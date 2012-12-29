@@ -1,14 +1,22 @@
+#<< common/properties
 
-class common.sim.SquareWavePulse
 
-	constructor: (@interval, @amplitude) ->
-		@t = 0.0
-		@I_stim = 0.0
+class common.sim.SquareWavePulseSim extends common.PropsEnabled
+
+	constructor: ->
+		@interval = @prop 3.0			# mS
+		@amplitude = @prop 15			# uA
+		@t = @prop 0.0, => @update()	# mS
+		@I_stim = @prop 0.0				# uA
 
 
 	update: ->
-		if @t > @interval[0] and @t < @interval[1]
+		[s, e]  = @interval()
 
-			@I_stim = @amplitude
+		if @t() > s and @t() < e
+
+			@I_stim(@amplitude())
 		else
-			@I_stim = 0.0
+			@I_stim(0.0)
+
+common.sim.SquareWavePulse = -> new common.sim.SquareWavePulseSim()

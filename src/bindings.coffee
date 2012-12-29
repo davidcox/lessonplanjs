@@ -36,7 +36,7 @@ ko.bindingHandlers.slider =
 
 @manualOutputBindings = []
 
-bindings =
+svgbind =
 
     bindVisible: (selector, observable) ->
         el = d3.select(selector)
@@ -80,40 +80,39 @@ bindings =
 
         setter(observable())
 
-    exposeOutputBindings: (sourceObj, keys, viewModel) ->
-        @bindOutput(sourceObj, key, viewModel) for key in keys
+    # exposeOutputBindings: (sourceObj, keys, viewModel) ->
+    #     @bindOutput(sourceObj, key, viewModel) for key in keys
 
-    bindOutput: (sourceObj, key, viewModel, key2) ->
-        if not key2?
-            key2 = key
+    # bindOutput: (sourceObj, key, viewModel, key2) ->
+    #     if not key2?
+    #         key2 = key
 
-        if viewModel[key2]?
-            viewModel[key2](sourceObj[key])
-        else
-            viewModel[key2] = ko.observable(sourceObj[key])
-        manualOutputBindings.push([sourceObj, key, viewModel[key2]])
+    #     if viewModel[key2]?
+    #         viewModel[key2](sourceObj[key])
+    #     else
+    #         viewModel[key2] = ko.observable(sourceObj[key])
+    #     manualOutputBindings.push([sourceObj, key, viewModel[key2]])
 
-    update: ->
-        obs(sourceObj[key]) for [sourceObj, key, obs] in manualOutputBindings
+    # update: ->
+    #     obs(sourceObj[key]) for [sourceObj, key, obs] in manualOutputBindings
 
-    bindInput: (sourceObj, key, viewModel, key2, cb) ->
-        if not key2?
-            key2 = key
+    # bindInput: (sourceObj, key, viewModel, key2, cb) ->
+    #     if not key2?
+    #         key2 = key
 
-        if viewModel[key2]?
-            viewModel[key2](sourceObj[key])
-        else
-            viewModel[key2] = ko.observable(sourceObj[key])
+    #     if viewModel[key2]?
+    #         viewModel[key2](sourceObj[key])
+    #     else
+    #         viewModel[key2] = ko.observable(sourceObj[key])
 
-        viewModel[key2].subscribe((newVal) ->
-            sourceObj[key] = newVal
-            cb() if cb?
-        )
+    #     viewModel[key2].subscribe((newVal) ->
+    #         sourceObj[key] = newVal
+    #         cb() if cb?
+    #     )
 
-    exposeInputBindings: (sourceObj, keys, viewModel) ->
-        @bindInput(sourceObj, key, viewModel) for key in keys
-
+    # exposeInputBindings: (sourceObj, keys, viewModel) ->
+    #     @bindInput(sourceObj, key, viewModel) for key in keys
 
 
 root = window ? exports
-root.bindings = bindings
+root.svgbind = svgbind

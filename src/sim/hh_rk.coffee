@@ -1,36 +1,44 @@
+#<< common/properties
 
-class common.sim.HHSimulationRK4
+
+class common.sim.HHSimulationRK4 extends common.PropsEnabled
 
     constructor: ->
 
         # Stimulus
-        @I_ext = 0.0               # uA / cm^2
+        @I_ext = @prop 0.0                   # uA / cm^2
 
-        # Axial currents
-        @I_a = 0.0
+        # Axial currents (if any)
+        @I_a = @prop 0.0
 
-        # Time Step
-        @dt = 0.05                         # ms
+        # Time step
+        @dt = @prop 0.05                     # ms
 
         # Capacitance
-        @C_m = 1.0                          # uF / cm^2
+        @C_m = @prop 1.0                     # uF / cm^2
 
-        # Peak Channel conductances
-        @g_Na_max = 120                     # mS / cm^2
-        @g_K_max = 36                       # mS / cm^2
-        @g_L_max = 0.3                      # mS / cm^2
+        # Channel conductances
+        @gbar_Na = @prop 120                # mS / cm^2
+        @gbar_K = @prop 36                  # mS / cm^2
+        @gbar_L = @prop 0.3                 # mS / cm^2
+
+
+        # Resting Potential
+        @V_rest = @prop 0.0                # mV
+
+        # hack
+        @V_offset = @prop -65.0
 
         # Reversal Potentials
-        @E_Na = 115                         # mV
-        @E_K = -12                          # mV
-        @E_L = 10.6                         # mV
-
-        # Resting Potential (a la H&H 1952)
-        @V_rest = 0.0                       # mV
+        @E_Na = @prop 115 + @V_rest()         # mV
+        @E_K = @prop -12 + @V_rest()          # mV
+        @E_L = @prop 10.6 + @V_rest()         # mV
 
 
-        # Internal variables (exposed in case we'd like to plot them)
-        @I_Na = @I_K = @I_L = @g_Na = @g_K = @g_L = 0.0
+        # Internal variables
+        @defineProps ['I_Na', 'I_K', 'I_L', 'g_Na', 'g_K', 'g_L'], 0.0
+
+        @defineProps ['v', 'm', 'n', 'h', 't'], 0.0
 
         @reset()
 
@@ -43,57 +51,58 @@ class common.sim.HHSimulationRK4
         # m: Na-channel activation gating variable
         # n: K-channel activation gating variable
         # h: Na-channel inactivation gating variable
-        @v = @V_rest
-        @m = @alphaM(@v) / (@alphaM(@v) + @betaM(@v))
-        @n = @alphaN(@v) / (@alphaN(@v) + @betaN(@v))
-        @h = @alphaH(@v) / (@alphaH(@v) + @betaH(@v))
+        @v(@V_rest())
 
-        # Package into a vector for convenience
-        @state = [@v, @m, @n, @h]
+        v_ = @v()
+        @m(@alphaM(v_) / (@alphaM(v_) + @betaM(v_)))
+        @n(@alphaN(v_) / (@alphaN(v_) + @betaN(v_)))
+        @h(@alphaH(v_) / (@alphaH(v_) + @betaH(v_)))
+
+        @state = [@v(), @m(), @n(), @h()]
 
         # Starting time for simulation
-        @t = 0.0
-
-    unpackState: ->
-        [@v, @m, @n, @h] = @state
-
-        # hack:
-        # shift the membrane V down to a physiologically realistic value
-        # H & H fit everything assuming Em = 0.0
-        @v -= 65.0
-
+        @t(0.0)
 
     step: (stepCallback) ->
 
         # update the time
-        @t += @dt
+        @t(@t() + @dt())
+
+        # Store these as locals for convenience (be careful!)
+        t = @t()
+        dt = @dt()
 
         # Vector math in JS/CS is tedious; I've done it below as list comprehensions for
         # compactness's sake
         svars = [0..3] # indices over state variables, a shorthand/cut
 
+
         # Euler term
-        k1 = @ydot(@t, @state)
+        k1 = @ydot(t, @state)
 
 
         if @rk4
 
-            k2 = @ydot(@t + (@dt / 2),
-                       (@state[i] + (@dt * k1[i] / 2) for i in svars))
+            k2 = @ydot(t + (dt / 2),
+                       (@state[i] + (dt * k1[i] / 2) for i in svars))
 
-            k3 = @ydot(@t + @dt / 2,
-                       (@state[i] + (@dt * k2[i] / 2) for i in svars))
+            k3 = @ydot(t + dt / 2,
+                       (@state[i] + (dt * k2[i] / 2) for i in svars))
 
-            k4 = @ydot(@t + @timeStep,
-                       (@state[i] + @dt * k3[i] for i in svars))
+            k4 = @ydot(t + dt,
+                       (@state[i] + dt * k3[i] for i in svars))
 
-            @state = (@state[i] + (@dt / 6.0) * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) for i in svars)
+            @state = (@state[i] + (dt / 6.0) * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) for i in svars)
 
         else
             # Euler's method (just use the first term, k1)
-            @state = (@state[i] + @dt * k1[i] for i in svars)
+            @state = (state[i] + dt * k1[i] for i in svars)
 
-        @unpackState()
+        # unpack the state vector to make outputs accessible
+        @v(@state[0] + @V_offset())
+        @m(@state[1])
+        @n(@state[2])
+        @h(@state[3])
 
         if stepCallback?
             stepCallback()
@@ -130,16 +139,16 @@ class common.sim.HHSimulationRK4
         [v, m, n, h] = s
 
         # Conductances
-        @g_Na = @g_Na_max * Math.pow(m, 3) * h
-        @g_K = @g_K_max * Math.pow(n, 4)
-        @g_L = @g_L_max
+        @g_Na (@gbar_Na() * Math.pow(m, 3) * h)
+        @g_K  (@gbar_K() * Math.pow(n, 4))
+        @g_L  (@gbar_L())
 
         # Currents
-        @I_Na = @g_Na * (v - @E_Na)
-        @I_K = @g_K * (v - @E_K)
-        @I_L = @g_L * (v - @E_L)
+        @I_Na (@g_Na() * (v - @E_Na()))
+        @I_K (@g_K() * (v - @E_K()))
+        @I_L (@g_L() * (v - @E_L()))
 
-        dv = (@I_ext + @I_a - @I_Na - @I_K - @I_L) / @C_m
+        dv = (@I_ext() + @I_a() - @I_Na() - @I_K() - @I_L()) / @C_m()
 
         # Gating Variables
         dm = @alphaM(v) * (1.0 - m) - @betaM(v) * m
@@ -149,6 +158,4 @@ class common.sim.HHSimulationRK4
         dy = [dv, dm, dn, dh]
         return dy
 
-# export this class
-root = window ? exports
-root.HHSimulationRK4 = HHSimulationRK4
+common.sim.HodgkinHuxleyNeuron = -> new common.sim.HHSimulationRK4()

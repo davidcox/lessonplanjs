@@ -1,16 +1,16 @@
+#<< common/properties
 #<< common/sim/hh_rk
-HHSimulationRK4 = common.sim.HHSimulationRK4
 
-class common.sim.LinearCompartmentModel
+class common.sim.LinearCompartmentModel extends common.PropsEnabled
 
 	constructor: (@nCompartments) ->
 
 		@cIDs = [0..@nCompartments-1]
-		@compartments = ((new HHSimulationRK4()) for c in @cIDs)
+		@compartments = (HodgkinHuxleyNeuron() for c in @cIDs)
 
 		@t = @compartments[0].t
 
-		@R_a = 10.0
+		@R_a = @prop 10.0
 
 		@v = (0.0 for c in @cIDs)
 		@I = (0.0 for c in @cIDs)
@@ -62,4 +62,4 @@ class common.sim.LinearCompartmentModel
 
 		@unpackArrays()
 
-root.LinearCompartmentModel = LinearCompartmentModel
+LinearCompartmentModel = -> new common.sim.LinearCompartmentModel()
