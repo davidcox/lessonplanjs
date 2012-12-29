@@ -1,9 +1,7 @@
 #<< common/sim/hh_rk
+HHSimulationRK4 = common.sim.HHSimulationRK4
 
-root = window ? exports
-HHSimulationRK4 = root.HHSimulationRK4
-
-class LinearCompartmentModel
+class common.sim.LinearCompartmentModel
 
 	constructor: (@nCompartments) ->
 

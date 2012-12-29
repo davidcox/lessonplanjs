@@ -1,5 +1,5 @@
 
-class SquareWavePulse
+class common.sim.SquareWavePulse
 
 	constructor: (@interval, @amplitude) ->
 		@t = 0.0
@@ -12,6 +12,3 @@ class SquareWavePulse
 			@I_stim = @amplitude
 		else
 			@I_stim = 0.0
-
-root = window ? exports
-root.SquareWavePulse = SquareWavePulse

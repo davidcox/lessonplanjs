@@ -1,5 +1,5 @@
 
-class HHSimulationRK4
+class common.sim.HHSimulationRK4
 
     constructor: ->
 
