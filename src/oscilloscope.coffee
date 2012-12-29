@@ -22,6 +22,8 @@ oscilloscope = (svgSelector, frameSelector) ->
     width = 0
     height = 0
 
+    frame.attr('opacity', 0.0)
+
     setScales = ->
         frameXOffset = Number(frame.attr('x'))
         frameYOffset = Number(frame.attr('y'))
