@@ -55,7 +55,7 @@ class common.Timeline
         @setupTiming()
 
 
-        # Show / Hide the timline on mmouseover
+        # Show / Hide the timeline on mmouseover
         @div.on('mouseover', ->
             d3.select(this).transition()
                 .style('opacity', 1.0)
@@ -114,6 +114,11 @@ class common.Timeline
                 .attr('r', 5)
                 .duration(250)
         )
+
+        # Marker click action
+        @markers.on('click', (d) =>
+            @scene.stop()
+            @scene.runAtSegment(d.title))
 
         $('.timeline-segment-marker').tipsy(
             #gravity: $.fn.tipsy.autoNS
