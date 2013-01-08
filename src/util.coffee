@@ -16,6 +16,8 @@ util =
         div = d3.select(divSelector)
         div.style('position', 'absolute')
 
+        d3.select(rectSelector).attr('opacity', 0.0)
+
         # trick from http://stackoverflow.com/questions/5834298/getting-the-screen-pixel-coordinates-of-a-rect-element
         pt  = svg.createSVGPoint()
         resizeIt = () ->
@@ -36,8 +38,9 @@ util =
             div.style('top', corners.nw.y)
             div.style('left', corners.nw.x)
 
-        resizeIt()
+
         resizeHandlers.push(resizeIt)
+        f() for f in resizeHandlers
 
 
 root = window ? exports
