@@ -356,8 +356,6 @@ class mcb80x.FSM extends LessonElement
         if @stopping
             return
 
-        console.log('transition to: ' + state)
-
         stateObj = @states[state]
 
         # pin some values to the object to make the DSL work
