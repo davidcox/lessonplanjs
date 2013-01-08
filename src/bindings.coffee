@@ -55,7 +55,6 @@ svgbind =
     bindAttr: (selector, attr, observable, mapping) ->
 
         el = d3.select(selector)
-        console.log(el)
 
         setter = (newVal) ->
             el.attr(attr, mapping(newVal))
