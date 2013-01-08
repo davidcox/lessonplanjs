@@ -70,10 +70,11 @@ svgbind =
 
         if centered
             center = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
+            origTransform = el.attr('transform')
             recenter = (el) ->
                 newbbox = el.node().getBBox()
                 newcenter = [ newbbox.x + newbbox.width/2.0, newbbox.y + newbbox.height/2.0]
-                transform = ''
+                transform = origTransform
                 transform += 'translate(' + center[0] + ', ' + center[1] + ') '
                 transform += 'translate(' + (-1*newcenter[0]) + ', ' + (-1*newcenter[1]) + ') '
                 el.attr('transform', transform)
@@ -87,7 +88,7 @@ svgbind =
 
         setter = (newVal) ->
             el.text(newVal)
-            #recenter(el)
+            recenter(el)
 
         observable.subscribe(setter)
         setter(observable())
