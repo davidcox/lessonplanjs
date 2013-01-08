@@ -1,7 +1,7 @@
-#<< common/properties
-#<< common/sim/hh_rk
+#<< mcb80x/properties
+#<< mcb80x/sim/hh_rk
 
-class common.sim.LinearCompartmentModel extends common.PropsEnabled
+class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 	constructor: (@nCompartments) ->
 
@@ -62,4 +62,4 @@ class common.sim.LinearCompartmentModel extends common.PropsEnabled
 
 		@unpackArrays()
 
-LinearCompartmentModel = -> new common.sim.LinearCompartmentModel()
+LinearCompartmentModel = -> new mcb80x.sim.LinearCompartmentModel()

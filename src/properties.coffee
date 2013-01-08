@@ -1,6 +1,6 @@
 
 
-class common.PropsEnabled
+class mcb80x.PropsEnabled
 
     prop: (defaultVal, cb) ->
         owner = this
@@ -34,7 +34,7 @@ class common.PropsEnabled
             this[name] = @prop(defaultVal)
 
 
-class common.ViewModel
+class mcb80x.ViewModel
 
     inheritProperties: (target, keys) ->
         if not $.isArray(keys)

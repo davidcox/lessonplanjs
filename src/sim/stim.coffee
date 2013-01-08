@@ -1,7 +1,7 @@
-#<< common/properties
+#<< mcb80x/properties
 
 
-class common.sim.SquareWavePulseSim extends common.PropsEnabled
+class mcb80x.sim.SquareWavePulseSim extends mcb80x.PropsEnabled
 
 	constructor: ->
 		@interval = @prop 3.0			# mS
@@ -19,4 +19,4 @@ class common.sim.SquareWavePulseSim extends common.PropsEnabled
 		else
 			@I_stim(0.0)
 
-common.sim.SquareWavePulse = -> new common.sim.SquareWavePulseSim()
+mcb80x.sim.SquareWavePulse = -> new mcb80x.sim.SquareWavePulseSim()

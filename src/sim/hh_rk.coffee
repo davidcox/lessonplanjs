@@ -1,7 +1,7 @@
-#<< common/properties
+#<< mcb80x/properties
 
 
-class common.sim.HHSimulationRK4 extends common.PropsEnabled
+class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
 
     constructor: ->
 
@@ -158,4 +158,4 @@ class common.sim.HHSimulationRK4 extends common.PropsEnabled
         dy = [dv, dm, dn, dh]
         return dy
 
-common.sim.HodgkinHuxleyNeuron = -> new common.sim.HHSimulationRK4()
+mcb80x.sim.HodgkinHuxleyNeuron = -> new mcb80x.sim.HHSimulationRK4()
