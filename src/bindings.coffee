@@ -62,6 +62,36 @@ svgbind =
         observable.subscribe(setter)
         setter(observable())
 
+    bindText: (selector, observable, centered) ->
+        el = d3.select(selector)
+
+        bbox = el.node().getBBox()
+        console.log(bbox)
+
+        if centered
+            center = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
+            recenter = (el) ->
+                newbbox = el.node().getBBox()
+                newcenter = [ newbbox.x + newbbox.width/2.0, newbbox.y + newbbox.height/2.0]
+                transform = ''
+                transform += 'translate(' + center[0] + ', ' + center[1] + ') '
+                transform += 'translate(' + (-1*newcenter[0]) + ', ' + (-1*newcenter[1]) + ') '
+                el.attr('transform', transform)
+                console.log(transform)
+                console.log(center)
+                console.log(newcenter)
+        else
+            recenter = (el) ->
+
+        console.log(recenter)
+
+        setter = (newVal) ->
+            el.text(newVal)
+            #recenter(el)
+
+        observable.subscribe(setter)
+        setter(observable())
+
     bindMultiState: (selectorMap, observable) ->
         keys = Object.keys(selectorMap)
         values = (selectorMap[k] for k in keys)
@@ -78,6 +108,35 @@ svgbind =
         observable.subscribe(setter)
 
         setter(observable())
+
+
+    bindScale: (selector, observable, scaleMapping, anchorType) ->
+
+
+        bbox = d3.select(selector).node().getBBox()
+
+        if anchorType is 'sw'
+            anchor = [bbox.x, bbox.y + bbox.height]
+        else if anchorType is 'nw'
+            anchor = [bbox.x, bbox.y + bbox.height]
+        else if anchorType is 'ne'
+            anchor = [bbox.x + bbox.width, bbox.y + bbox.height]
+        else if anchorType is 'se'
+            anchor = [bbox.x, bbox.y]
+        else
+            anchor = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
+
+        transformFn = (val) ->
+            s = scaleMapping(val)
+            transform = ''
+            transform += 'translate(' + anchor[0] + ', ' + anchor[1] + ') '
+
+            transform += 'scale(' + s + ') '
+            transform += 'translate(' + (-1 * anchor[0]) + ', ' + (-1 * anchor[1]) + ') '
+
+            return transform
+
+        @bindAttr(selector, 'transform', observable, transformFn)
 
     # exposeOutputBindings: (sourceObj, keys, viewModel) ->
     #     @bindOutput(sourceObj, key, viewModel) for key in keys
