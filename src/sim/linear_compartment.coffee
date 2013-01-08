@@ -66,8 +66,4 @@ class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 		@unpackArrays()
 
-<<<<<<< HEAD
-LinearCompartmentModel = -> new mcb80x.sim.LinearCompartmentModel()
-=======
-common.sim.LinearCompartmentModel = (n) -> new common.sim.LinearCompartmentModelSim(n)
->>>>>>> ad83f9646da7113ad6334ae136378bb3f82e7c78
+mcb80x.sim.LinearCompartmentModel = -> new mcb80x.sim.LinearCompartmentModel()

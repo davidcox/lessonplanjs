@@ -404,7 +404,7 @@ class mcb80x.FSM extends LessonElement
 # word
 
 root.scene = (sceneId, title) ->
-    sceneObj = new Scene(sceneId, title)
+    sceneObj = new mcb80x.Scene(sceneId, title)
 
     (f) ->
         currentObj = sceneObj
@@ -412,7 +412,7 @@ root.scene = (sceneId, title) ->
 
 root.interactive = (beatId) ->
     #register the id
-    beatObj = new Interactive(beatId)
+    beatObj = new mcb80x.Interactive(beatId)
 
     currentObj.addChild(beatObj)
 
@@ -427,14 +427,14 @@ root.stage = (name) ->
 
 
 root.line = (text, audio, state) ->
-    lineObj = new Line(text, audio, state)
+    lineObj = new mcb80x.Line(text, audio, state)
 
     currentObj.addChild(lineObj)
 
 root.lines = line
 
 root.video = (name) ->
-    videoObj = new Video(name)
+    videoObj = new mcb80x.Video(name)
     currentObj.addChild(videoObj)
 
     (f) ->
@@ -454,19 +454,19 @@ root.duration = (t) ->
     currentObj.duration(t) if currentObj.duration?
 
 root.play = (name) ->
-    runObj = new PlayAction(name)
+    runObj = new mcb80x.PlayAction(name)
     currentObj.addChild(runObj)
 
 root.wait = (delay) ->
-    waitObj = new WaitAction(delay)
+    waitObj = new mcb80x.WaitAction(delay)
     currentObj.addChild(waitObj)
 
 root.stop_and_reset = (name) ->
-    stopResetObj = new StopAndResetAction(name)
+    stopResetObj = new mcb80x.StopAndResetAction(name)
     currentObj.addChild(stopResetObj)
 
 root.goal = (f) ->
-    goalObj = new FSM(f())
+    goalObj = new mcb80x.FSM(f())
     currentObj.addChild(goalObj)
 
 root.fsm = goal

@@ -1,6 +1,6 @@
 
 
-class common.Timeline
+class mcb80x.Timeline
 
     constructor: (selector, @scene) ->
         @orderedSegments = []

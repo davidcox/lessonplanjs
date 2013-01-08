@@ -1,7 +1,7 @@
-#<< common/sim/linear_compartment
-#<< common/sim/passive_membrane
+#<< mcb80x/sim/linear_compartment
+#<< mcb80x/sim/passive_membrane
 
-class MyelinatedLinearCompartmentModel extends LinearCompartmentModel
+class mcb80x.sim.MyelinatedLinearCompartmentModel extends mcb80x.sim.LinearCompartmentModel
 
 	constructor: (@nCompartments, @nNodes) ->
 
@@ -33,6 +33,3 @@ class MyelinatedLinearCompartmentModel extends LinearCompartmentModel
 
 		@unpackArrays()
 
-
-root = window ? exports
-root.LinearCompartmentModel = LinearCompartmentModel

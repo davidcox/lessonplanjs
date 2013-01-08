@@ -1,7 +1,7 @@
-#<< common/properties
+#<< mcb80x/properties
 
 
-class com.sim.PassiveMembrane extends PropsEnabled
+class mcb80x.sim.PassiveMembrane extends mcb80x.PropsEnabled
 
     constructor: ->
 
