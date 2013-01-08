@@ -1,13 +1,13 @@
 #<< mcb80x/properties
 #<< mcb80x/sim/hh_rk
 
-class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
+class mcb80x.sim.LinearCompartmentModelSim extends mcb80x.PropsEnabled
 
 
 	constructor: (@nCompartments) ->
 
 		@cIDs = [0..@nCompartments-1]
-		@compartments = (HodgkinHuxleyNeuron() for c in @cIDs)
+		@compartments = (mcb80x.sim.HodgkinHuxleyNeuron() for c in @cIDs)
 
 		console.log(@compartments)
 		@t = @compartments[0].t
@@ -66,4 +66,4 @@ class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 		@unpackArrays()
 
-mcb80x.sim.LinearCompartmentModel = -> new mcb80x.sim.LinearCompartmentModel()
+mcb80x.sim.LinearCompartmentModel = (c) -> new mcb80x.sim.LinearCompartmentModelSim(c)

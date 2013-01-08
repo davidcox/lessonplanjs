@@ -1,7 +1,7 @@
 #<< mcb80x/properties
 
 
-class mcb80x.sim.PassiveMembrane extends mcb80x.PropsEnabled
+class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
 
     constructor: ->
 
@@ -110,3 +110,4 @@ class mcb80x.sim.PassiveMembrane extends mcb80x.PropsEnabled
 
         return dv
 
+mcb80x.sim.PassiveMembrane = -> new mcb80x.sim.PassiveMembraneSim
