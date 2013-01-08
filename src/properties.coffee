@@ -37,6 +37,9 @@ class mcb80x.PropsEnabled
 class mcb80x.ViewModel
 
     inheritProperties: (target, keys) ->
+        if not keys?
+            keys = (k for k,v of target when v.subscribe?)
+
         if not $.isArray(keys)
             keys = [keys]
 
