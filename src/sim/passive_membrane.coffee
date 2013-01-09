@@ -35,12 +35,13 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
         # Internal variables
         @defineProps ['I_L', 'g_L'], 0.0
 
-        @defineProps ['v', 't'], 0.0
+        @v = @prop 0.0
+        @t = @prop 0.0
 
         @reset()
 
         # Use Runga-Kutta
-        @rk4 = true
+        @rk4 = false
 
     reset: ->
         # Starting (steady) sate
@@ -84,7 +85,7 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
 
         else
             # Euler's method (just use the first term, k1)
-            @state = state + dt * k1
+            @state = @state + dt * k1
 
         # unpack the state vector to make outputs accessible
         @v(@state + @V_offset())
@@ -100,8 +101,6 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
 
         # Unpack the incoming state
         v = s
-
-        @g_L  (@gbar_L())
 
         # Currents
         @I_L (@g_L() * (v - @E_L()))

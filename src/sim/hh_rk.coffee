@@ -43,7 +43,7 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @reset()
 
         # Use Runga-Kutta
-        @rk4 = true
+        @rk4 = false
 
     reset: ->
         # Starting (steady) sate
@@ -96,7 +96,7 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
 
         else
             # Euler's method (just use the first term, k1)
-            @state = (state[i] + dt * k1[i] for i in svars)
+            @state = (@state[i] + dt * k1[i] for i in svars)
 
         # unpack the state vector to make outputs accessible
         @v(@state[0] + @V_offset())

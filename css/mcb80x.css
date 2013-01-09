@@ -18,6 +18,12 @@ svg {
   stroke-width: 2.5px;
 }
 
+.xv-line {
+  fill: none;
+  stroke: #f00;
+  stroke-width: 2.5px;
+}
+
 .axis path, .axis line {
   fill: none;
   stroke: #5CBA47;
