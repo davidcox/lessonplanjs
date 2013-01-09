@@ -39,10 +39,12 @@ svg {
   font-family: 'Arial', sans-serif;
   font-weight: bold;
   text-align: left;
+  z-index: 100;
 }
 
 #floatrect {
   opacity: 0.0;
+  z-index: 100;
 }
 
 #art{
