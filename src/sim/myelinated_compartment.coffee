@@ -9,19 +9,17 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         console.log 'internode: ' + interNodeDistance
         @nodeIndices = []
 
+        # A global capacitance for the passive nodes
+        @C_m = @prop 1.1
+
         @compartments = []
         for n in [0..@nNodes]
             @compartments.push(new mcb80x.sim.HHSimulationRK4())
             @nodeIndices.push(@compartments.length - 1)
             for c in [0..interNodeDistance]
-                @compartments.push(new mcb80x.sim.PassiveMembrane().C_m(0.5))
-
-        # @compartments.push(new mcb80x.sim.HHSimulationRK4())
-        # @nodeIndices.push(@compartments.length - 1)
-
-        @C_m = @prop 1.1
-        for c in @compartments
-            c.C_m = @C_m
+                passive = new mcb80x.sim.PassiveMembrane()
+                passive.C_m = @C_m
+                @compartments.push(passive)
 
         @t = @compartments[0].t
 
