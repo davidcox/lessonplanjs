@@ -6,7 +6,6 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
     constructor: (@nCompartments, @nNodes) ->
 
         interNodeDistance = (@nCompartments - @nNodes) / (@nNodes - 1)
-        console.log 'internode: ' + interNodeDistance
         @nodeIndices = []
 
         # A global capacitance for the passive nodes
@@ -27,7 +26,6 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
 
         @nCompartments = @compartments.length
 
-        console.log('n Compartments: ' + @nCompartments)
 
         @cIDs = [0..@nCompartments-1]
 
