@@ -1,21 +1,26 @@
 #<< mcb80x/properties
 #<< mcb80x/sim/hh_rk
 
-class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
+class mcb80x.sim.LinearCompartmentModelSim extends mcb80x.PropsEnabled
 
 
 	constructor: (@nCompartments) ->
 
 		@cIDs = [0..@nCompartments-1]
-		@compartments = (HodgkinHuxleyNeuron() for c in @cIDs)
+		@compartments = (mcb80x.sim.HodgkinHuxleyNeuron() for c in @cIDs)
+
+		# Tie all compartments to a global membrane capacitance property
+		@C_m = @prop 1.1
+		for c in @compartments
+			c.C_m = @C_m
 
 		console.log(@compartments)
 		@t = @compartments[0].t
 
-		@R_a = @prop 10.0
+		@R_a = @prop 2.0
 
-		@v = (0.0 for c in @cIDs)
-		@I = (0.0 for c in @cIDs)
+		@v = @prop (0.0 for c in @cIDs)
+		@I = @prop (0.0 for c in @cIDs)
 
 		for c in @cIDs
 			this['v' + c] = @prop 0.0
@@ -25,9 +30,11 @@ class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 	# a hack to make bindings easier
 	unpackArrays: ->
+		vs = @v()
+		Is = @I()
 		for c in @cIDs
-			this['v' + c](@v[c])
-			this['I' + c](@I[c])
+			this['v' + c](vs[c])
+			this['I' + c](Is[c])
 
 	reset: ->
 		if @compartments?
@@ -37,7 +44,8 @@ class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 		Iexts = []
 
-		v_rest = @compartments[0].V_rest()
+		v_rest = (@compartments[0].V_rest() +
+				  @compartments[0].V_offset())
 
 		for c in @cIDs
 			I = 0.0
@@ -60,10 +68,12 @@ class mcb80x.sim.LinearCompartmentModel extends mcb80x.PropsEnabled
 
 		# @t = @compartments[0].t
 
+		vs = @v()
+		Is = @I()
 		for c in @cIDs
-			@v[c] = @compartments[c].v()
-			@I[c] = @compartments[c].I_ext()
+			vs[c] = @compartments[c].v()
+			Is[c] = @compartments[c].I_ext()
 
 		@unpackArrays()
 
-mcb80x.sim.LinearCompartmentModel = -> new mcb80x.sim.LinearCompartmentModel()
+mcb80x.sim.LinearCompartmentModel = (c) -> new mcb80x.sim.LinearCompartmentModelSim(c)
