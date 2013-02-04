@@ -111,6 +111,33 @@ svgbind =
         setter(observable())
 
 
+    bindAsToggle: (onSelector, offSelector, observable) ->
+        selectorMap =
+            onSelector: true
+            offSelector: false
+
+        # bind the selectorMap to the observable
+        @bindMultiState(selectorMap, observable)
+
+        # register on click handles for every selector in the map
+        for s in Object.keys(selectorMap)
+            d3.select(s).on('click', -> observable(!observable()))
+
+    bindAsMomentaryButton: (onSelector, offSelector, observable) ->
+
+        selectorMap =
+            onSelector: true
+            offSelector: false
+
+        # bind the selectorMap to the observable
+        @bindMultiState(selectorMap, observable)
+
+        for s in Object.keys(selectorMap)
+            d3.select(s).on('mousedown', -> observable(true))
+            d3.select(s).on('mouseup', -> observable(false))
+
+
+
     bindScale: (selector, observable, scaleMapping, anchorType) ->
 
 
