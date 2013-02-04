@@ -14,7 +14,6 @@ class mcb80x.sim.LinearCompartmentModelSim extends mcb80x.PropsEnabled
 		for c in @compartments
 			c.C_m = @C_m
 
-		console.log(@compartments)
 		@t = @compartments[0].t
 
 		@R_a = @prop 2.0
