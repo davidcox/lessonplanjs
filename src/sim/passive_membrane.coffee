@@ -31,12 +31,17 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
         # Reversal Potentials
         @E_L = @prop 10.6 + @V_rest()         # mV
 
-
         # Internal variables
         @defineProps ['I_L', 'g_L'], 0.0
 
         @v = @prop 0.0
         @t = @prop 0.0
+
+        # External voltage clamp
+        # this will force the voltage to some value
+        @voltageClamped = @prop false
+
+        @clampVoltage = @prop -65.0
 
         @reset()
 
@@ -88,7 +93,13 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
             @state = @state + dt * k1
 
         # unpack the state vector to make outputs accessible
-        @v(@state + @V_offset())
+        if @voltageClamped()
+            # hold the voltage at the clamped level
+            @v(@clampVoltage())
+            console.log('clamped')
+        else
+            # update normally
+            @v(@state + @V_offset())
 
         if stepCallback?
             stepCallback()

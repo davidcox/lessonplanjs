@@ -34,6 +34,9 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @E_K = @prop -12 + @V_rest()          # mV
         @E_L = @prop 10.6 + @V_rest()         # mV
 
+        # External voltage clamp
+        @voltageClamped = @prop false
+        @clampVoltage = @prop -65.0
 
         # Internal variables
         @defineProps ['I_Na', 'I_K', 'I_L', 'g_Na', 'g_K', 'g_L'], 0.0
@@ -41,6 +44,8 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @defineProps ['v', 'm', 'n', 'h', 't'], 0.0
 
         @reset()
+
+        @t(0.0)
 
         # Use Runga-Kutta
         @rk4 = false
@@ -61,7 +66,7 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @state = [@v(), @m(), @n(), @h()]
 
         # Starting time for simulation
-        @t(0.0)
+        # @t(0.0)
 
     step: (stepCallback) ->
 
@@ -99,7 +104,18 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
             @state = (@state[i] + dt * k1[i] for i in svars)
 
         # unpack the state vector to make outputs accessible
-        @v(@state[0] + @V_offset())
+
+        if @voltageClamped()
+            @v(@clampVoltage())
+        else
+            @v(@state[0] + @V_offset())
+
+        if isNaN(@v())
+            @reset()
+            console.log(@v())
+            return
+
+
         @m(@state[1])
         @n(@state[2])
         @h(@state[3])

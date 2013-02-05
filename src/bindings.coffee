@@ -133,7 +133,6 @@ svgbind =
         @bindMultiState(selectorMap, observable)
 
         for s in Object.keys(selectorMap)
-            d3.select(s).on('mouseover', (d, i) -> console.log('blah'))
             d3.selectAll(s).on('mousedown', -> observable(true))
             d3.selectAll(s).on('mouseup', -> observable(false))
             console.log(d3.select(s))
@@ -148,15 +147,20 @@ svgbind =
         if orientation is 'h'
             minCoord = 0 # box.node().x.animVal.value
             maxCoord = minCoord + box.node().width.animVal.value
+
+            normalizedScale = d3.scale.linear()
+                .domain([minCoord, maxCoord])
+                .range([0.0, 1.0]).clamp(true)
+
         else
-            minCoord = 0 # box.node().y.animVal.value
-            maxCoord = minCoord + box.node().height.animVal.value
+            maxCoord = 0 # box.node().y.animVal.value
+            minCoord = - box.node().height.animVal.value
 
-        normalizedScale = d3.scale.linear()
-            .domain([minCoord, maxCoord])
-            .range([0.0, 1.0])
+            normalizedScale = d3.scale.linear()
+                .domain([maxCoord, minCoord])
+                .range([0.0, 1.0]).clamp(true)
 
-        console.log('here: ' + normalizedScale(50))
+
         # create a drag "behavior" in d3
         drag = d3.behavior.drag()
             .origin(Object)
