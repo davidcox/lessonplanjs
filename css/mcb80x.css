@@ -30,6 +30,10 @@ svg {
   shape-rendering: crispEdges;
 }
 
+#art {
+  z-index: 100;
+}
+
 .properties-pane {
   /*background-color: #ccc;*/
   width: 100%;
@@ -43,8 +47,7 @@ svg {
 }
 
 #floatrect {
-  opacity: 0.0;
-  z-index: 100;
+  opacity: 0.0; d
 }
 
 #art{

@@ -112,9 +112,9 @@ svgbind =
 
 
     bindAsToggle: (onSelector, offSelector, observable) ->
-        selectorMap =
-            onSelector: true
-            offSelector: false
+        selectorMap = {}
+        selectorMap[onSelector] = true
+        selectorMap[offSelector] = false
 
         # bind the selectorMap to the observable
         @bindMultiState(selectorMap, observable)
@@ -125,17 +125,66 @@ svgbind =
 
     bindAsMomentaryButton: (onSelector, offSelector, observable) ->
 
-        selectorMap =
-            onSelector: true
-            offSelector: false
+        selectorMap = {}
+        selectorMap[onSelector] = true
+        selectorMap[offSelector] = false
 
         # bind the selectorMap to the observable
         @bindMultiState(selectorMap, observable)
 
         for s in Object.keys(selectorMap)
-            d3.select(s).on('mousedown', -> observable(true))
-            d3.select(s).on('mouseup', -> observable(false))
+            d3.select(s).on('mouseover', (d, i) -> console.log('blah'))
+            d3.selectAll(s).on('mousedown', -> observable(true))
+            d3.selectAll(s).on('mouseup', -> observable(false))
+            console.log(d3.select(s))
 
+
+    bindSlider: (knobSelector, boxSelector, orientation, observable, mapping) ->
+
+        if mapping is undefined
+            mapping = d3.scale.linear().domain([0,1]).range([0,1])
+
+        box = d3.select(boxSelector)
+        if orientation is 'h'
+            minCoord = 0 # box.node().x.animVal.value
+            maxCoord = minCoord + box.node().width.animVal.value
+        else
+            minCoord = 0 # box.node().y.animVal.value
+            maxCoord = minCoord + box.node().height.animVal.value
+
+        normalizedScale = d3.scale.linear()
+            .domain([minCoord, maxCoord])
+            .range([0.0, 1.0])
+
+        console.log('here: ' + normalizedScale(50))
+        # create a drag "behavior" in d3
+        drag = d3.behavior.drag()
+            .origin(Object)
+            .on("drag", (d,i) ->
+                if orientation is 'h'
+                    d.x += d3.event.dx
+                    if d.x > maxCoord
+                        d.x = maxCoord
+                    if d.x < minCoord
+                        d.x = minCoord
+                    observable(mapping(normalizedScale(d.x)))
+                else
+                    d.y += d3.event.dy
+                    if d.y > maxCoord
+                        d.y = maxCoord
+                    if d.y < minCoord
+                        d.y = minCoord
+                    observable(mapping(normalizedScale(d.y)))
+
+                d3.select(this).attr("transform", (d2,i) ->
+                    return "translate(" + [ d2.x, d2.y ] + ")"
+                )
+            )
+
+
+        d3.select(knobSelector)
+            .data([ {'x' : 0, 'y': 0}])
+            .call(drag)
 
 
     bindScale: (selector, observable, scaleMapping, anchorType) ->
