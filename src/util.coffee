@@ -8,6 +8,24 @@ $(window).resize( ->
 
 util =
 
+    hideElement: (el, duration) ->
+        if duration is undefined
+            el.attr('opacity', 0.0)
+            el.attr('display', 'none')
+        else
+            el.transition()
+              .attr('opacity', 0.0)
+              .duration(duration)
+              .each('end', -> el.attr('display', 'none'))
+
+    showElement: (el, duration) ->
+        el.attr('visibility', 'visible')
+        el.attr('display', 'inline')
+        if duration is undefined
+            el.attr('opacity', 1.0)
+        else
+            el.transition().attr('opacity', 1.0).duration(duration)
+
     # Float a div element over top of an SVG rect element
     floatOverRect: (svgSelector, rectSelector, divSelector) ->
 

@@ -1,15 +1,4 @@
-
-hideElement = (el, duration) ->
-    if duration is undefined
-        el.attr('opacity', 0.0)
-    else
-        el.transition().attr('opacity', 0.0).duration(duration)
-
-showElement = (el, duration) ->
-    if duration is undefined
-        el.attr('opacity', 1.0)
-    else
-        el.transition().attr('opacity', 1.0).duration(duration)
+#<< mcb80x/util
 
 # A knockout jquery-ui handler
 ko.bindingHandlers.slider =
@@ -38,11 +27,13 @@ ko.bindingHandlers.slider =
         $(element).slider('value', value)
 
 
-
-
 @manualOutputBindings = []
 
 svgbind =
+
+    batchBindVisible: (selectorMap, duration) ->
+        for k in Object.keys(selectorMap)
+            @bindVisible(k, selectorMap, duration)
 
     bindVisible: (selector, observable, duration) ->
         if duration is undefined
@@ -53,9 +44,9 @@ svgbind =
         thisobj = this
         setter = (newVal) ->
             if newVal
-                showElement(el, duration)
+                util.showElement(el, duration)
             else
-                hideElement(el, duration)
+                util.hideElement(el, duration)
 
         observable.subscribe(setter)
         setter(observable())
@@ -111,11 +102,11 @@ svgbind =
 
         setter = (val) ->
             # hide all of the alternatives
-            hideElement(el) for el in elements
+            util.hideElement(el) for el in elements
 
             matchSelectors = (keys[i] for i in [0 .. keys.length] when values[i] == val)
             matchElements = (d3.select(s) for s in matchSelectors)
-            showElement(el) for el in matchElements
+            util.showElement(el) for el in matchElements
 
         observable.subscribe(setter)
 
@@ -147,6 +138,16 @@ svgbind =
             d3.selectAll(s).on('mousedown', -> observable(true))
             d3.selectAll(s).on('mouseup', -> observable(false))
             console.log(d3.select(s))
+
+    bindMultipleChoice: (selectorMap, observable) ->
+
+        for k in Object.keys(selectorMap)
+            el = d3.select(k)
+            v = selectorMap[k]
+            el.on('click', ->
+                console.log('clicky')
+                observable(v)
+            )
 
 
     bindSlider: (knobSelector, boxSelector, orientation, observable, mapping) ->

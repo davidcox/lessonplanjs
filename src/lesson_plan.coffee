@@ -1,3 +1,4 @@
+#<< mcb80x/util
 
 root = window ? exports
 
@@ -362,6 +363,27 @@ class mcb80x.Line extends LessonElement
         #     )
 
 
+class mcb80x.ShowAction extends LessonElement
+
+    constructor: (@selectors)  ->
+        super()
+
+    run: ->
+        stage = @parent.stage()
+        stage.showElement('#' + s) for s in @selectors
+
+        @yield()
+
+class mcb80x.HideAction extends LessonElement
+
+    constructor: (@selectors)  ->
+        super()
+
+    run: ->
+        stage = @parent.stage()
+        stage.hideElement('#' + s) for s in @selectors
+
+        @yield()
 
 
 # Actions to "instruct" a demo to do something
@@ -393,6 +415,18 @@ class mcb80x.WaitAction extends LessonElement
         console.log('waiting ' + @delay + ' ms...')
         cb = => @yield()
         setTimeout(cb, @delay)
+
+
+class mcb80x.WaitForChoice extends LessonElement
+    constructor: (@observableName) ->
+        super()
+
+    run: ->
+        obs = @parent.stage()[@observableName]
+        @subs = obs.subscribe( =>
+            @subs.dispose()
+            @yield()
+        )
 
 # A finite state machine
 # The idea here is to have a simple state machine so
@@ -520,6 +554,17 @@ root.line = (text, audio, state) ->
 
 root.lines = line
 
+root.show = (selectors...) ->
+    showObj = new mcb80x.ShowAction(selectors)
+
+    currentObj.addChild(showObj)
+
+root.hide = (selectors...) ->
+    hideObj = new mcb80x.HideAction(selectors)
+
+    currentObj.addChild(hideObj)
+
+
 root.video = (name) ->
     videoObj = new mcb80x.Video(name)
     currentObj.addChild(videoObj)
@@ -555,5 +600,9 @@ root.stop_and_reset = (name) ->
 root.goal = (f) ->
     goalObj = new mcb80x.FSM(f())
     currentObj.addChild(goalObj)
+
+root.choice = (o) ->
+    choiceObj = new mcb80x.WaitForChoice(o)
+    currentObj.addChild(choiceObj)
 
 root.fsm = goal
