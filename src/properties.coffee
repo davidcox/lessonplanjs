@@ -60,3 +60,44 @@ class mcb80x.ViewModel
                             write: (newVal) ->
                                 targetVal(newVal)
                           })
+
+
+class mcb80x.InteractiveSVG extends mcb80x.ViewModel
+
+    # Main initialization function; triggered after the SVG doc is
+    # loaded
+    svgDocumentReady: (xml) ->
+
+        # transition out the video if it's visible
+        # d3.select('#video').transition().style('opacity', 0.0).duration(1000)
+
+        # Attach the SVG to the DOM in the appropriate place
+        importedNode = document.importNode(xml.documentElement, true)
+
+        d3.select('#art').node().appendChild(importedNode)
+        d3.select('#art').transition().style('opacity', 1.0).duration(1000)
+
+        @svg = d3.select(importedNode)
+        @svg.attr('width', '100%')
+        @svg.attr('height', '100%')
+
+        @init()
+
+    play: () ->
+
+    stop: () ->
+
+    showElement: (s) ->
+        console.log('showing ' + s)
+        util.showElement(d3.select(s), 250)
+
+    hideElement: (s) ->
+        console.log('hiding ' + s)
+        util.hideElement(d3.select(s), 250)
+
+    show: ->
+        d3.xml('svg/ap_propagation2.svg', 'image/svg+xml', (xml) => @svgDocumentReady(xml))
+
+    hide: ->
+        @runSimulation = false
+        d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)

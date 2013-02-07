@@ -19,6 +19,7 @@ util =
               .each('end', -> el.attr('display', 'none'))
 
     showElement: (el, duration) ->
+        el.attr('opacity', 0.0)
         el.attr('visibility', 'visible')
         el.attr('display', 'inline')
         if duration is undefined
