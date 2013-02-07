@@ -17,11 +17,24 @@ pushCurrent = (obj) ->
 popCurrent = ->
     currentObj = currentStack.pop()
 
-
 elementCounter = -1
 uniqueElementId = ->
     elementCounter += 1
     'element_assigned_id_' + elementCounter
+
+
+soundReady = false
+audioRoot = '/audio/'
+initSound = (cb) ->
+
+    soundManager.setup(
+        url: '/swf',
+        flashVersion: 9, # optional: shiny features (default = 8)
+        useFlashBlock: false, # optionally, enable when you're ready to dive in/**
+        onready: ->
+            soundReady = true
+            cb()
+    )
 
 # Lesson Elements
 # These are the objects that the DSL will actually build
@@ -140,7 +153,6 @@ class mcb80x.Scene extends LessonElement
 
 
 
-
 class mcb80x.Interactive extends LessonElement
 
     constructor: (elId) ->
@@ -153,12 +165,49 @@ class mcb80x.Interactive extends LessonElement
         else
             return @stageObj
 
+
+    soundtrack: (s) ->
+        if s?
+            @soundtrackFile = s
+        else
+            return @soundtrackFile
+
+        if not soundReady
+            initSound(=> @loadSoundtrack(s))
+        else
+            @loadSoundtrack(s)
+
+    loadSoundtrack: (s) ->
+        @soundtrackAudio = soundManager.createSound(
+            id: s
+            url: audioRoot + s
+            autoLoad: true
+            autoPlay: false
+            onload: =>
+                @soundtrackLoaded = true
+        )
+
     yield: ->
         # hide the stage before yielding to parent
         @stageObj.hide() if @stageObj? and @stageObj.hide?
         super()
 
+
+    playSoundtrack: ->
+        @soundtrackAudio.play(
+            volume: 50
+            onfinish: => @playSoundtrack()
+        )
+
     run: () ->
+
+        if @soundtrackLoaded?
+            console.log('playing soundtrack')
+            @playSoundtrack()
+        else
+            runit = => @run()
+            setTimeout(runit, 100)
+            return
 
         # show the stage and announce the current
         # segment
@@ -247,33 +296,71 @@ class mcb80x.Video extends LessonElement
 
 class mcb80x.Line extends LessonElement
 
-    constructor: (@audio, @text, @state) ->
+    constructor: (@audioFile, @text, @state) ->
         super()
 
     init: ->
         #@div = d3.select('#prompt_overlay')
         @div = $('#prompt_overlay')
         @div.hide()
+
+        if not soundReady
+            initSound(=> @loadAudio(@audioFile))
+        else
+            @loadAudio(@audioFile)
+
         super()
 
-    run: ->
-        cb = => @yield()
-
-        @div.text(@text)
-        @div.dialog(
-            dialogClass: 'noTitleStuff'
-            resizable: true
-            title: null
-            height: 300
-            modal: true
-            buttons:
-                'continue': ->
-                    $(this).dialog('close')
-                    cb()
+    loadAudio: (af) ->
+        @audio = soundManager.createSound(
+            id: af
+            url: audioRoot + af
+            autoLoad: true
+            autoPlay: false
+            onload: =>
+                @audioLoaded = true
         )
 
+    run: ->
+        cb = =>
+            @yield()
+
         for k,v of @state
-            @parent.stage()[k] = v
+            console.log('setting ' + k + ' to ' + v)
+            console.log(@parent.stage())
+            p = @parent.stage()[k]
+            console.log(p)
+            p(v)
+
+            console.log(p(v))
+
+        if not @audioLoaded
+            console.log('waiting for audio load')
+            runit = => @run()
+            setTimeout(runit, 100)
+            return
+
+        @audio.play(
+            onfinish: -> cb()
+        )
+
+        # for now, just enable audio; we'll need to figure
+        # out how to accomodate text
+        # else
+
+        #     @div.text(@text)
+        #     @div.dialog(
+        #         dialogClass: 'noTitleStuff'
+        #         resizable: true
+        #         title: null
+        #         height: 300
+        #         modal: true
+        #         buttons:
+        #             'continue': ->
+        #                 $(this).dialog('close')
+        #                 cb()
+        #     )
+
 
 
 
@@ -423,6 +510,8 @@ root.stage = (name) ->
     s = stages[name]
     currentObj.stage(s)
 
+root.soundtrack = (s) ->
+    currentObj.soundtrack(s)
 
 root.line = (text, audio, state) ->
     lineObj = new mcb80x.Line(text, audio, state)

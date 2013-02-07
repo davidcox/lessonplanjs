@@ -46,7 +46,7 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
         @reset()
 
         # Use Runga-Kutta
-        @rk4 = false
+        @rk4 = true
 
     reset: ->
         # Starting (steady) sate
@@ -100,6 +100,12 @@ class mcb80x.sim.PassiveMembraneSim extends mcb80x.PropsEnabled
         else
             # update normally
             @v(@state + @V_offset())
+
+
+        if isNaN(@v())
+            @reset()
+            console.log(@v())
+            return
 
         if stepCallback?
             stepCallback()

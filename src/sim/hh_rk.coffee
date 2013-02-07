@@ -48,7 +48,7 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @t(0.0)
 
         # Use Runga-Kutta
-        @rk4 = false
+        @rk4 = true
 
     reset: ->
         # Starting (steady) sate

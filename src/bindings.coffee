@@ -1,9 +1,15 @@
 
-hideElement = (el) ->
-    el.attr('opacity', 0.0)
+hideElement = (el, duration) ->
+    if duration is undefined
+        el.attr('opacity', 0.0)
+    else
+        el.transition().attr('opacity', 0.0).duration(duration)
 
-showElement = (el) ->
-    el.attr('opacity', 1.0)
+showElement = (el, duration) ->
+    if duration is undefined
+        el.attr('opacity', 1.0)
+    else
+        el.transition().attr('opacity', 1.0).duration(duration)
 
 # A knockout jquery-ui handler
 ko.bindingHandlers.slider =
@@ -38,15 +44,18 @@ ko.bindingHandlers.slider =
 
 svgbind =
 
-    bindVisible: (selector, observable) ->
+    bindVisible: (selector, observable, duration) ->
+        if duration is undefined
+            duration = 500
+
         el = d3.select(selector)
 
         thisobj = this
         setter = (newVal) ->
             if newVal
-                showElement(el)
+                showElement(el, duration)
             else
-                hideElement(el)
+                hideElement(el, duration)
 
         observable.subscribe(setter)
         setter(observable())
@@ -93,7 +102,9 @@ svgbind =
         observable.subscribe(setter)
         setter(observable())
 
-    bindMultiState: (selectorMap, observable) ->
+    bindMultiState: (selectorMap, observable, duration) ->
+        if duration is undefined
+            duration = 10
         keys = Object.keys(selectorMap)
         values = (selectorMap[k] for k in keys)
         elements = (d3.select(s) for s in keys)
