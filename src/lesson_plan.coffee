@@ -26,6 +26,7 @@ uniqueElementId = ->
 
 soundReady = false
 audioRoot = '/audio/'
+svgRoot = '/svg/'
 initSound = (cb) ->
 
     soundManager.setup(
@@ -109,6 +110,7 @@ class mcb80x.LessonElement
     # Run through this element and all of its children
     run: ->
 
+        console.log('running with children: ' + @children)
         # If this node doesn't have any children, yield
         # back up to the parent
         if not @children?
@@ -158,6 +160,7 @@ class mcb80x.Interactive extends LessonElement
 
     constructor: (elId) ->
         @duration = ko.observable(1.0)
+        @soundtrackFile = undefined
         super(elId)
 
     stage: (s) ->
@@ -201,11 +204,12 @@ class mcb80x.Interactive extends LessonElement
         )
 
     run: () ->
+        console.log('running interactive')
 
         if @soundtrackLoaded?
             console.log('playing soundtrack')
             @playSoundtrack()
-        else
+        else if @soundtrackFile?
             runit = => @run()
             setTimeout(runit, 100)
             return
@@ -213,9 +217,16 @@ class mcb80x.Interactive extends LessonElement
         # show the stage and announce the current
         # segment
         @parent.currentSegment(@elementId)
-        @stageObj.show() if @stageObj?
 
-        # iterate through the child nodes, as usual
+        console.log('stage: ' + @stageObj)
+        if @stageObj?
+            @stageObj.show(=> super())
+        else
+            # iterate through the child nodes, as usual
+            super()
+
+    stop: () ->
+        @soundtrackAudio.stop()
         super()
 
     scene: ->
@@ -540,9 +551,25 @@ root.interactive = (beatId) ->
         f()
         popCurrent()
 
-root.stage = (name) ->
-    s = stages[name]
+root.stage = (name, propertiesMap) ->
+
+    if stages[name]?
+        s = stages[name]()
+    else
+        console.log('loading interactive svg by name: ' + svgRoot + name)
+        s = new mcb80x.InteractiveSVG(svgRoot + name)
+
+    console.log('name: ' + name)
+    console.log('propertiesMap: ' + propertiesMap)
+
+    if propertiesMap?
+        for k in Object.keys(propertiesMap)
+            console.log('setting ' + k + ' on ' + s + ' to ' + propertiesMap[k])
+            if s[k]?
+                s[k](propertiesMap[k])
+
     currentObj.stage(s)
+
 
 root.soundtrack = (s) ->
     currentObj.soundtrack(s)

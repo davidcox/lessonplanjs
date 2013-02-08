@@ -34,7 +34,8 @@ class mcb80x.PropsEnabled
             this[name] = @prop(defaultVal)
 
 
-class mcb80x.ViewModel
+class mcb80x.ViewModel extends mcb80x.PropsEnabled
+    constructor: ->
 
     inheritProperties: (target, keys) ->
         if not keys?
@@ -64,15 +65,21 @@ class mcb80x.ViewModel
 
 class mcb80x.InteractiveSVG extends mcb80x.ViewModel
 
+    constructor: (@svgFileName) ->
+
+
     # Main initialization function; triggered after the SVG doc is
     # loaded
-    svgDocumentReady: (xml) ->
+    svgDocumentReady: (xml, cb) ->
 
         # transition out the video if it's visible
         # d3.select('#video').transition().style('opacity', 0.0).duration(1000)
 
         # Attach the SVG to the DOM in the appropriate place
         importedNode = document.importNode(xml.documentElement, true)
+
+        # hollow out the 'art' node to remove anything there previously
+        $('#art').empty()
 
         d3.select('#art').node().appendChild(importedNode)
         d3.select('#art').transition().style('opacity', 1.0).duration(1000)
@@ -83,21 +90,37 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
 
         @init()
 
+        cb() if cb?
+
     play: () ->
 
     stop: () ->
 
+    init: () ->
+
     showElement: (s) ->
         console.log('showing ' + s)
-        util.showElement(d3.select(s), 250)
+        util.showElement(@svg.select(s), 250)
 
     hideElement: (s) ->
         console.log('hiding ' + s)
-        util.hideElement(d3.select(s), 250)
+        util.hideElement(@svg.select(s), 250)
 
-    show: ->
-        d3.xml('svg/ap_propagation2.svg', 'image/svg+xml', (xml) => @svgDocumentReady(xml))
+    show: (cb) ->
+        console.log('showing interactive: ' + @svgFileName)
 
-    hide: ->
+        cb1 = ->
+            d3.select('#interactive').transition()
+                .style('opacity', 1.0)
+                .duration(1000)
+                .each('end', cb)
+
+        d3.xml(@svgFileName, 'image/svg+xml', (xml) => @svgDocumentReady(xml, cb1))
+
+
+    hide: (cb) ->
         @runSimulation = false
-        d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
+        d3.select('#interactive').transition()
+            .style('opacity', 0.0)
+            .duration(1000)
+            .each('end', cb)

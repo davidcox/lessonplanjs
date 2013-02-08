@@ -38,6 +38,9 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @voltageClamped = @prop false
         @clampVoltage = @prop -65.0
 
+
+        @passiveMembrane = @prop false
+
         # Internal variables
         @defineProps ['I_Na', 'I_K', 'I_L', 'g_Na', 'g_K', 'g_L'], 0.0
 
@@ -155,8 +158,14 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         [v, m, n, h] = s
 
         # Conductances
-        @g_Na (@gbar_Na() * Math.pow(m, 3) * h)
-        @g_K  (@gbar_K() * Math.pow(n, 4))
+        if @passiveMembrane()
+            @g_Na 0.0
+            @g_K 0.0
+        else
+            @g_Na (@gbar_Na() * Math.pow(m, 3) * h)
+            @g_K  (@gbar_K() * Math.pow(n, 4))
+
+
         @g_L  (@gbar_L())
 
         # Currents

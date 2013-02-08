@@ -6,26 +6,42 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
     constructor: (@nCompartments, @nNodes) ->
 
         interNodeDistance = (@nCompartments - @nNodes) / (@nNodes - 1)
-        @nodeIndices = []
+        @nodes = []
+        @internodes = []
 
         # A global capacitance for the passive nodes
-        @C_m = @prop 1.1
+        @C_internode = @prop 1.1
+        @C_node = @prop 2.0
+        @passiveNodes = @prop false
+        @passiveInternodes = @prop true
 
         @compartments = []
-        for n in [0..@nNodes]
-            @compartments.push(new mcb80x.sim.HHSimulationRK4())
-            @nodeIndices.push(@compartments.length - 1)
-            for c in [0..interNodeDistance]
-                passive = new mcb80x.sim.PassiveMembrane()
-                passive.C_m = @C_m
-                @compartments.push(passive)
+        for n in [1..@nNodes]
+            # add a "node"
+            node = new mcb80x.sim.HHSimulationRK4()
+                .C_m(@C_node)
+                .passiveMembrane(@passiveNodes)
+
+            @nodes.push(node)
+            @compartments.push(node)
+
+            # add a span of "internodes"
+            if n < @nNodes
+                for c in [1..interNodeDistance]
+                    internode = new mcb80x.sim.HHSimulationRK4()
+                        .C_m(@C_internode)
+                        .passiveMembrane(@passiveInternodes)
+
+                    @internodes.push(internode)
+                    @compartments.push(internode)
+
 
         @t = @compartments[0].t
 
         @R_a = @prop 1.0
 
         @nCompartments = @compartments.length
-
+        console.log('nCompartments: ' + @nCompartments)
 
         @cIDs = [0..@nCompartments-1]
 
