@@ -49,6 +49,9 @@ initSound = (cb) ->
 class mcb80x.LessonElement
 
     constructor: (@elementId) ->
+
+        @holds = []
+
         if not @elementId?
             @elementId = uniqueElementId()
         registry[@elementId] = this
@@ -101,6 +104,14 @@ class mcb80x.LessonElement
         @children[index].run()
 
     yield: ->
+
+        if @holds.length > 0
+            @holds.pop()
+
+        if @holds.length > 0
+            # something else still not finished
+            return
+
         if @parent?
             @parent.resumeAfterChild(this)
         else
@@ -333,9 +344,11 @@ class mcb80x.Line extends LessonElement
                 @audioLoaded = true
         )
 
+    stage: ->
+        return @parent.stage()
+
     run: ->
-        cb = =>
-            @yield()
+        console.log(this)
 
         for k,v of @state
             console.log('setting ' + k + ' to ' + v)
@@ -352,9 +365,18 @@ class mcb80x.Line extends LessonElement
             setTimeout(runit, 100)
             return
 
+        # put two "holds" on the advance of the lesson.
+        # both the audio *and* the children (if there are any)
+        # hae to call yield to proceed
+        @holds.push('audio')
+        @holds.push('default')
+
         @audio.play(
-            onfinish: -> cb()
+            onfinish: =>
+                @yield()
         )
+
+        super()
 
         # for now, just enable audio; we'll need to figure
         # out how to accomodate text
@@ -393,6 +415,17 @@ class mcb80x.HideAction extends LessonElement
     run: ->
         stage = @parent.stage()
         stage.hideElement('#' + s) for s in @selectors
+
+        @yield()
+
+class mcb80x.SetAction extends LessonElement
+
+    constructor: (@property, @value)  ->
+        super()
+
+    run: ->
+        stage = @parent.stage()
+        stage[@property](@value)
 
         @yield()
 
@@ -574,10 +607,16 @@ root.stage = (name, propertiesMap) ->
 root.soundtrack = (s) ->
     currentObj.soundtrack(s)
 
-root.line = (text, audio, state) ->
-    lineObj = new mcb80x.Line(text, audio, state)
+root.line = (text, audio, actions) ->
+    lineObj = new mcb80x.Line(text, audio)
+
+    if actions?
+        pushCurrent(lineObj)
+        actions()
+        popCurrent()
 
     currentObj.addChild(lineObj)
+
 
 root.lines = line
 
@@ -591,6 +630,10 @@ root.hide = (selectors...) ->
 
     currentObj.addChild(hideObj)
 
+root.set = (property, value) ->
+    setObj = new mcb80x.SetAction(property, value)
+
+    currentObj.addChild(setObj)
 
 root.video = (name) ->
     videoObj = new mcb80x.Video(name)

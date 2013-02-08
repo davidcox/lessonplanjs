@@ -12,14 +12,23 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         # A global capacitance for the passive nodes
         @C_internode = @prop 1.1
         @C_node = @prop 2.0
+        @g_L_internode = @prop 0.1
+        @g_L_node = @prop 0.3
         @passiveNodes = @prop false
         @passiveInternodes = @prop true
+        @dt = @prop 0.05
+        @oversampling = @prop 1
+        @resistanceOnly = @prop false
+
+        @dt_effective = ko.computed(=> @dt() / @oversampling())
 
         @compartments = []
         for n in [1..@nNodes]
             # add a "node"
             node = new mcb80x.sim.HHSimulationRK4()
+                .dt(@dt_effective)
                 .C_m(@C_node)
+                .g_L(@g_L_node)
                 .passiveMembrane(@passiveNodes)
 
             @nodes.push(node)
@@ -30,6 +39,7 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
                 for c in [1..interNodeDistance]
                     internode = new mcb80x.sim.HHSimulationRK4()
                         .C_m(@C_internode)
+                        .g_L(@g_L_internode)
                         .passiveMembrane(@passiveInternodes)
 
                     @internodes.push(internode)
@@ -71,26 +81,46 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         v_rest = (@compartments[0].V_rest() +
                   @compartments[0].V_offset())
 
-        for c in @cIDs
-            I = 0.0
 
-            if c > 0
-                I += @compartments[c - 1].v() / @R_a()
-            else
-                I += v_rest / @R_a()
+        if @resistanceOnly()
 
-            if c < @nCompartments - 1
-                I += @compartments[c + 1].v() / @R_a()
-            else
-                I += v_rest / @R_a()
+            # in a resistance-only simulation (C_m = 0), our
+            # differential-equation-based simulator will
+            # blow up due to numerical instability, so we need
+            # to do something different.  This is a simple hack
+            # that will work for now (assumes voltage clamped
+            # in first compartment):
 
-            I -= 2 * @compartments[c].v() / @R_a()
+            offset_voltage = @compartments[0].v() - v_rest
+            @compartments[0].step()
+            for i in [1..@nCompartments-1]
+                c = @compartments[i]
+                R_l = 1.0 / c.g_L()
+                offset_voltage *= R_l / (@R_a() + R_l)
+                c.v(v_rest + offset_voltage)
 
-            @compartments[c].I_a(I)
+        else
 
-        compartment.step() for compartment in @compartments
+            for rep in [1..@oversampling()]
+                for c in @cIDs
+                    I = 0.0
 
-        # @t = @compartments[0].t
+                    if c > 0
+                        I += @compartments[c - 1].v() / @R_a()
+                    else
+                        I += v_rest / @R_a()
+
+                    if c < @nCompartments - 1
+                        I += @compartments[c + 1].v() / @R_a()
+                    else
+                        I += v_rest / @R_a()
+
+                    I -= 2 * @compartments[c].v() / @R_a()
+
+                    @compartments[c].I_a(I)
+
+                compartment.step() for compartment in @compartments
+
 
         vs = @v()
         Is = @I()

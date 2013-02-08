@@ -20,10 +20,31 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         # Channel conductances
         @gbar_Na = @prop 120                # mS / cm^2
         @gbar_K = @prop 36                  # mS / cm^2
-        @gbar_L = @prop 0.3                 # mS / cm^2
 
+        # Variable conductances
+        @g_Na = @prop 0.0
+        @g_K = @prop 0.0
 
-        # Resting Potential
+        # Fixed Leakage Conductance
+        @g_L = @prop 0.3
+
+        # Currents
+        @I_Na = @prop 0.0
+        @I_K = @prop 0.0
+        @I_L = @prop 0.0
+
+        # Membrane potential
+        @v = @prop 0.0
+
+        # Gating Variables
+        @m = @prop 0.0
+        @n = @prop 0.0
+        @h = @prop 0.0
+
+        # time
+        @t = @prop 0.0
+
+        # Resting Potential, for HH equations
         @V_rest = @prop 0.0                # mV
 
         # hack
@@ -38,13 +59,7 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         @voltageClamped = @prop false
         @clampVoltage = @prop -65.0
 
-
         @passiveMembrane = @prop false
-
-        # Internal variables
-        @defineProps ['I_Na', 'I_K', 'I_L', 'g_Na', 'g_K', 'g_L'], 0.0
-
-        @defineProps ['v', 'm', 'n', 'h', 't'], 0.0
 
         @reset()
 
@@ -165,8 +180,6 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
             @g_Na (@gbar_Na() * Math.pow(m, 3) * h)
             @g_K  (@gbar_K() * Math.pow(n, 4))
 
-
-        @g_L  (@gbar_L())
 
         # Currents
         @I_Na (@g_Na() * (v - @E_Na()))
