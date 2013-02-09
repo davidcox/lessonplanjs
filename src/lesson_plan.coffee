@@ -112,6 +112,8 @@ class mcb80x.LessonElement
             # something else still not finished
             return
 
+        @stop() is @stop?
+
         if @parent?
             @parent.resumeAfterChild(this)
         else
@@ -142,7 +144,9 @@ class mcb80x.LessonElement
         @childLookup[head].runAtSegment(splitPath.join(':'))
 
     stop: ->
-        child.stop() if child.stop? for child in @children
+        for child in @children
+            if child? and child.stop?
+                child.stop()
 
 LessonElement = mcb80x.LessonElement
 
@@ -172,6 +176,7 @@ class mcb80x.Interactive extends LessonElement
     constructor: (elId) ->
         @duration = ko.observable(1.0)
         @soundtrackFile = undefined
+        @soundtrackLoaded = false
         super(elId)
 
     stage: (s) ->
@@ -217,10 +222,11 @@ class mcb80x.Interactive extends LessonElement
     run: () ->
         console.log('running interactive')
 
-        if @soundtrackLoaded?
+        if @soundtrackLoaded or (@soundtrackAudio? and @soundtrackAudio.loaded)
             console.log('playing soundtrack')
             @playSoundtrack()
         else if @soundtrackFile?
+            console.log('waiting for soundtrack load')
             runit = => @run()
             setTimeout(runit, 100)
             return
@@ -237,7 +243,7 @@ class mcb80x.Interactive extends LessonElement
             super()
 
     stop: () ->
-        @soundtrackAudio.stop()
+        @soundtrackAudio.stop() if @soundtrackAudio?
         super()
 
     scene: ->
@@ -630,7 +636,7 @@ root.hide = (selectors...) ->
 
     currentObj.addChild(hideObj)
 
-root.set = (property, value) ->
+root.set_property = (property, value) ->
     setObj = new mcb80x.SetAction(property, value)
 
     currentObj.addChild(setObj)

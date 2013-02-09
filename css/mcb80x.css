@@ -44,7 +44,8 @@ svg {
   font-weight: bold;
   text-align: left;
   z-index: 100;
-  display: none;
+/*  display: none;*/
+  /*opacity:0;*/
 }
 
 #floatrect {
