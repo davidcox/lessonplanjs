@@ -14,6 +14,7 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         @C_node = @prop 2.0
         @g_L_internode = @prop 0.1
         @g_L_node = @prop 0.3
+        @passiveFirstNode = @prop false
         @passiveNodes = @prop false
         @passiveInternodes = @prop true
         @dt = @prop 0.05
@@ -29,7 +30,11 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
                 .dt(@dt_effective)
                 .C_m(@C_node)
                 .g_L(@g_L_node)
-                .passiveMembrane(@passiveNodes)
+
+            if n is 1
+                node.passiveMembrane(@passiveFirstNode)
+            else
+                node.passiveMembrane(@passiveNodes)
 
             @nodes.push(node)
             @compartments.push(node)

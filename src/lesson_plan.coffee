@@ -112,7 +112,7 @@ class mcb80x.LessonElement
             # something else still not finished
             return
 
-        @stop() is @stop?
+        @stop() if @stop?
 
         if @parent?
             @parent.resumeAfterChild(this)
@@ -664,6 +664,7 @@ root.duration = (t) ->
 root.play = (name) ->
     runObj = new mcb80x.PlayAction(name)
     currentObj.addChild(runObj)
+
 
 root.wait = (delay) ->
     waitObj = new mcb80x.WaitAction(delay)
