@@ -215,7 +215,7 @@ class mcb80x.Interactive extends LessonElement
 
     playSoundtrack: ->
         @soundtrackAudio.play(
-            volume: 50
+            volume: 20
             onfinish: => @playSoundtrack()
         )
 
