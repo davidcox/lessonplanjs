@@ -32,7 +32,7 @@ initSound = (cb) ->
     soundManager.setup(
         url: '/swf',
         flashVersion: 9, # optional: shiny features (default = 8)
-        useFlashBlock: false, # optionally, enable when you're ready to dive in/**
+        useFlashBlock: true, # optionally, enable when you're ready to dive in/**
         onready: ->
             soundReady = true
             cb()
@@ -52,6 +52,8 @@ class mcb80x.LessonElement
 
         @holds = []
 
+        @stopping = false
+
         if not @elementId?
             @elementId = uniqueElementId()
         registry[@elementId] = this
@@ -60,8 +62,11 @@ class mcb80x.LessonElement
         @childLookup = {}
         @parent = undefined
 
+        @parentScene = undefined
+
     addChild: (child) ->
         child.parent = this
+        child.parentScene = @parentScene
         @children.push(child)
         @childIndexLookup[child.elementId] = @children.length - 1
         @childLookup[child.elementId] = child
@@ -75,6 +80,9 @@ class mcb80x.LessonElement
     # methods for picking up after a child node
     # has yielded
     resumeAfterChild: (child) ->
+        console.log('resumeAfterChild')
+        if @stopping
+            return
         childId = child.elementId
         console.log('resumeAfter: ' + childId)
 
@@ -84,6 +92,7 @@ class mcb80x.LessonElement
         @resumeAfterIndex(childIndex)
 
     resumeAfterIndex: (childIndex) ->
+        console.log('resumeAfterIndex')
         nextIndex = childIndex + 1
         if @children[nextIndex]?
             @children[nextIndex].run()
@@ -104,17 +113,20 @@ class mcb80x.LessonElement
         @children[index].run()
 
     yield: ->
-
+        console.log('yield')
+        console.log('stopping = ' + @stopping)
         if @holds.length > 0
             @holds.pop()
 
         if @holds.length > 0
             # something else still not finished
+            console.log('waiting on more holds')
             return
 
-        @stop() if @stop?
+        # @stop()
 
         if @parent?
+            console.log('going to resume after child')
             @parent.resumeAfterChild(this)
         else
             console.log('no parent:')
@@ -122,31 +134,56 @@ class mcb80x.LessonElement
 
     # Run through this element and all of its children
     run: ->
+        @stopping = false
+
+        @parentScene.currentSegment(this) if @parentScene
 
         console.log('running with children: ' + @children)
         # If this node doesn't have any children, yield
         # back up to the parent
         if not @children?
-            @yield()
+            if @stopping
+                return
+            else
+                @yield()
         else
             # start running the child nodes
             @runChildrenStartingAtIndex(0)
 
+    reset: ->
+        console.log('reseting')
+        @holds = []
+        @stopping = false
+
+        for child in @children
+            child.reset()
 
     runAtSegment: (path) ->
-        if path is ''
-            return @run()
+        console.log('runAtSegment')
+        cb = =>
+            console.log('stopCb')
+            if path is ''
+                return @run()
 
-        splitPath = path.split(':')
+            splitPath = path.split(':')
 
-        head = splitPath.shift()
+            head = splitPath.shift()
 
-        @childLookup[head].runAtSegment(splitPath.join(':'))
+            @reset()
+            @childLookup[head].runAtSegment(splitPath.join(':'))
 
-    stop: ->
+
+        # @parentScene.currentSegment().stop(cb)
+        @parentScene.stop(cb)
+
+    stop: (cb) ->
+        @stopping = true
+
         for child in @children
             if child? and child.stop?
                 child.stop()
+
+        cb() if cb
 
 LessonElement = mcb80x.LessonElement
 
@@ -160,6 +197,7 @@ class mcb80x.Scene extends LessonElement
 
         # register this scene in the global registry
         scenes[elId] = this
+        @parentScene = this
 
         @currentSegment = ko.observable(undefined)
         @currentTime = ko.observable(undefined)
@@ -184,7 +222,6 @@ class mcb80x.Interactive extends LessonElement
             @stageObj = s
         else
             return @stageObj
-
 
     soundtrack: (s) ->
         if s?
@@ -242,9 +279,10 @@ class mcb80x.Interactive extends LessonElement
             # iterate through the child nodes, as usual
             super()
 
-    stop: () ->
+    stop: (cb) ->
+        console.log('stop the fucking soundtrack!!')
         @soundtrackAudio.stop() if @soundtrackAudio?
-        super()
+        super(cb)
 
     scene: ->
         return @parent
@@ -314,9 +352,10 @@ class mcb80x.Video extends LessonElement
         @pop.on('ended', cb)
         @pop.play(0)
 
-    stop: ->
+    stop: (cb) ->
         @pop.pause()
         @hide()
+        super(cb)
 
 
 # A "line" is a bit of audio + text that can be played
@@ -353,6 +392,11 @@ class mcb80x.Line extends LessonElement
     stage: ->
         return @parent.stage()
 
+    stop: (cb) ->
+        console.log('line stop')
+        @audio.stop() if @audio
+        super(cb)
+
     run: ->
         console.log(this)
 
@@ -379,6 +423,7 @@ class mcb80x.Line extends LessonElement
 
         @audio.play(
             onfinish: =>
+                console.log('on finish yield')
                 @yield()
         )
 
@@ -560,10 +605,6 @@ class mcb80x.FSM extends LessonElement
         console.log('running fsm')
         @stopping = false
         @runState('initial')
-
-    stop: ->
-        @stopping = true
-        super()
 
 
 # Imperative Domain Specific Language bits
