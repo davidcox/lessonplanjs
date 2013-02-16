@@ -146,6 +146,7 @@ svgbind =
             v = selectorMap[k]
             el.on('click', ->
                 console.log('clicky')
+                observable(undefined)
                 observable(v)
             )
 

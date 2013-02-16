@@ -27,9 +27,16 @@ uniqueElementId = ->
 soundReady = false
 audioRoot = '/audio/'
 svgRoot = '/svg/'
+videoRoot = '/video/'
+videoSelector = '#vid'
+videoDivSelector = '#video'
+interactiveDivSelector = '#interactive'
+
+
 initSound = (cb) ->
 
     soundManager.setup(
+        preferFlash: false,
         url: '/swf',
         flashVersion: 9, # optional: shiny features (default = 8)
         useFlashBlock: true, # optionally, enable when you're ready to dive in/**
@@ -80,7 +87,7 @@ class mcb80x.LessonElement
     # methods for picking up after a child node
     # has yielded
     resumeAfterChild: (child) ->
-        console.log('resumeAfterChild')
+        console.log('resumeAfterChild (stopping = ' + @stopping + ')')
         if @stopping
             return
         childId = child.elementId
@@ -169,7 +176,7 @@ class mcb80x.LessonElement
 
             head = splitPath.shift()
 
-            @reset()
+            @parentScene.reset()
             @childLookup[head].runAtSegment(splitPath.join(':'))
 
 
@@ -292,8 +299,8 @@ class mcb80x.Video extends LessonElement
     constructor: (elId) ->
         @duration = ko.observable(1.0)
         @mediaUrls = {}
-
         super(elId)
+
 
     media: (fileType, url) ->
         if url?
@@ -307,33 +314,64 @@ class mcb80x.Video extends LessonElement
     subtitles: (f) ->
         # fill me in
 
+
+    # init is called after the DOM is ready
     init: ->
-        if not @pop?
-            @pop = Popcorn.smart('#vid', @media('mp4'))
+
+        if not globalPop?
+            globalPop = Popcorn.smart(videoSelector)
+
+        @pop = globalPop
+        @load()
+
+        super()
+
+    show: ->
+        d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
+        d3.select('#video').style('display', 'inline')
+        d3.select('#video').transition().style('opacity', 1.0).duration(1000)
+
+    hide: ->
+        d3.select('#video').transition().style('opacity', 0.0).duration(1000)
+
+    playWhenReady: ->
+        if @pop.readyState() >= 4
+            @pop.play(0)
+
+        else
+            playit = =>
+                console.log('buffering... ' + @pop.readyState())
+                @playWhenReady()
+            setTimeout(playit, 1000)
+
+    load: ->
+        # Load the media on the player object
+        @pop.media.src = @media('mp4')
+        @pop.load()
 
         @pop.on('durationchange', =>
             console.log('duration changed!:' + @pop.duration())
             @duration(@pop.duration())
         )
 
-        console.log('Loading: ' + @media('mp4'))
-        @pop.load(@media('mp4'))
-
-        super()
-
-    show: ->
-        d3.select('#video').transition().style('opacity', 1.0).duration(1000)
-
-    hide: ->
-        d3.select('#video').transition().style('opacity', 0.0).duration(1000)
-
     run: (cb) ->
+
+        @load()
+
+
+        console.log(@mediaUrls)
+        console.log('Loading video: ' + @media('mp4'))
+        @pop.load()
+
+
+        console.log('playing video')
 
         @parent.currentSegment(@elementId)
         @show()
 
         scene = @parent
         console.log(scene)
+
 
         updateTimeCb = ->
             t = @currentTime()
@@ -350,10 +388,14 @@ class mcb80x.Video extends LessonElement
 
         # yield when the view has ended
         @pop.on('ended', cb)
-        @pop.play(0)
+
+        #@playWhenReady()
+        console.log(@pop)
+        @pop.play()
+
 
     stop: (cb) ->
-        @pop.pause()
+        @pop.pause() if @pop
         @hide()
         super(cb)
 
@@ -517,8 +559,11 @@ class mcb80x.WaitForChoice extends LessonElement
         super()
 
     run: ->
+        console.log('installing waitForChoice subscription on ' + @observableName)
         obs = @parent.stage()[@observableName]
+        console.log(obs)
         @subs = obs.subscribe( =>
+            console.log('waitForChoice yielding')
             @subs.dispose()
             @yield()
         )
@@ -691,6 +736,8 @@ root.video = (name) ->
         f()
         popCurrent()
 
+root.m4v = (f) ->
+    currentObj.media('m4v', f)
 root.mp4 = (f) ->
     currentObj.media('mp4', f)
 root.webm = (f) ->
