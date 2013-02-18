@@ -33,17 +33,18 @@ videoDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 
-initSound = (cb) ->
+# initSound = (cb) ->
 
-    soundManager.setup(
-        preferFlash: false,
-        url: '/swf',
-        flashVersion: 9, # optional: shiny features (default = 8)
-        useFlashBlock: true, # optionally, enable when you're ready to dive in/**
-        onready: ->
-            soundReady = true
-            cb()
-    )
+#     soundManager.setup(
+#         preferFlash: false,
+#         url: '/swf/',
+#         flashVersion: 9,
+#         useFlashBlock: false,
+#         useHTML5Audio: true,
+#         onready: ->
+#             soundReady = true
+#             cb()
+#     )
 
 # Lesson Elements
 # These are the objects that the DSL will actually build
@@ -119,6 +120,9 @@ class mcb80x.LessonElement
         # otherwise, run the child node
         @children[index].run()
 
+    setCurrent: ->
+        @parentScene.currentSegment(this) if @parentScene
+
     yield: ->
         console.log('yield')
         console.log('stopping = ' + @stopping)
@@ -139,11 +143,21 @@ class mcb80x.LessonElement
             console.log('no parent:')
             console.log(this)
 
+    checkIfPaused: ->
+        if @paused()
+            runit = =>
+                console.log('checking if paused')
+                @checkIfPaused()
+            setTimeout(runit, 1000)
+        return
+
+
     # Run through this element and all of its children
     run: ->
-        @stopping = false
+        @setCurrent()
+        @checkIfPaused()
 
-        @parentScene.currentSegment(this) if @parentScene
+        @stopping = false
 
         console.log('running with children: ' + @children)
         # If this node doesn't have any children, yield
@@ -157,6 +171,14 @@ class mcb80x.LessonElement
             # start running the child nodes
             @runChildrenStartingAtIndex(0)
 
+    paused: ->
+        if @parentScene?
+            return @parentScene.paused()
+        else
+            return @parent.parentScene.paused() if @parent?
+
+        return false
+
     reset: ->
         console.log('reseting')
         @holds = []
@@ -167,6 +189,7 @@ class mcb80x.LessonElement
 
     runAtSegment: (path) ->
         console.log('runAtSegment')
+
         cb = =>
             console.log('stopCb')
             if path is ''
@@ -192,13 +215,18 @@ class mcb80x.LessonElement
 
         cb() if cb
 
+    pause: ->
+        console.log('base pause')
+
+    resume: ->
+
 LessonElement = mcb80x.LessonElement
 
 # Top-level "Scene"
 class mcb80x.Scene extends LessonElement
     constructor: (@title, elId) ->
         if not elId?
-            eleId = @title
+            elId = @title
 
         super(elId)
 
@@ -214,6 +242,24 @@ class mcb80x.Scene extends LessonElement
         console.log('scene[' + @elementId + ']')
         super()
 
+    reset: ->
+        @paused(false)
+        super()
+
+    paused: (isit) ->
+        if isit
+            @isPaused = isit
+        else
+            return @isPaused
+
+    pause: ->
+        @isPaused = true
+        @currentSegment().pause()
+
+    resume: ->
+        @isPaused = false
+        @currentSegment().resume()
+
 
 
 class mcb80x.Interactive extends LessonElement
@@ -222,6 +268,7 @@ class mcb80x.Interactive extends LessonElement
         @duration = ko.observable(1.0)
         @soundtrackFile = undefined
         @soundtrackLoaded = false
+        @hasSoundtrack = false
         super(elId)
 
     stage: (s) ->
@@ -233,23 +280,18 @@ class mcb80x.Interactive extends LessonElement
     soundtrack: (s) ->
         if s?
             @soundtrackFile = s
+            @hasSoundtrack = true
         else
             return @soundtrackFile
 
-        if not soundReady
-            initSound(=> @loadSoundtrack(s))
-        else
-            @loadSoundtrack(s)
+        # if not soundReady
+        #     initSound(=> @loadSoundtrack(s))
+        # else
+        @loadSoundtrack(s)
 
     loadSoundtrack: (s) ->
-        @soundtrackAudio = soundManager.createSound(
-            id: s
-            url: audioRoot + s
-            autoLoad: true
-            autoPlay: false
-            onload: =>
-                @soundtrackLoaded = true
-        )
+        @soundtrackAudio = new buzz.sound(audioRoot + s,
+            preload:true)
 
     yield: ->
         # hide the stage before yielding to parent
@@ -258,26 +300,17 @@ class mcb80x.Interactive extends LessonElement
 
 
     playSoundtrack: ->
-        @soundtrackAudio.play(
-            volume: 20
-            onfinish: => @playSoundtrack()
-        )
+        @soundtrackAudio.loop().play()
 
     run: () ->
         console.log('running interactive')
+        @checkIfPaused()
 
-        if @soundtrackLoaded or (@soundtrackAudio? and @soundtrackAudio.loaded)
-            console.log('playing soundtrack')
-            @playSoundtrack()
-        else if @soundtrackFile?
-            console.log('waiting for soundtrack load')
-            runit = => @run()
-            setTimeout(runit, 100)
-            return
+        @playSoundtrack() if @hasSoundtrack
 
         # show the stage and announce the current
         # segment
-        @parent.currentSegment(@elementId)
+        @parent.currentSegment(this)
 
         console.log('stage: ' + @stageObj)
         if @stageObj?
@@ -287,7 +320,6 @@ class mcb80x.Interactive extends LessonElement
             super()
 
     stop: (cb) ->
-        console.log('stop the fucking soundtrack!!')
         @soundtrackAudio.stop() if @soundtrackAudio?
         super(cb)
 
@@ -297,6 +329,7 @@ class mcb80x.Interactive extends LessonElement
 # A somewhat hacked up video object
 class mcb80x.Video extends LessonElement
     constructor: (elId) ->
+        @preferedFormat = 'mp4'
         @duration = ko.observable(1.0)
         @mediaUrls = {}
         super(elId)
@@ -334,39 +367,39 @@ class mcb80x.Video extends LessonElement
     hide: ->
         d3.select('#video').transition().style('opacity', 0.0).duration(1000)
 
-    playWhenReady: ->
-        if @pop.readyState() >= 4
-            @pop.play(0)
+    # playWhenReady: ->
+    #     if @pop.readyState() >= 4
+    #         @pop.play(0)
 
-        else
-            playit = =>
-                console.log('buffering... ' + @pop.readyState())
-                @playWhenReady()
-            setTimeout(playit, 1000)
+    #     else
+    #         playit = =>
+    #             console.log('buffering... ' + @pop.readyState())
+    #             @playWhenReady()
+    #         setTimeout(playit, 1000)
 
     load: ->
         # Load the media on the player object
-        @pop.media.src = @media('mp4')
-        @pop.load()
+        f = @media(@preferedFormat)
+        @pop.media.src = f
+        console.log('loading ' + f)
 
         @pop.on('durationchange', =>
             console.log('duration changed!:' + @pop.duration())
-            @duration(@pop.duration())
+            dur = @pop.duration()
+            @duration(dur)
         )
+
+        @pop.load()
 
     run: (cb) ->
 
+        @checkIfPaused()
+
         @load()
-
-
-        console.log(@mediaUrls)
-        console.log('Loading video: ' + @media('mp4'))
-        @pop.load()
-
 
         console.log('playing video')
 
-        @parent.currentSegment(@elementId)
+        @parent.currentSegment(this)
         @show()
 
         scene = @parent
@@ -393,6 +426,11 @@ class mcb80x.Video extends LessonElement
         console.log(@pop)
         @pop.play()
 
+    pause: ->
+        @pop.pause() if @pop
+
+    resume: ->
+        @pop.play() if @pop
 
     stop: (cb) ->
         @pop.pause() if @pop
@@ -410,26 +448,35 @@ class mcb80x.Line extends LessonElement
         super()
 
     init: ->
-        #@div = d3.select('#prompt_overlay')
         @div = $('#prompt_overlay')
         @div.hide()
 
-        if not soundReady
-            initSound(=> @loadAudio(@audioFile))
-        else
-            @loadAudio(@audioFile)
+        # if not soundReady
+        #     initSound(=> @loadAudio(@audioFile))
+        # else
+        @loadAudio(@audioFile)
 
         super()
 
     loadAudio: (af) ->
-        @audio = soundManager.createSound(
-            id: af
-            url: audioRoot + af
-            autoLoad: true
-            autoPlay: false
-            onload: =>
-                @audioLoaded = true
+        console.log('loading: ' + af)
+        @audio = new buzz.sound(audioRoot + af,
+            preload: true
         )
+        # @audio.bind('canplay', =>
+        #     console.log(af + ' can play')
+        #     @audioLoaded = true
+        # )
+        # @audio.load()
+
+        # soundManager.createSound(
+        #     id: af
+        #     url: audioRoot + af
+        #     autoLoad: true
+        #     autoPlay: false
+        #     onload: =>
+        #         @audioLoaded = true
+        # )
 
     stage: ->
         return @parent.stage()
@@ -440,7 +487,9 @@ class mcb80x.Line extends LessonElement
         super(cb)
 
     run: ->
-        console.log(this)
+        console.log('Running line...')
+        @setCurrent()
+        @checkIfPaused()
 
         for k,v of @state
             console.log('setting ' + k + ' to ' + v)
@@ -451,11 +500,11 @@ class mcb80x.Line extends LessonElement
 
             console.log(p(v))
 
-        if not @audioLoaded
-            console.log('waiting for audio load')
-            runit = => @run()
-            setTimeout(runit, 100)
-            return
+        # if not @audioLoaded
+        #     console.log('waiting for audio load')
+        #     runit = => @run()
+        #     setTimeout(runit, 100)
+        #     return
 
         # put two "holds" on the advance of the lesson.
         # both the audio *and* the children (if there are any)
@@ -463,11 +512,12 @@ class mcb80x.Line extends LessonElement
         @holds.push('audio')
         @holds.push('default')
 
-        @audio.play(
-            onfinish: =>
+        @audio.bind('ended', =>
                 console.log('on finish yield')
                 @yield()
         )
+
+        @audio.play()
 
         super()
 
@@ -495,6 +545,9 @@ class mcb80x.ShowAction extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         stage = @parent.stage()
         stage.showElement('#' + s) for s in @selectors
 
@@ -506,6 +559,9 @@ class mcb80x.HideAction extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         stage = @parent.stage()
         stage.hideElement('#' + s) for s in @selectors
 
@@ -517,6 +573,9 @@ class mcb80x.SetAction extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         stage = @parent.stage()
         stage[@property](@value)
 
@@ -530,6 +589,9 @@ class mcb80x.PlayAction extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         console.log('running play action')
         @parent.stage().play()
         @yield()
@@ -540,6 +602,8 @@ class mcb80x.StopAndResetAction extends LessonElement
         super()
 
     run: ->
+        @checkIfPaused()
+
         @parent.stage().stop()
         @yield()
 
@@ -549,6 +613,9 @@ class mcb80x.WaitAction extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         console.log('waiting ' + @delay + ' ms...')
         cb = => @yield()
         setTimeout(cb, @delay)
@@ -559,6 +626,9 @@ class mcb80x.WaitForChoice extends LessonElement
         super()
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         console.log('installing waitForChoice subscription on ' + @observableName)
         obs = @parent.stage()[@observableName]
         console.log(obs)
@@ -647,6 +717,9 @@ class mcb80x.FSM extends LessonElement
             @transitionState(state)
 
     run: ->
+        @setCurrent()
+        @checkIfPaused()
+
         console.log('running fsm')
         @stopping = false
         @runState('initial')

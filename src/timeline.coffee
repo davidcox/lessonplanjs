@@ -3,10 +3,19 @@
 class mcb80x.Timeline
 
     constructor: (selector, @scene) ->
+
+        @paused = ko.observable(false)
+        @playing = ko.observable(true)
+        @self = ko.observable(this)
+
         @orderedSegments = []
         @segmentLookup = {}
 
-        @div = d3.select(selector)
+        @parentDiv = d3.select(selector)
+
+        console.log('parentdiv = ' + @parentDiv)
+
+        @div = @parentDiv.select('#timeline')
 
         @scene.currentTime.subscribe( (v) =>
             @update(@scene.currentSegment(), v)
@@ -56,29 +65,40 @@ class mcb80x.Timeline
 
 
         # Show / Hide the timeline on mmouseover
-        @div.on('mouseover', ->
+        @parentDiv.on('mouseover', ->
             d3.select(this).transition()
                 .style('opacity', 1.0)
                 .duration(250)
         )
 
-        @div.on('mouseout', ->
+        @parentDiv.on('mouseout', ->
             d3.select(this).transition()
                 .style('opacity', 0.0)
                 .duration(250)
         )
 
-    setupTiming: ->
 
+        # Connect Knockout.js bindings between the timeline object and the
+        # html UI.  This will let us control the play/pause state, etc.
+        ko.applyBindings(this, @parentDiv.node())
+
+    setupTiming: ->
+        console.log('adjusting timeline timing...')
         runningTime = 0.0
         for beat in @scene.children
             segId = beat.elementId
+            console.log('setting up ' + segId)
             duration = beat.duration()
             @segmentLookup[segId].duration = duration
             @segmentLookup[segId].start = runningTime
             runningTime += duration
 
         @totalDuration = runningTime
+
+        console.log('total duration = ' + @totalDuration)
+
+
+        console.log('Drawing timeline...')
 
         @tScale = d3.scale.linear()
             .domain([0.0, @totalDuration])
@@ -103,6 +123,7 @@ class mcb80x.Timeline
                 .attr('timelinetooltip', (d) -> d.title)
 
         # Marker mouseover effects
+        console.log('Installing mouseovers...')
 
         @markers.on('mouseover', (d) ->
             d3.select(this).transition()
@@ -115,10 +136,14 @@ class mcb80x.Timeline
                 .duration(250)
         )
 
+        console.log('Installing click handlers...')
+
         # Marker click action
         @markers.on('click', (d) =>
             @scene.stop()
             @scene.runAtSegment(d.title))
+
+        console.log('Installing tooltips...')
 
         $('.timeline-segment-marker').tipsy(
             #gravity: $.fn.tipsy.autoNS
@@ -128,15 +153,31 @@ class mcb80x.Timeline
                 d3.select(this).attr('timelinetooltip')
         )
 
-    update: (segId, t) ->
+        console.log('Done setting up timeline.')
+
+    update: (segment, t) ->
+        segId = segment.elementId
+
         if not @tScale?
             return
 
-        console.log(segId)
         @currentTime = t
         newWidth = @tScale(@segmentLookup[segId].start + @currentTime)
         # console.log(newWidth)
         @progressbar.attr('width', newWidth + '%')
+
+
+    play: ->
+        console.log('play')
+        @playing(true)
+        @paused(false)
+        @scene.resume()
+
+    pause: ->
+        console.log('pause')
+        @playing(false)
+        @paused(true)
+        @scene.pause()
 
 
 
