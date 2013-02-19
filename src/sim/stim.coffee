@@ -4,7 +4,7 @@
 class mcb80x.sim.SquareWavePulseSim extends mcb80x.PropsEnabled
 
 	constructor: ->
-		@interval = @prop 3.0			# mS
+		@interval = @prop 5.0			# mS
 		@amplitude = @prop 15			# uA
 		@t = @prop 0.0, => @update()	# mS
 		@I_stim = @prop 0.0				# uA

@@ -6,18 +6,8 @@ root.registry = []
 root.scenes = {}
 root.stages = []
 
-# Infrastructure for managing the 'current' object
-# in our little imperative DSL
-currentStack = []
-currentObj = undefined
 
-pushCurrent = (obj) ->
-    currentStack.push(currentObj)
-    currentObj = obj
-
-popCurrent = ->
-    currentObj = currentStack.pop()
-
+# Some basic infrastructure for uniquely ID'ing elements
 elementCounter = -1
 uniqueElementId = ->
     elementCounter += 1
@@ -33,18 +23,79 @@ videoDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 
-# initSound = (cb) ->
+class mcb80x.SceneController
 
-#     soundManager.setup(
-#         preferFlash: false,
-#         url: '/swf/',
-#         flashVersion: 9,
-#         useFlashBlock: false,
-#         useHTML5Audio: true,
-#         onready: ->
-#             soundReady = true
-#             cb()
-#     )
+    constructor: (@scene) ->
+
+        # state defines
+        @paused = $.Deferred().resolve()
+        @stopped = $.Deferred()
+
+        @currentElement = @scene
+
+        @currentSegment = @scene.currentSegment
+        @currentTime = @scene.currentTime
+
+    run: ->
+        console.log('Scene controller: running...')
+        @advance()
+
+    runAtSegment: (seg) ->
+        console.log('Running from segment: ')
+        console.log(seg)
+
+        @stop()
+
+        $.when(@stopped).then(=>
+            @stopped = $.Deferred()
+            @paused = $.Deferred().resolve()
+            @reset()
+            @currentElement = seg
+            @advance()
+        )
+
+    advance: ->
+        if not @currentElement?
+            return
+
+        console.log('Scene controller: running ' + @currentElement.elementId)
+        console.log(@currentElement)
+
+        dfrd = @currentElement.run()
+
+        $.when(dfrd, @paused).done(=>
+            console.log('Scene controller: finishing ' + @currentElement.elementId)
+            if @currentElement.willYieldOnNext()
+                @currentElement.finish()
+            @currentElement = @currentElement.next()
+            console.log('Scene controller: next element is ' + @currentElement)
+            @advance()
+        ).fail(=>
+            console.log('stopping...')
+            @stopped.resolve()
+        )
+
+    pause: ->
+        @paused = $.Deferred()
+        @currentElement.pause()
+
+        return @paused
+
+    resume: ->
+        @currentElement.resume()
+        @paused.resolve()
+        @paused = $.Deferred()
+
+    stop: ->
+        # @currentElement.stop()
+        @scene.stop()
+        @pause().reject()
+
+    reset: ->
+        @currentElement = @scene
+        @currentElement.reset()
+
+
 
 # Lesson Elements
 # These are the objects that the DSL will actually build
@@ -58,19 +109,19 @@ class mcb80x.LessonElement
 
     constructor: (@elementId) ->
 
-        @holds = []
-
-        @stopping = false
-
         if not @elementId?
             @elementId = uniqueElementId()
+
         registry[@elementId] = this
+
         @children = []
         @childIndexLookup = {}
         @childLookup = {}
-        @parent = undefined
 
+        @parent = undefined
         @parentScene = undefined
+
+        @currentChild = 0
 
     addChild: (child) ->
         child.parent = this
@@ -87,102 +138,101 @@ class mcb80x.LessonElement
 
     # methods for picking up after a child node
     # has yielded
-    resumeAfterChild: (child) ->
-        console.log('resumeAfterChild (stopping = ' + @stopping + ')')
-        if @stopping
-            return
+    nextAfterChild: (child) ->
+
         childId = child.elementId
-        console.log('resumeAfter: ' + childId)
 
+        # if by some weirdness there are no children, return
+        # undefined
         if not @children? or @children.length is 0
-            @yield()
-        childIndex = @childIndexLookup[childId]
-        @resumeAfterIndex(childIndex)
+            return undefined
 
-    resumeAfterIndex: (childIndex) ->
-        console.log('resumeAfterIndex')
+        # Look up the index of child
+        childIndex = @childIndexLookup[childId]
+        return @nextAfterIndex(childIndex)
+
+    nextAfterIndex: (childIndex) ->
+
         nextIndex = childIndex + 1
         if @children[nextIndex]?
-            @children[nextIndex].run()
+            return @children[nextIndex]
+        else if @parent?
+            return @parent.nextAfterChild(this)
         else
-            @yield()
+            return undefined
 
     # run starting from one of this element's children
     # this call allows recursive function call chaining
-    runChildrenStartingAtIndex: (index, cb) ->
-        console.log('runStartingAtIndex index: ' + index)
+    # runChildrenStartingAtIndex: (index, cb) ->
+    #     console.log('runStartingAtIndex index: ' + index)
 
-        # if there is no next child, just yield
-        if index > @children.length - 1
-            @yield()
-            return
+    #     # if there is no next child, just yield
+    #     if index > @children.length - 1
+    #         @yield()
+    #         return
 
-        # otherwise, run the child node
-        @children[index].run()
+    #     # otherwise, run the child node
+    #     @children[index].run()
 
-    setCurrent: ->
-        @parentScene.currentSegment(this) if @parentScene
+    # setCurrent: ->
+    #     @parentScene.currentSegment(this) if @parentScene
 
-    yield: ->
-        console.log('yield')
-        console.log('stopping = ' + @stopping)
-        if @holds.length > 0
-            @holds.pop()
+    willYieldOnNext: ->
+        if not (@children? and @children.length and @currentChild < @children.length)
+            return true
+        else
+            return false
 
-        if @holds.length > 0
-            # something else still not finished
-            console.log('waiting on more holds')
-            return
+    next: ->
 
-        # @stop()
+        if @children? and @children.length
+            if @currentChild < @children.length
+                @currentChild += 1
+                return @children[@currentChild-1]
 
         if @parent?
-            console.log('going to resume after child')
-            @parent.resumeAfterChild(this)
+            return @parent.nextAfterChild(this)
         else
-            console.log('no parent:')
-            console.log(this)
+            return undefined
 
-    checkIfPaused: ->
-        if @paused()
-            runit = =>
-                console.log('checking if paused')
-                @checkIfPaused()
-            setTimeout(runit, 1000)
-        return
+    # checkIfPaused: ->
+    #     if @paused()
+    #         runit = =>
+    #             console.log('checking if paused')
+    #             @checkIfPaused()
+    #         setTimeout(runit, 1000)
+    #     return
 
 
     # Run through this element and all of its children
     run: ->
-        @setCurrent()
-        @checkIfPaused()
+        return true
 
-        @stopping = false
+        # # If this node doesn't have any children, yield
+        # # back up to the parent
+        # if not @children?
+        #     if @stopping
+        #         return false
+        #     else
+        #         return $.Deferred.done(=> @yield())
+        #                          .failed(=> @reset())
+        # else
+        #     # start running the child nodes
+        #     return $.Deferred.done(=> @runChildrenStartingAtIndex(0))
+        #                      .failed(=> @reset())
 
-        console.log('running with children: ' + @children)
-        # If this node doesn't have any children, yield
-        # back up to the parent
-        if not @children?
-            if @stopping
-                return
-            else
-                @yield()
-        else
-            # start running the child nodes
-            @runChildrenStartingAtIndex(0)
+    # paused: ->
+    #     if @parentScene?
+    #         return @parentScene.paused()
+    #     else
+    #         return @parent.parentScene.paused() if @parent?
 
-    paused: ->
-        if @parentScene?
-            return @parentScene.paused()
-        else
-            return @parent.parentScene.paused() if @parent?
-
-        return false
+    #     return false
 
     reset: ->
         console.log('reseting')
-        @holds = []
-        @stopping = false
+
+        @currentChild = 0
 
         for child in @children
             child.reset()
@@ -206,21 +256,22 @@ class mcb80x.LessonElement
         # @parentScene.currentSegment().stop(cb)
         @parentScene.stop(cb)
 
-    stop: (cb) ->
-        @stopping = true
-
+    stop: ->
         for child in @children
-            if child? and child.stop?
-                child.stop()
-
-        cb() if cb
+            child.stop()
 
     pause: ->
         console.log('base pause')
 
     resume: ->
+        console.log('base resume')
+
+    finish: ->
+        console.log('base finish')
+
 
 LessonElement = mcb80x.LessonElement
+
 
 # Top-level "Scene"
 class mcb80x.Scene extends LessonElement
@@ -240,26 +291,7 @@ class mcb80x.Scene extends LessonElement
     run: ->
         @init()
         console.log('scene[' + @elementId + ']')
-        super()
-
-    reset: ->
-        @paused(false)
-        super()
-
-    paused: (isit) ->
-        if isit
-            @isPaused = isit
-        else
-            return @isPaused
-
-    pause: ->
-        @isPaused = true
-        @currentSegment().pause()
-
-    resume: ->
-        @isPaused = false
-        @currentSegment().resume()
-
+        return super()
 
 
 class mcb80x.Interactive extends LessonElement
@@ -291,40 +323,35 @@ class mcb80x.Interactive extends LessonElement
 
     loadSoundtrack: (s) ->
         @soundtrackAudio = new buzz.sound(audioRoot + s,
-            preload:true)
+            preload:true
+            loop: true
+        )
 
-    yield: ->
-        # hide the stage before yielding to parent
+    finish: ->
+        @soundtrackAudio.stop() if @soundtrackAudio?
+
+        # hide the stage
         @stageObj.hide() if @stageObj? and @stageObj.hide?
-        super()
 
 
     playSoundtrack: ->
-        @soundtrackAudio.loop().play()
+        @soundtrackAudio.play().setVolume(10)
 
     run: () ->
         console.log('running interactive')
-        @checkIfPaused()
 
         @playSoundtrack() if @hasSoundtrack
 
-        # show the stage and announce the current
-        # segment
-        @parent.currentSegment(this)
-
         console.log('stage: ' + @stageObj)
         if @stageObj?
-            @stageObj.show(=> super())
-        else
-            # iterate through the child nodes, as usual
-            super()
+            return @stageObj.show()
 
-    stop: (cb) ->
+        return super()
+
+    stop: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
-        super(cb)
+        super()
 
-    scene: ->
-        return @parent
 
 # A somewhat hacked up video object
 class mcb80x.Video extends LessonElement
@@ -391,40 +418,37 @@ class mcb80x.Video extends LessonElement
 
         @pop.load()
 
-    run: (cb) ->
+    finish: ->
+        # unregister callbacks
+        @pop.off('ended', @yieldCb) if @yieldCb
+        @pop.off('updatetime', @updateTimeCb) if @updateTimeCb
 
-        @checkIfPaused()
+        # hide the video
+        @hide()
+
+    run: ->
 
         @load()
 
         console.log('playing video')
 
-        @parent.currentSegment(this)
         @show()
 
-        scene = @parent
-        console.log(scene)
-
-
-        updateTimeCb = ->
+        @updateTimeCb = =>
             t = @currentTime()
             scene.currentTime(t)
-        @pop.on('timeupdate', updateTimeCb)
+        @pop.on('timeupdate', @updateTimeCb)
 
-        cb = =>
-            console.log('popcorn triggered cb')
-            console.log(cb)
-            @pop.off('ended', cb)
-            @pop.off('updatetime', updateTimeCb)
-            @hide()
-            @yield()
+        dfrd = $.Deferred()
 
         # yield when the view has ended
-        @pop.on('ended', cb)
+        @yieldCb = ->
+            dfrd.resolve()
+        @pop.on('ended', @yieldCb)
 
-        #@playWhenReady()
-        console.log(@pop)
         @pop.play()
+
+        return dfrd
 
     pause: ->
         @pop.pause() if @pop
@@ -432,10 +456,36 @@ class mcb80x.Video extends LessonElement
     resume: ->
         @pop.play() if @pop
 
-    stop: (cb) ->
+    stop: ->
         @pop.pause() if @pop
         @hide()
-        super(cb)
+        super()
+
+
+# a helper
+runChained = (actions) ->
+    # a deferred to return for the whole sequence
+    sdfrd = $.Deferred()
+
+    # copy the actions list so that we can alter it
+    actionsCopy = actions.slice(0)
+
+    # a function to all recursively
+    chainIt = (a) ->
+        # resolve the "sequence" deferred when the
+        # list is empty
+        if a.length == 0
+            sdfrd.resolve()
+            return
+
+        dfrd = a.shift().run()
+        $.when(dfrd).then(-> chainIt(a))
+
+    chainIt(actionsCopy)
+
+    # return the "sequence" deferred
+    return sdfrd
+
 
 
 # A "line" is a bit of audio + text that can be played
@@ -444,16 +494,13 @@ class mcb80x.Video extends LessonElement
 
 class mcb80x.Line extends LessonElement
 
-    constructor: (@audioFile, @text, @state) ->
+    constructor: (@audioFile, @text) ->
         super()
 
     init: ->
         @div = $('#prompt_overlay')
         @div.hide()
 
-        # if not soundReady
-        #     initSound(=> @loadAudio(@audioFile))
-        # else
         @loadAudio(@audioFile)
 
         super()
@@ -463,63 +510,66 @@ class mcb80x.Line extends LessonElement
         @audio = new buzz.sound(audioRoot + af,
             preload: true
         )
-        # @audio.bind('canplay', =>
-        #     console.log(af + ' can play')
-        #     @audioLoaded = true
-        # )
-        # @audio.load()
-
-        # soundManager.createSound(
-        #     id: af
-        #     url: audioRoot + af
-        #     autoLoad: true
-        #     autoPlay: false
-        #     onload: =>
-        #         @audioLoaded = true
-        # )
+        @audio.load()
 
     stage: ->
         return @parent.stage()
 
-    stop: (cb) ->
-        console.log('line stop')
+    pause: ->
+        @audio.pause() if @audio
+
+    resume: ->
+        @audio.play() if @audio
+
+    stop: ->
         @audio.stop() if @audio
-        super(cb)
+        @audio.trigger('ended')
+        super()
+
+    next: ->
+        # don't navigate children normally (as in super()); they will run
+        # concurrent with the line
+        if @parent?
+            return @parent.nextAfterChild(this)
+        else
+            return undefined
 
     run: ->
         console.log('Running line...')
-        @setCurrent()
-        @checkIfPaused()
 
-        for k,v of @state
-            console.log('setting ' + k + ' to ' + v)
-            console.log(@parent.stage())
-            p = @parent.stage()[k]
-            console.log(p)
-            p(v)
+        childDeferred = true
 
-            console.log(p(v))
+        # If there are child actions, we'll run these in
+        # tandem with the line/voiceover
+        if @children? and @children.length
 
-        # if not @audioLoaded
-        #     console.log('waiting for audio load')
-        #     runit = => @run()
-        #     setTimeout(runit, 100)
-        #     return
+            childDeferred = runChained(@children)
+            # # copy the array of children
+            # childrenCopy = @children.slice(0)
 
-        # put two "holds" on the advance of the lesson.
-        # both the audio *and* the children (if there are any)
-        # hae to call yield to proceed
-        @holds.push('audio')
-        @holds.push('default')
+            # # take off the first child and start it running
+            # childDeferred = childrenCopy.shift().run()
+
+            # # chain together run methods of subsequent children
+            # # using deferred's and $.when
+            # for child in childrenCopy
+            #     childDeferred = $.when(childDeferred).done(->
+            #         child.run()
+            #     )
+
+        audioDeferred = $.Deferred()
 
         @audio.bind('ended', =>
-                console.log('on finish yield')
-                @yield()
+            audioDeferred.resolve()
         )
 
+        console.log('playing audio')
+        console.log(@audio)
         @audio.play()
 
-        super()
+        # return a deferred object that is contingent on
+        # both the audio and the children
+        return $.when(audioDeferred, childDeferred)
 
         # for now, just enable audio; we'll need to figure
         # out how to accomodate text
@@ -545,13 +595,8 @@ class mcb80x.ShowAction extends LessonElement
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         stage = @parent.stage()
         stage.showElement('#' + s) for s in @selectors
-
-        @yield()
 
 class mcb80x.HideAction extends LessonElement
 
@@ -559,13 +604,9 @@ class mcb80x.HideAction extends LessonElement
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         stage = @parent.stage()
         stage.hideElement('#' + s) for s in @selectors
 
-        @yield()
 
 class mcb80x.SetAction extends LessonElement
 
@@ -573,28 +614,19 @@ class mcb80x.SetAction extends LessonElement
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         stage = @parent.stage()
         stage[@property](@value)
 
-        @yield()
-
 
 # Actions to "instruct" a demo to do something
-
 class mcb80x.PlayAction extends LessonElement
     constructor: (@stageId) ->
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         console.log('running play action')
         @parent.stage().play()
-        @yield()
+
 
 class mcb80x.StopAndResetAction extends LessonElement
 
@@ -602,10 +634,7 @@ class mcb80x.StopAndResetAction extends LessonElement
         super()
 
     run: ->
-        @checkIfPaused()
-
         @parent.stage().stop()
-        @yield()
 
 
 class mcb80x.WaitAction extends LessonElement
@@ -613,12 +642,13 @@ class mcb80x.WaitAction extends LessonElement
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         console.log('waiting ' + @delay + ' ms...')
-        cb = => @yield()
+        dfrd = $.Deferred()
+        cb = ->
+            dfrd.resolve()
+
         setTimeout(cb, @delay)
+        return dfrd
 
 
 class mcb80x.WaitForChoice extends LessonElement
@@ -626,22 +656,25 @@ class mcb80x.WaitForChoice extends LessonElement
         super()
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
-
         console.log('installing waitForChoice subscription on ' + @observableName)
         obs = @parent.stage()[@observableName]
-        console.log(obs)
+
+        dfrd = $.Deferred()
+
         @subs = obs.subscribe( =>
             console.log('waitForChoice yielding')
             @subs.dispose()
-            @yield()
+            dfrd.resolve()
         )
+
+        return dfrd
+
 
 # A finite state machine
 # The idea here is to have a simple state machine so
 # that simple interactive goals can be easily defined
 class mcb80x.FSM extends LessonElement
+
     constructor: (@states) ->
 
         super()
@@ -650,7 +683,8 @@ class mcb80x.FSM extends LessonElement
         @currentState = 'initial'
         @delay = 500
         @startTime = undefined
-        @stopping = false
+
+        @statesDfrd = $.Deferred()
 
         # convert DSL imperative action definitions
         # to objects
@@ -684,8 +718,8 @@ class mcb80x.FSM extends LessonElement
 
     transitionState: (state) ->
 
-        if @stopping
-            return
+        # if @stopping
+        #     return
 
         stateObj = @states[state]
 
@@ -699,7 +733,7 @@ class mcb80x.FSM extends LessonElement
         if transitionTo?
             if transitionTo is 'continue'
                 console.log('yielding...')
-                @yield()
+                @statesDfrd.resolve()
             else
                 @runState(transitionTo)
         else
@@ -710,19 +744,28 @@ class mcb80x.FSM extends LessonElement
         console.log('ACTION: state: ' + state)
         @startTime = new Date().getTime()
 
-        if @states[state].action?
-            @states[state].action.yield = => @transitionState(state)
-            @states[state].action.run()
+        dfrd = $.Deferred().resolve()
+
+        if @states[state].action? and @states[state].action.children.length
+            dfrd = runChained(@states[state].action.children)
+
+        dfrd.done(=> @transitionState(state))
+
+    next: ->
+        # override regular next-children behavior
+        if @parent?
+            return @parent.nextAfterChild(this)
         else
-            @transitionState(state)
+            return undefined
 
     run: ->
-        @setCurrent()
-        @checkIfPaused()
+        @statesDfrd = $.Deferred()
+        # start = => @runState('initial')
+        # setTimeout(start, 0)
 
-        console.log('running fsm')
-        @stopping = false
         @runState('initial')
+
+        return @statesDfrd
 
 
 # Imperative Domain Specific Language bits
@@ -730,6 +773,19 @@ class mcb80x.FSM extends LessonElement
 # the final script read more like an outline or
 # "script" in the lines-in-a-documentary sense of the
 # word
+
+# Infrastructure for managing the 'current' object
+# in our little imperative DSL
+currentStack = []
+currentObj = undefined
+
+pushCurrent = (obj) ->
+    currentStack.push(currentObj)
+    currentObj = obj
+
+popCurrent = ->
+    currentObj = currentStack.pop()
+
 
 root.scene = (sceneId, title) ->
     sceneObj = new mcb80x.Scene(sceneId, title)

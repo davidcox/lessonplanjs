@@ -2,7 +2,9 @@
 
 class mcb80x.Timeline
 
-    constructor: (selector, @scene) ->
+    constructor: (selector, @sceneController) ->
+
+        @scene = @sceneController.scene
 
         @paused = ko.observable(false)
         @playing = ko.observable(true)
@@ -89,6 +91,7 @@ class mcb80x.Timeline
             segId = beat.elementId
             console.log('setting up ' + segId)
             duration = beat.duration()
+            @segmentLookup[segId].obj = beat
             @segmentLookup[segId].duration = duration
             @segmentLookup[segId].start = runningTime
             runningTime += duration
@@ -140,8 +143,9 @@ class mcb80x.Timeline
 
         # Marker click action
         @markers.on('click', (d) =>
-            @scene.stop()
-            @scene.runAtSegment(d.title))
+            @sceneController.stop()
+            obj = @segmentLookup[d.title].obj
+            @sceneController.runAtSegment(obj))
 
         console.log('Installing tooltips...')
 
@@ -171,13 +175,13 @@ class mcb80x.Timeline
         console.log('play')
         @playing(true)
         @paused(false)
-        @scene.resume()
+        @sceneController.resume()
 
     pause: ->
         console.log('pause')
         @playing(false)
         @paused(true)
-        @scene.pause()
+        @sceneController.pause()
 
 
 
