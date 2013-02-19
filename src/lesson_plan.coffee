@@ -29,6 +29,7 @@ class mcb80x.SceneController
 
         # state defines
         @paused = $.Deferred().resolve()
+        @stopping = false
         @stopped = $.Deferred()
 
         @currentElement = @scene
@@ -36,23 +37,39 @@ class mcb80x.SceneController
         @currentSegment = @scene.currentSegment
         @currentTime = @scene.currentTime
 
+        @currentExecutionId = undefined
+
     run: ->
         console.log('Scene controller: running...')
+        @paused = $.Deferred().resolve()
+        @stopping = false
+        @stopped = $.Deferred()
         @advance()
 
     runAtSegment: (seg) ->
         console.log('Running from segment: ')
         console.log(seg)
+        console.log('paused state: ' + @paused.state())
+        console.log('stopped state: ' + @stopped.state())
+        util.dimLights(true)
 
         @stop()
 
-        $.when(@stopped).then(=>
-            @stopped = $.Deferred()
-            @paused = $.Deferred().resolve()
+        console.log('waiting until stopped')
+
+        whenStopped = =>
+
+            if @stopped.state() == 'pending'
+                setTimeout(whenStopped, 100)
+                return
+            console.log('stopped, reset deferreds...')
             @reset()
             @currentElement = seg
-            @advance()
-        )
+            util.dimLights(false)
+            @run()
+
+        setTimeout(whenStopped, 100)
+
 
     advance: ->
         if not @currentElement?
@@ -60,18 +77,27 @@ class mcb80x.SceneController
 
         console.log('Scene controller: running ' + @currentElement.elementId)
         console.log(@currentElement)
+        console.log(@paused.state())
+        console.log(@stopped.state())
 
         dfrd = @currentElement.run()
 
+        console.log('waiting for element to finish running')
+
         $.when(dfrd, @paused).done(=>
             console.log('Scene controller: finishing ' + @currentElement.elementId)
-            if @currentElement.willYieldOnNext()
+            if @currentElement.willYieldOnNext() or @stopping
                 @currentElement.finish()
+
+            if @stopping
+                @stopped.resolve()
+                return
+
             @currentElement = @currentElement.next()
             console.log('Scene controller: next element is ' + @currentElement)
             @advance()
         ).fail(=>
-            console.log('stopping...')
+            console.log('stopped...')
             @stopped.resolve()
         )
 
@@ -87,9 +113,10 @@ class mcb80x.SceneController
         @paused = $.Deferred()
 
     stop: ->
-        # @currentElement.stop()
+        @currentElement.stop()
         @scene.stop()
         @pause().reject()
+        @stopping = true
 
     reset: ->
         @currentElement = @scene
@@ -335,6 +362,7 @@ class mcb80x.Interactive extends LessonElement
 
 
     playSoundtrack: ->
+        @soundtrackAudio.load()
         @soundtrackAudio.play().setVolume(10)
 
     run: () ->
@@ -347,6 +375,9 @@ class mcb80x.Interactive extends LessonElement
             return @stageObj.show()
 
         return super()
+
+    reset: ->
+        @stage().reset() if (@stage() and @stage().reset?)
 
     stop: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
@@ -498,11 +529,7 @@ class mcb80x.Line extends LessonElement
         super()
 
     init: ->
-        @div = $('#prompt_overlay')
-        @div.hide()
-
         @loadAudio(@audioFile)
-
         super()
 
     loadAudio: (af) ->
@@ -511,6 +538,9 @@ class mcb80x.Line extends LessonElement
             preload: true
         )
         @audio.load()
+
+    reset: ->
+        @stop()
 
     stage: ->
         return @parent.stage()
@@ -524,6 +554,7 @@ class mcb80x.Line extends LessonElement
     stop: ->
         @audio.stop() if @audio
         @audio.trigger('ended')
+        @audio.unbind('ended')
         super()
 
     next: ->
@@ -565,6 +596,7 @@ class mcb80x.Line extends LessonElement
 
         console.log('playing audio')
         console.log(@audio)
+        @audio.load()
         @audio.play()
 
         # return a deferred object that is contingent on

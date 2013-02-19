@@ -106,3 +106,13 @@ svg {
   padding: 0;
   opacity: 0.5;
 }
+
+.veil {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  opacity: 0.2;
+  background-color: #000;
+  display: none;
+  z-index: 1000;
+}

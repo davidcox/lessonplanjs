@@ -8,6 +8,15 @@ $(window).resize( ->
 
 util =
 
+    dimLights: (v) ->
+        veil = $('#veil')
+        if v
+            console.log('showing veil')
+            veil.show()
+        else
+            console.log('hiding veil')
+            veil.hide()
+
     hideElement: (el, duration) ->
         if duration is undefined
             el.attr('opacity', 0.0)

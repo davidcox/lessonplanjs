@@ -143,7 +143,6 @@ class mcb80x.Timeline
 
         # Marker click action
         @markers.on('click', (d) =>
-            @sceneController.stop()
             obj = @segmentLookup[d.title].obj
             @sceneController.runAtSegment(obj))
 
