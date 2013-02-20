@@ -424,6 +424,7 @@ class mcb80x.Scene extends LessonElement
 
     run: ->
         @init()
+        util.indicateLoading(false)
         console.log('scene[' + @elementId + ']')
         return super()
 
