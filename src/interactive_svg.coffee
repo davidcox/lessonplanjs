@@ -44,7 +44,7 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
         console.log('hiding ' + s)
         util.hideElement(@svg.select(s), 250)
 
-    show: (cb) ->
+    show: ->
         console.log('showing interactive: ' + @svgFileName)
 
         dfrd = $.Deferred()

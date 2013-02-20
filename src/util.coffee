@@ -8,14 +8,22 @@ $(window).resize( ->
 
 util =
 
-    dimLights: (v) ->
+    indicateLoading: (v, duration) ->
+        if not duration?
+            duration = 1000
         veil = $('#veil')
         if v
             console.log('showing veil')
-            veil.show()
+            veil.fadeIn(duration)
         else
             console.log('hiding veil')
-            veil.hide()
+            veil.fadeOut(duration)
+
+        dfrd = $.Deferred()
+        resolve = -> dfrd.resolve()
+        setTimeout(resolve, duration)
+
+        return dfrd
 
     hideElement: (el, duration) ->
         if duration is undefined
