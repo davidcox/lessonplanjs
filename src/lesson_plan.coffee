@@ -31,10 +31,7 @@ class mcb80x.SceneController
 
     constructor: (@scene) ->
 
-        # this is a jQuery deferred object for pausing
-        # we'll start with one in a resolved state,
-        # since we are not paused by default
-        @deferredPause = $.Deferred().resolve()
+        @paused = ko.observable(false)
 
         # a flag to inform the callback chain to
         # abort and stop
@@ -62,10 +59,6 @@ class mcb80x.SceneController
     run: ->
         console.log('Scene controller: running...')
 
-        # unset the pause deferred
-        @deferredPause.reject()
-        @deferredPause = $.Deferred().resolve()
-
         # unset the stop flags
         @stopping = false
         @stopped = false
@@ -90,12 +83,13 @@ class mcb80x.SceneController
 
         # dim the stage lights right away to
         # let the user know the click registered
-        util.indicateLoading(true).then(=>
+        $.when(util.indicateLoading(true).promise()).then(=>
             console.log('waiting for stop')
             return @stop().promise()
         ).then(=>
-            console.log('stopped...')
-            @reset()
+            console.log('reseting...')
+            return @reset().promise()
+        ).then(=>
             return util.indicateLoading(false).promise()
         ).then(=>
             console.log('running scene')
@@ -139,7 +133,7 @@ class mcb80x.SceneController
                 # fall out
                 return
 
-            if $.when(dfrd).state() == 'pending'
+            if $.when(dfrd).state() == 'pending' or @paused()
                 # schedule another pass
                 setTimeout(checkForCompletion, 100)
                 return
@@ -168,34 +162,47 @@ class mcb80x.SceneController
 
     pause: ->
         # set up a deferred pause
-        @deferredPause = $.Deferred()
+        # @deferredPause = $.Deferred()
+
+        @paused(true)
 
         # freeze execution of the current element
-        #@currentElement.pause()
+        @currentElement.pause()
+
 
     resume: ->
+
+        @paused(false)
+
         # resume the current element
-        #@currentElement.resume()
+        @currentElement.resume()
 
         # release the pause deferred
-        @deferredPause.resolve()
+        # @deferredPause.resolve()
 
     stop: ->
 
         # set the stopping flag
         @stopping = true
+        @paused(false)
 
         # reject the pause deferred, this will cause any
         # execution waiting on the pause deferred to
         # fall through and go away
-        console.log('rejecting deferredPause')
-        @deferredPause.reject()
-        console.log('rejected')
+        # console.log('rejecting deferredPause')
+        # @deferredPause.reject()
+        # console.log('rejected')
 
         deferredStopped = $.Deferred()
 
         # instruct all elements in the scene to stop
-        @scene.stop()
+        deferredSceneStop = $.Deferred()
+
+        stopit = =>
+            @scene.stop()
+            deferredSceneStop.resolve()
+
+        setTimeout(stopit, 0)
 
         checkStopped = =>
             if @stopped
@@ -206,11 +213,19 @@ class mcb80x.SceneController
 
         setTimeout(checkStopped, 100)
 
-        return deferredStopped
+        return $.when(deferredStopped, deferredSceneStop)
 
     reset: ->
         @currentElement = @scene
-        @currentElement.reset()
+
+        dfrd = $.Deferred()
+        resetEverything = =>
+            @currentElement.reset()
+            dfrd.resolve()
+
+        setTimeout(resetEverything, 0)
+
+        return dfrd
 
 
 
@@ -474,6 +489,7 @@ class mcb80x.Interactive extends LessonElement
 
     stop: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
+        @stage().stop() if (@stage() and @stage().stop?)
         super()
 
 

@@ -11,17 +11,16 @@ util =
     indicateLoading: (v, duration) ->
         if not duration?
             duration = 1000
+        dfrd = $.Deferred()
+        resolve = -> dfrd.resolve()
+
         veil = $('#veil')
         if v
             console.log('showing veil')
-            veil.fadeIn(duration)
+            veil.fadeIn(duration, resolve)
         else
             console.log('hiding veil')
-            veil.fadeOut(duration)
-
-        dfrd = $.Deferred()
-        resolve = -> dfrd.resolve()
-        setTimeout(resolve, duration)
+            veil.fadeOut(duration, resolve)
 
         return dfrd
 
