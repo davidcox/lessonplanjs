@@ -484,7 +484,7 @@ class mcb80x.Interactive extends LessonElement
         return super()
 
     reset: ->
-        @stage().reset() if (@stage() and @stage().reset?)
+        # @stage().reset() if (@stage() and @stage().reset?)
         super()
 
     stop: ->

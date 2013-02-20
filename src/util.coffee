@@ -14,7 +14,7 @@ util =
         dfrd = $.Deferred()
         resolve = -> dfrd.resolve()
 
-        veil = $('#veil')
+        veil = $('#loading-indicator')
         if v
             console.log('showing veil')
             veil.fadeIn(duration, resolve)
