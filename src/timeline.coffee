@@ -13,6 +13,8 @@ class mcb80x.Timeline
         @orderedSegments = []
         @segmentLookup = {}
 
+        @displayedSegment = undefined
+
         @parentDiv = d3.select(selector)
 
         console.log('parentdiv = ' + @parentDiv)
@@ -20,10 +22,25 @@ class mcb80x.Timeline
         @div = @parentDiv.select('#timeline')
 
         @scene.currentTime.subscribe( (v) =>
-            @update(@scene.currentSegment(), v)
+            @update(@sceneController.currentElement, v)
         )
 
         @svg = @div.append('svg').attr('id', 'timeline-svg')
+        defs = @svg.append('svg:defs')
+        defs.append('svg:pattern')
+                .attr('id', 'patstripes')
+                .attr('width', 15)
+                .attr('height', 15)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('patternUnits', 'userSpaceOnUse')
+            .append('svg:image')
+                .attr('width', 15)
+                .attr('height', 15)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('xlink:href', 'images/stripes.png')
+
 
         @bgRect = @svg.append('rect')
             .attr('width', '100%')
@@ -37,6 +54,14 @@ class mcb80x.Timeline
             .attr('y', '35%')
             .attr('class', 'timeline-progressbar')
 
+        @activebar = @svg.append('rect')
+            .attr('width', 0.0)
+            .attr('height', '30%')
+            .attr('x', '0')
+            .attr('y', '35%')
+            .attr('class', 'timeline-activebar')
+            .attr('fill', 'url(#patstripes)')
+            # .attr('fill', '#666')
 
         @orderedSegments = []
         @segmentLookup = {}
@@ -77,6 +102,13 @@ class mcb80x.Timeline
             d3.select(this).transition()
                 .style('opacity', 0.0)
                 .duration(250)
+        )
+
+        controller = this
+        @svg.on('click', ->
+            # seek to the appropriate place in the timeline
+            [x, y] = d3.mouse(this)
+            controller.seek(x)
         )
 
 
@@ -159,16 +191,69 @@ class mcb80x.Timeline
         console.log('Done setting up timeline.')
 
     update: (segment, t) ->
+        if not segment?
+            return
+
         segId = segment.elementId
 
+        timelineSegment = @segmentLookup[segId]
+
         if not @tScale?
+            console.log('No time scale defined')
             return
 
         @currentTime = t
-        newWidth = @tScale(@segmentLookup[segId].start + @currentTime)
-        # console.log(newWidth)
-        @progressbar.attr('width', newWidth + '%')
 
+        if not timelineSegment?
+            @currentTime = undefined
+        else
+            @displayedSegment = timelineSegment
+
+
+        if not @displayedSegment?
+            return
+
+        if not @currentTime?
+            progressWidth = @tScale(@displayedSegment.start)
+            activebarWidth = @tScale(@displayedSegment.duration)
+            @progressbar.attr('width', progressWidth + '%')
+            @activebar.attr('x', progressWidth + '%')
+            @activebar.attr('width', activebarWidth + '%')
+        else
+            newWidth = @tScale(@displayedSegment.start + @currentTime)
+            @progressbar.attr('width', newWidth + '%')
+            @activebar.attr('x', '0%')
+            @activebar.attr('width', '0%')
+
+    seek: (x) ->
+        console.log('x: ' + x)
+
+        if not @tScale?
+            console.log('No time scale defined')
+
+            return
+
+        svgWidth = @svg.node().getBBox().width
+        console.log(svgWidth)
+        t = @tScale.invert(100 * (x / svgWidth))
+
+        console.log('t: ' + t)
+
+        thisSeg = undefined
+        for s in @orderedSegments
+            if s.start > t
+                break
+
+            if s.start < t
+                thisSeg = s
+
+        if not thisSeg?
+            console.log('No sensible segment to match')
+
+        relT = t - thisSeg.start
+        console.log('Seeking to ' + thisSeg.segId + ':' + relT)
+
+        @sceneController.runAtSegment(thisSeg.obj, relT)
 
     play: ->
         console.log('play')

@@ -63,7 +63,7 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
                     dfrd.resolve()
                 )
         ).fail( ->
-            alert('SVG would not load')
+            alert('SVG would not load: ' + @svgFileName)
         )
 
         return dfrd

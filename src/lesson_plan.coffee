@@ -22,8 +22,7 @@ soundReady = false
 audioRoot = '/audio/'
 svgRoot = '/svg/'
 videoRoot = '/video/'
-videoSelector = '#vid'
-videoDivSelector = '#video'
+videoPlayerDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 
@@ -56,7 +55,7 @@ class mcb80x.SceneController
         # calls from piling up.
         @runAtSegmentInvoked = false
 
-    run: ->
+    run: (t) ->
         console.log('Scene controller: running...')
 
         # unset the stop flags
@@ -68,15 +67,16 @@ class mcb80x.SceneController
         @currentCallId = uniqueCbId()
 
         # set the scene in motion
-        @advance(@currentCallId)
+        @advance(@currentCallId, t)
 
 
-    runAtSegment: (seg) ->
+    runAtSegment: (seg, t) ->
         console.log('Running from segment: ')
+        console.log('t = ' + t)
 
         if @runAtSegmentInvoked
             # already working on one these
-            alert('shaking off repeat invokation of runAtSegment')
+            console.log('shaking off repeat invokation of runAtSegment')
             return
 
         @runAtSegmentInvoked = true
@@ -95,11 +95,11 @@ class mcb80x.SceneController
             console.log('running scene')
             @currentElement = seg
             @runAtSegmentInvoked = false
-            @run()
+            @run(t)
         )
 
 
-    advance: (cbId) ->
+    advance: (cbId, t) ->
 
         console.log('advance: callId = ' + cbId)
 
@@ -121,9 +121,15 @@ class mcb80x.SceneController
 
         console.log('Scene controller: running ' + @currentElement.elementId)
         console.log(@currentElement)
+        @currentTime(undefined)
+        @currentSegment(@currentElement)
 
-        # Run it. dfrd is a jQuery deferred object
-        dfrd = @currentElement.run()
+        if t?
+            dfrd = $.when(@currentElement.seek(t))
+                    .then(@currentElement.run())
+        else
+            # Run it. dfrd is a jQuery deferred object
+            dfrd = @currentElement.run()
 
         console.log('waiting for element to finish running')
         checkForCompletion = =>
@@ -256,9 +262,13 @@ class mcb80x.LessonElement
         @currentChild = 0
 
     addChild: (child) ->
+        console.log('adding ' + child.elementId + ' to ' + @elementId)
         child.parent = this
         child.parentScene = @parentScene
         @children.push(child)
+
+        if @childIndexLookup[child.elementId]?
+            alert('Dupicate script element name.  Unpredictable behavior will ensue')
         @childIndexLookup[child.elementId] = @children.length - 1
         @childLookup[child.elementId] = child
 
@@ -277,6 +287,7 @@ class mcb80x.LessonElement
         # if by some weirdness there are no children, return
         # undefined
         if not @children? or @children.length is 0
+            console.log('weirdness')
             return undefined
 
         # Look up the index of child
@@ -286,11 +297,15 @@ class mcb80x.LessonElement
     nextAfterIndex: (childIndex) ->
 
         nextIndex = childIndex + 1
+        console.log(nextIndex)
+        console.log(@children[nextIndex])
         if @children[nextIndex]?
             return @children[nextIndex]
         else if @parent?
             return @parent.nextAfterChild(this)
         else
+            console.log('nextAfterIndex: no parent to yield to...')
+            console.log(this)
             return undefined
 
     # run starting from one of this element's children
@@ -309,6 +324,11 @@ class mcb80x.LessonElement
     # setCurrent: ->
     #     @parentScene.currentSegment(this) if @parentScene
 
+    seek: (t) ->
+        # do nothing
+        dfrd = $.Deferred().resolve()
+        return dfrd
+
     willYieldOnNext: ->
         if not (@children? and @children.length and @currentChild < @children.length)
             return true
@@ -326,6 +346,7 @@ class mcb80x.LessonElement
         if @parent?
             return @parent.nextAfterChild(this)
         else
+            console.log('no parent, yielding undefined')
             return undefined
 
     # checkIfPaused: ->
@@ -362,33 +383,31 @@ class mcb80x.LessonElement
 
     #     return false
 
-    reset: ->
-        console.log('reseting children')
-
+    reset: (t) ->
         @currentChild = 0
 
         # for child in Array::reverse.call(children)
         for child in @children
             child.reset()
 
-    runAtSegment: (path) ->
-        console.log('runAtSegment')
+    # runAtSegment: (path) ->
+    #     console.log('runAtSegment')
 
-        cb = =>
-            console.log('stopCb')
-            if path is ''
-                return @run()
+    #     cb = =>
+    #         console.log('stopCb')
+    #         if path is ''
+    #             return @run()
 
-            splitPath = path.split(':')
+    #         splitPath = path.split(':')
 
-            head = splitPath.shift()
+    #         head = splitPath.shift()
 
-            @parentScene.reset()
-            @childLookup[head].runAtSegment(splitPath.join(':'))
+    #         @parentScene.reset()
+    #         @childLookup[head].runAtSegment(splitPath.join(':'))
 
 
-        # @parentScene.currentSegment().stop(cb)
-        @parentScene.stop(cb)
+    #     # @parentScene.currentSegment().stop(cb)
+    #     @parentScene.stop(cb)
 
     stop: ->
         for child in @children
@@ -497,9 +516,12 @@ class mcb80x.Interactive extends LessonElement
 # A somewhat hacked up video object
 class mcb80x.Video extends LessonElement
     constructor: (elId) ->
-        @preferedFormat = 'mp4'
+        @preferredFormat = 'youtube'
+        #@preferredFormat = 'vimeo'
         @duration = ko.observable(1.0)
         @mediaUrls = {}
+
+        @playerReady = $.Deferred()
         super(elId)
 
 
@@ -519,21 +541,69 @@ class mcb80x.Video extends LessonElement
     # init is called after the DOM is ready
     init: ->
 
-        if not globalPop?
-            globalPop = Popcorn.smart(videoSelector)
+        # f = @media(@preferredFormat)
 
-        @pop = globalPop
+        # # Load the media on the player object
+        # if @preferredFormat == 'vimeo'
+        #     f = 'http://player.vimeo.com/video/' + f
+
+        # console.log('video parent: ' + @parent)
+        # if not globalPop?
+        #     if @preferredFormat is 'vimeo'
+        #         globalPop = Popcorn.vimeo(videoPlayerDivSelector, f)
+        #     else
+        #         globalPop = Popcorn.smart(videoPlayerDivSelector, f)
+
+        # @pop = globalPop
+
+        # hide the video player by default
+        $(videoPlayerDivSelector).attr('style', 'opacity: 0.0;')
+
+        @playerSelector = undefined
+
         @load()
 
         super()
 
+    reset: (t) ->
+        console.log('Resetting video')
+        t = 0.0 if not t?
+        @seek(t)
+        # @finish()
+        @hide()
+
+        super()
+
+    seek: (t) ->
+        console.log('seeking video to ' + t)
+        @pop.pause()
+        @pop.currentTime(t)
+
+        dfrd = $.Deferred()
+
+        checkIfSeeking = =>
+            if not @pop.seeking()
+                console.log('not seeking')
+                dfrd.resolve()
+            else
+                console.log('seeking')
+                setTimeout(checkIfSeeking, 100)
+
+        checkIfSeeking()
+        return dfrd
+
     show: ->
+
+        @playerNode.setAttribute('style', 'display: inline; opacity: 1.0;')
+
         d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
-        d3.select('#video').style('display', 'inline')
-        d3.select('#video').transition().style('opacity', 1.0).duration(1000)
+        d3.select(videoPlayerDivSelector).style('display', 'inline')
+        d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
 
     hide: ->
-        d3.select('#video').transition().style('opacity', 0.0).duration(1000)
+        d3.select(videoPlayerDivSelector).transition().style('opacity', 0.0).duration(1000)
+        #d3.select(videoPlayerDivSelector).style('display', 'none')
+        @playerNode.setAttribute('style', 'opacity: 0.0;') if @playerNode?
 
     # playWhenReady: ->
     #     if @pop.readyState() >= 4
@@ -546,9 +616,69 @@ class mcb80x.Video extends LessonElement
     #         setTimeout(playit, 1000)
 
     load: ->
+
+        f = @media(@preferredFormat)
+
         # Load the media on the player object
-        f = @media(@preferedFormat)
-        @pop.media.src = f
+        if @preferredFormat == 'vimeo' or @preferredFormat == 'youtube'
+
+            if @preferredFormat == 'vimeo'
+                url = 'http://player.vimeo.com/video/' + f
+                console.log('f: ' + f)
+                # @pop.url = f
+                @pop = Popcorn.vimeo(videoPlayerDivSelector, url)
+            else
+                url = 'http://www.youtube.com/embed/' + f + '?controls=0&enablejsapi=1&modestbranding=1&showinfo=0&rel=0'
+                @pop = Popcorn.youtube(videoPlayerDivSelector, url)
+
+            #  Need to do some machinations to get our hands on the correct iframe node
+            console.log(videoPlayerDivSelector + ' iframe')
+
+            preparePlayer = =>
+                console.log('preparing player')
+                iframes = $(videoPlayerDivSelector + ' iframe')
+
+                console.log(iframes)
+                window.iframes = iframes
+                iframes.each( (i, v) =>
+                    console.log('iframe')
+                    console.log(v)
+                    src = v.getAttribute('src')
+                    r = new RegExp(f, 'g')
+                    window.r = r
+                    window.src = src
+                    console.log('src: ' + src + ', f: ' + f)
+                    m = src.match(r)
+                    if m? and m.length > 0
+                        console.log('found correct iframe')
+                        console.log(v)
+                        @playerNode = v
+                )
+
+                if not @playerNode?
+                    setTimeout(preparePlayer, 100)
+                    return
+
+                # @playerNode.setAttribute('style', 'display:none;')
+
+                if @preferredFormat is 'youtube'
+                    @youtubePreload()
+                else
+                    @playerReady.resolve()
+
+            # this must run as a separate evt since the
+            # injected player won't be available until after this
+            # function ends
+            setTimeout(preparePlayer, 0)
+
+        else
+            @pop = Popcorn.smart(videoPlayerDivSelector, f)
+
+            @playerNode = @pop.video
+            # @playerNode.setAttribute('style', 'display:none;')
+
+            @playerReady.resolve()
+
         console.log('loading ' + f)
 
         @pop.on('durationchange', =>
@@ -559,8 +689,33 @@ class mcb80x.Video extends LessonElement
 
         @pop.load()
 
+
+    youtubePreload: ->
+
+        console.log('preloading youtube')
+
+        @playerNode.setAttribute('style', 'opacity: 0; display: inline')
+        @pop.mute()
+        @pop.play()
+
+        checkReady = =>
+            if @pop.readyState() is 4
+                @pop.pause(0)
+                @pop.unmute()
+                # @playerNode.setAttribute('style', 'opacity:1.0;')
+                @playerNode.setAttribute('style', 'opacity:0.0;')
+                console.log('youtube video loaded')
+                @playerReady.resolve()
+            else
+                console.log(@pop.readyState())
+                setTimeout(checkReady, 500)
+
+        checkReady()
+
+
     finish: ->
         # unregister callbacks
+        console.log('unregistering callbacks on video')
         @pop.off('ended', @yieldCb) if @yieldCb
         @pop.off('updatetime', @updateTimeCb) if @updateTimeCb
 
@@ -569,25 +724,31 @@ class mcb80x.Video extends LessonElement
 
     run: ->
 
-        @load()
-
-        console.log('playing video')
-
-        @show()
-
-        @updateTimeCb = =>
-            t = @currentTime()
-            scene.currentTime(t)
-        @pop.on('timeupdate', @updateTimeCb)
-
+        console.log('video run called')
         dfrd = $.Deferred()
 
-        # yield when the view has ended
-        @yieldCb = ->
-            dfrd.resolve()
-        @pop.on('ended', @yieldCb)
+        $.when(@playerReady).done( =>
 
-        @pop.play()
+            console.log('playing video')
+
+            @show()
+
+            @updateTimeCb = =>
+                t = @pop.currentTime()
+                @parentScene.currentTime(t)
+            @pop.on('timeupdate', @updateTimeCb)
+
+
+            # yield when the view has ended
+            @yieldCb = ->
+                console.log('video finished')
+                console.log('parent: ' + @parent)
+                dfrd.resolve()
+            @pop.on('ended', @yieldCb)
+
+            # @pop.currentTime(0)
+            @pop.play()
+        )
 
         return dfrd
 
@@ -808,9 +969,13 @@ class mcb80x.WaitForChoice extends LessonElement
         super()
 
     run: ->
-        console.log('installing waitForChoice subscription on ' + @observableName)
+
         obs = @parent.stage()[@observableName]
 
+        console.log('clearing ' + @observableName)
+        obs(undefined)
+
+        console.log('installing waitForChoice subscription on ' + @observableName)
         @dfrd = $.Deferred()
 
         @subs = obs.subscribe( =>
@@ -1034,6 +1199,11 @@ root.mp4 = (f) ->
     currentObj.media('mp4', f)
 root.webm = (f) ->
     currentObj.media('webm', f)
+root.vimeo = (f) ->
+    currentObj.media('vimeo', f)
+root.youtube = (f) ->
+    currentObj.media('youtube', f)
+
 
 root.subtitles = (f) ->
     currentObj.subtitles(f)
