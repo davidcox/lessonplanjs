@@ -76,27 +76,36 @@ class mcb80x.SceneController
 
         if @runAtSegmentInvoked
             # already working on one these
-            console.log('shaking off repeat invokation of runAtSegment')
-            return
+            console.log('WARNING: multiple invocations of runAtSegment')
+            # TODO: stop the existing invocation
+            # return
 
         @runAtSegmentInvoked = true
 
-        # dim the stage lights right away to
-        # let the user know the click registered
-        $.when(util.indicateLoading(true).promise()).then(=>
-            console.log('waiting for stop')
-            return @stop().promise()
-        ).then(=>
-            console.log('reseting...')
-            return @reset().promise()
-        ).then(=>
-            return util.indicateLoading(false).promise()
-        ).then(=>
-            console.log('running scene')
-            @currentElement = seg
-            @runAtSegmentInvoked = false
-            @run(t)
-        )
+        if seg == @currentElement
+            $.when(@currentElement.pause())
+             .then(=>
+                @runAtSegmentInvoked = false
+                @run(t)
+            )
+
+        else
+            # dim the stage lights right away to
+            # let the user know the click registered
+            $.when(util.indicateLoading(true).promise()).then(=>
+                console.log('waiting for stop')
+                return @stop().promise()
+            ).then(=>
+                console.log('reseting...')
+                return @reset().promise()
+            ).then(=>
+                return util.indicateLoading(false).promise()
+            ).then(=>
+                console.log('running scene')
+                @currentElement = seg
+                @runAtSegmentInvoked = false
+                @run(t)
+            )
 
 
     advance: (cbId, t) ->
@@ -109,7 +118,7 @@ class mcb80x.SceneController
 
         if cbId != @currentCallId
             # another call chain has been initated, bail on this one
-            alert('bailing')
+            console.log('bailing')
             return
 
         if @stopping
@@ -124,19 +133,24 @@ class mcb80x.SceneController
         @currentTime(undefined)
         @currentSegment(@currentElement)
 
+        dfrd = undefined
+
         if t?
+            @runAtSegmentInvoked = false  # TODO: ?
             dfrd = $.when(@currentElement.seek(t))
-                    .then(@currentElement.run())
+                    .then(=> @currentElement.run())
         else
             # Run it. dfrd is a jQuery deferred object
             dfrd = @currentElement.run()
 
         console.log('waiting for element to finish running')
         checkForCompletion = =>
+
             if @stopping
                 @stopped = true
                 @stopping = false
                 # fall out
+                console.log('stopping is true')
                 return
 
             if $.when(dfrd).state() == 'pending' or @paused()
@@ -145,9 +159,10 @@ class mcb80x.SceneController
                 return
 
             else
+
                 if cbId != @currentCallId
                     # another call chain has been initated, bail on this one
-                    alert('bailing 2')
+                    console.log('bailing 2')
                     return
 
                 console.log('Scene controller: finishing ' + @currentElement.elementId)
@@ -516,8 +531,8 @@ class mcb80x.Interactive extends LessonElement
 # A somewhat hacked up video object
 class mcb80x.Video extends LessonElement
     constructor: (elId) ->
-        @preferredFormat = 'youtube'
-        #@preferredFormat = 'vimeo'
+        @preferredFormat = 'mp4'
+        # @preferredFormat = 'youtube'
         @duration = ko.observable(1.0)
         @mediaUrls = {}
 
@@ -583,10 +598,8 @@ class mcb80x.Video extends LessonElement
 
         checkIfSeeking = =>
             if not @pop.seeking()
-                console.log('not seeking')
                 dfrd.resolve()
             else
-                console.log('seeking')
                 setTimeout(checkIfSeeking, 100)
 
         checkIfSeeking()
@@ -675,6 +688,10 @@ class mcb80x.Video extends LessonElement
             @pop = Popcorn.smart(videoPlayerDivSelector, f)
 
             @playerNode = @pop.video
+            if @playerNode.hasAttribute('controls')
+                @playerNode.removeAttribute('controls')
+
+            @playerNode.setAttribute('style', 'opacity: 0;')
             # @playerNode.setAttribute('style', 'display:none;')
 
             @playerReady.resolve()
@@ -972,8 +989,8 @@ class mcb80x.WaitForChoice extends LessonElement
 
         obs = @parent.stage()[@observableName]
 
-        console.log('clearing ' + @observableName)
-        obs(undefined)
+        # console.log('clearing ' + @observableName)
+        # obs(undefined)
 
         console.log('installing waitForChoice subscription on ' + @observableName)
         @dfrd = $.Deferred()

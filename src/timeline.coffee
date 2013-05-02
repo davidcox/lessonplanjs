@@ -184,14 +184,15 @@ class mcb80x.Timeline
             #gravity: $.fn.tipsy.autoNS
             gravity:'sw'
             title: ->
-                console.log(this)
                 d3.select(this).attr('timelinetooltip')
         )
 
         console.log('Done setting up timeline.')
 
     update: (segment, t) ->
+        console.log('updating timeline')
         if not segment?
+            console.log('Warning: empty segment in timeline')
             return
 
         segId = segment.elementId
@@ -211,6 +212,7 @@ class mcb80x.Timeline
 
 
         if not @displayedSegment?
+            console.log('warning: no segment to display')
             return
 
         if not @currentTime?
@@ -253,6 +255,7 @@ class mcb80x.Timeline
         relT = t - thisSeg.start
         console.log('Seeking to ' + thisSeg.segId + ':' + relT)
 
+        @update(thisSeg.segId, relT)
         @sceneController.runAtSegment(thisSeg.obj, relT)
 
     play: ->
