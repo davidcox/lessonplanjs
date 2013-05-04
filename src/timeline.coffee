@@ -256,7 +256,7 @@ class mcb80x.Timeline
         console.log('Seeking to ' + thisSeg.segId + ':' + relT)
 
         @update(thisSeg.segId, relT)
-        @sceneController.runAtSegment(thisSeg.obj, relT)
+        @sceneController.seek(thisSeg.obj, relT)
 
     play: ->
         console.log('play')

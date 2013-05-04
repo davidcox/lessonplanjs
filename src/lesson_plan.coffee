@@ -26,7 +26,154 @@ videoPlayerDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 
+
+# A simple controller that implements a run loop to poke its
+# head up periodically to check whether something needs to be
+# done
+
 class mcb80x.SceneController
+
+    constructor: (@scene) ->
+
+        # state variables
+        @shouldSeek = false
+        @seeking = false
+        @targetSegment = undefined
+        @targetTime = undefined
+
+        @shouldStop = false
+        @stopping = false
+        @stopped = true
+        @stopDfrd = undefined
+
+        @shouldPause = false
+        @pausing = false
+        @paused = true
+        @pauseDfrd = undefined
+
+        @shouldRun = false
+        @running = false
+        @runningDfrd = undefined
+
+        @currentElement = @scene
+
+        @runLoopActive = true
+
+        # knockout.js bindings, inherited from the scene
+        # object
+        @currentSegment = @scene.currentSegment
+        @currentTime = @scene.currentTime
+
+        @interval = 100
+
+
+    end: ->
+        @runLoopActive = false
+
+    begin: ->
+        setTimeout(@runLoop, 0)
+
+
+    punt: (t) ->
+        t = @interval if not t
+        rl = => @runLoop
+        setTimeout(rl, t)
+
+    runLoop: ->
+
+        if not @runLoopActive
+            return # bail
+
+        # test for stopping
+        if @shouldStop
+            @shouldStop = false
+            @stopping = true
+            # tell the system to stop, get a promise back
+            @stopDfrd = $.when(=> @scene.stop())
+                         .then(=> @scene.reset())
+
+        if @stopping
+            if $.when(@stopDfrd).isResolved()
+                @stopping = false
+                @stopped = true
+                @running = false
+            else
+                @punt()
+
+        # test for pausing
+        if @shouldPause
+            @shouldPause = false
+            @pausing = true
+            @pauseDfrd = @currentElement.pause()
+
+        if @pausing
+            if $.when(@pauseDfrd).isResolved()
+                @paused = true
+                @pausing = false
+            else
+                @punt()
+
+        # test for seeking
+        if @shouldSeek
+            @shouldSeek = false
+
+            @seekDfrd = $.when(=> @scene.stop())
+                         .then(=>
+                            @currentElement = @targetSegment
+                            @currentElement.seek(@targetTime)
+                        ).then(=>
+                            @shouldRun = true
+                        )
+
+            @seeking = true
+
+        if @seeking
+            if $.when(@seekDfrd).isResolved()
+                @seeking = false
+            else
+                @punt()
+
+        if @shouldRun
+            @shouldRun = false
+            @running = true
+            @runningDfrd = @advance()
+
+        # check for completion
+        if @running
+            if $.when(@runningDfrd).isResolved()
+
+                @running = false
+                @runningDfrd = @advance()
+                @running = true
+                @punt(0)
+            else
+                @punt()
+
+        @punt()
+
+
+    advance: ->
+        return @currentElement.run()
+
+    seek: (seg, t) ->
+        @shouldSeek = true
+        @targetSegment = seg
+        @targetTime = t
+
+
+    pause: ->
+        @shouldPause = true
+
+    run: ->
+        @shouldRun = true
+
+    stop: ->
+        @shouldRun = false
+        @shouldStop = true
+
+
+
+class mcb80x.SceneControllerOld
 
     constructor: (@scene) ->
 
@@ -323,22 +470,6 @@ class mcb80x.LessonElement
             console.log(this)
             return undefined
 
-    # run starting from one of this element's children
-    # this call allows recursive function call chaining
-    # runChildrenStartingAtIndex: (index, cb) ->
-    #     console.log('runStartingAtIndex index: ' + index)
-
-    #     # if there is no next child, just yield
-    #     if index > @children.length - 1
-    #         @yield()
-    #         return
-
-    #     # otherwise, run the child node
-    #     @children[index].run()
-
-    # setCurrent: ->
-    #     @parentScene.currentSegment(this) if @parentScene
-
     seek: (t) ->
         # do nothing
         dfrd = $.Deferred().resolve()
@@ -364,65 +495,18 @@ class mcb80x.LessonElement
             console.log('no parent, yielding undefined')
             return undefined
 
-    # checkIfPaused: ->
-    #     if @paused()
-    #         runit = =>
-    #             console.log('checking if paused')
-    #             @checkIfPaused()
-    #         setTimeout(runit, 1000)
-    #     return
-
 
     # Run through this element and all of its children
     run: ->
         return true
 
-        # # If this node doesn't have any children, yield
-        # # back up to the parent
-        # if not @children?
-        #     if @stopping
-        #         return false
-        #     else
-        #         return $.Deferred.done(=> @yield())
-        #                          .failed(=> @reset())
-        # else
-        #     # start running the child nodes
-        #     return $.Deferred.done(=> @runChildrenStartingAtIndex(0))
-        #                      .failed(=> @reset())
-
-    # paused: ->
-    #     if @parentScene?
-    #         return @parentScene.paused()
-    #     else
-    #         return @parent.parentScene.paused() if @parent?
-
-    #     return false
 
     reset: (t) ->
         @currentChild = 0
 
-        # for child in Array::reverse.call(children)
         for child in @children
             child.reset()
 
-    # runAtSegment: (path) ->
-    #     console.log('runAtSegment')
-
-    #     cb = =>
-    #         console.log('stopCb')
-    #         if path is ''
-    #             return @run()
-
-    #         splitPath = path.split(':')
-
-    #         head = splitPath.shift()
-
-    #         @parentScene.reset()
-    #         @childLookup[head].runAtSegment(splitPath.join(':'))
-
-
-    #     # @parentScene.currentSegment().stop(cb)
-    #     @parentScene.stop(cb)
 
     stop: ->
         for child in @children
