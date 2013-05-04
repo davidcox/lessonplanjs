@@ -66,7 +66,6 @@ svgbind =
         el = d3.select(selector)
 
         bbox = el.node().getBBox()
-        console.log(bbox)
 
         if centered
             center = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
@@ -78,13 +77,10 @@ svgbind =
                 transform += 'translate(' + center[0] + ', ' + center[1] + ') '
                 transform += 'translate(' + (-1*newcenter[0]) + ', ' + (-1*newcenter[1]) + ') '
                 el.attr('transform', transform)
-                console.log(transform)
-                console.log(center)
-                console.log(newcenter)
+
         else
             recenter = (el) ->
 
-        console.log(recenter)
 
         setter = (newVal) ->
             el.text(newVal)
@@ -137,7 +133,6 @@ svgbind =
         for s in Object.keys(selectorMap)
             d3.selectAll(s).on('mousedown', -> observable(true))
             d3.selectAll(s).on('mouseup', -> observable(false))
-            console.log(d3.select(s))
 
     bindMultipleChoice: (selectorMap, observable) ->
 
@@ -145,7 +140,6 @@ svgbind =
             el = d3.select(k)
             v = selectorMap[k]
             el.on('click', ->
-                console.log('clicky')
                 observable(undefined)
                 observable(v)
             )

@@ -56,7 +56,6 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         @R_a = @prop 1.0
 
         @nCompartments = @compartments.length
-        console.log('nCompartments: ' + @nCompartments)
 
         @cIDs = [0..@nCompartments-1]
 

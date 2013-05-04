@@ -86,7 +86,6 @@ oscilloscope = (svgSelector, frameSelector) ->
     dataFn = -> undefined
 
     proxy.data = (d) ->
-        console.log('data() got: ' + d)
         if not d?
             return dataFn
         else if $.isFunction(d)

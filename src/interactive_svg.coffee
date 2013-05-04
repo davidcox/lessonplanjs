@@ -9,8 +9,6 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
     # loaded
     svgDocumentReady: (xml, cb) ->
 
-        console.log('received svg xml data...')
-
         # Attach the SVG to the DOM in the appropriate place
         importedNode = document.importNode(xml.documentElement, true)
 
@@ -27,7 +25,6 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
 
         @init()
 
-        console.log('initialized interactive')
         cb() if cb?
 
     play: () ->
@@ -59,7 +56,7 @@ class mcb80x.InteractiveSVG extends mcb80x.ViewModel
                 .style('opacity', 1.0)
                 .duration(1000)
                 .each(->
-                    console.log('finished loading interactive onto stage')
+                    # console.log('finished loading interactive onto stage')
                     dfrd.resolve()
                 )
         ).fail( ->

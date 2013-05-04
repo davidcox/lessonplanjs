@@ -25,6 +25,10 @@ class mcb80x.Timeline
             @update(@sceneController.currentElement, v)
         )
 
+        @scene.currentSegment.subscribe( (v) =>
+            @update(@sceneController.currentElement, @sceneController.currentTime)
+        )
+
         @svg = @div.append('svg').attr('id', 'timeline-svg')
         defs = @svg.append('svg:defs')
         defs.append('svg:pattern')
@@ -104,11 +108,12 @@ class mcb80x.Timeline
                 .duration(250)
         )
 
-        controller = this
+        timeline = this
         @svg.on('click', ->
+            console.log('timeline click')
             # seek to the appropriate place in the timeline
             [x, y] = d3.mouse(this)
-            controller.seek(x)
+            timeline.seekToX(x)
         )
 
 
@@ -117,7 +122,7 @@ class mcb80x.Timeline
         ko.applyBindings(this, @parentDiv.node())
 
     setupTiming: ->
-        console.log('adjusting timeline timing...')
+        console.log('[timeline]: adjusting timing...')
         runningTime = 0.0
         for beat in @scene.children
             segId = beat.elementId
@@ -130,10 +135,10 @@ class mcb80x.Timeline
 
         @totalDuration = runningTime
 
-        console.log('total duration = ' + @totalDuration)
+        console.log('[timeline]: total duration = ' + @totalDuration)
 
 
-        console.log('Drawing timeline...')
+        console.log('[timeline]: drawing timeline...')
 
         @tScale = d3.scale.linear()
             .domain([0.0, @totalDuration])
@@ -158,7 +163,7 @@ class mcb80x.Timeline
                 .attr('timelinetooltip', (d) -> d.title)
 
         # Marker mouseover effects
-        console.log('Installing mouseovers...')
+        console.log('[timeline]: installing mouseovers...')
 
         @markers.on('mouseover', (d) ->
             d3.select(this).transition()
@@ -171,12 +176,15 @@ class mcb80x.Timeline
                 .duration(250)
         )
 
-        console.log('Installing click handlers...')
+        console.log('[timeline]: installing click handlers...')
 
         # Marker click action
         @markers.on('click', (d) =>
+            console.log('marker click: ' + d.title)
             obj = @segmentLookup[d.title].obj
-            @sceneController.runAtSegment(obj))
+            @sceneController.seek(obj, 0)
+            d3.event.stopPropagation()
+            )
 
         console.log('Installing tooltips...')
 
@@ -190,17 +198,20 @@ class mcb80x.Timeline
         console.log('Done setting up timeline.')
 
     update: (segment, t) ->
-        console.log('updating timeline')
+        console.log('[timeline]: updating timeline')
         if not segment?
-            console.log('Warning: empty segment in timeline')
+            console.log('[timeline]: warning: empty segment in timeline')
             return
+
+        if isNaN(t)
+            t = undefined
 
         segId = segment.elementId
 
         timelineSegment = @segmentLookup[segId]
 
         if not @tScale?
-            console.log('No time scale defined')
+            console.log('[timeline]: no time scale defined')
             return
 
         @currentTime = t
@@ -227,19 +238,16 @@ class mcb80x.Timeline
             @activebar.attr('x', '0%')
             @activebar.attr('width', '0%')
 
-    seek: (x) ->
-        console.log('x: ' + x)
+    seekToX: (x) ->
 
         if not @tScale?
-            console.log('No time scale defined')
+            console.log('[timeline]: no time scale defined')
 
             return
 
         svgWidth = @svg.node().getBBox().width
         console.log(svgWidth)
         t = @tScale.invert(100 * (x / svgWidth))
-
-        console.log('t: ' + t)
 
         thisSeg = undefined
         for s in @orderedSegments
@@ -250,22 +258,22 @@ class mcb80x.Timeline
                 thisSeg = s
 
         if not thisSeg?
-            console.log('No sensible segment to match')
+            console.log('[timeline]: no sensible segment to match')
 
         relT = t - thisSeg.start
-        console.log('Seeking to ' + thisSeg.segId + ':' + relT)
+        console.log('[timeline]: seeking to ' + thisSeg.segId + ':' + relT)
 
         @update(thisSeg.segId, relT)
         @sceneController.seek(thisSeg.obj, relT)
 
     play: ->
-        console.log('play')
+        console.log('[timeline]: play')
         @playing(true)
         @paused(false)
         @sceneController.resume()
 
     pause: ->
-        console.log('pause')
+        console.log('[timeline]: pause')
         @playing(false)
         @paused(true)
         @sceneController.pause()

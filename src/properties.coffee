@@ -54,7 +54,6 @@ class mcb80x.ViewModel extends mcb80x.PropsEnabled
             if targetVal.observable?
                 this[k] = targetVal.observable
             else
-                console.log('here')
                 this[k] = ko.computed({
                             read: ->
                                 targetVal()

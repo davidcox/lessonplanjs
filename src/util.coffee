@@ -38,8 +38,6 @@ util =
         el.attr('opacity', 0.0)
         el.attr('visibility', 'visible')
         el.attr('display', 'inline')
-        console.log('el: ' + el)
-        console.log('display: ' + el.attr('display'))
         if duration is undefined
             el.attr('opacity', 1.0)
         else

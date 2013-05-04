@@ -67,87 +67,122 @@ class mcb80x.SceneController
         @interval = 100
 
 
-    end: ->
-        @runLoopActive = false
-
-    begin: ->
-        setTimeout(@runLoop, 0)
-
 
     punt: (t) ->
         t = @interval if not t
-        rl = => @runLoop
+        rl = => @runLoop()
         setTimeout(rl, t)
+
+    stopRunLoop: ->
+        @runLoopActive = false
+
+    startRunLoop: ->
+        @runLoopActive = true
+        @shouldRun = true
+        @punt(0)
 
     runLoop: ->
 
+        l = (m) -> console.log(m)
+
         if not @runLoopActive
+            console.log('run loop inactive: ' + @runLoopActive)
             return # bail
 
         # test for stopping
         if @shouldStop
+            console.log('[ shouldStop ]')
             @shouldStop = false
             @stopping = true
             # tell the system to stop, get a promise back
             @stopDfrd = $.when(=> @scene.stop())
                          .then(=> @scene.reset())
+                         .then(=>
+                            @stopping = false
+                            @stopped = true
+                            @running = false)
 
         if @stopping
-            if $.when(@stopDfrd).isResolved()
-                @stopping = false
-                @stopped = true
-                @running = false
-            else
-                @punt()
+            console.log('[ stopping ]')
+            @punt()
+            return
 
         # test for pausing
         if @shouldPause
+            console.log('[ shouldPause ]')
             @shouldPause = false
             @pausing = true
             @pauseDfrd = @currentElement.pause()
 
         if @pausing
-            if $.when(@pauseDfrd).isResolved()
+            console.log('[ pausing ]')
+            $.when(@pauseDfrd)
+             .then(=>
                 @paused = true
                 @pausing = false
-            else
-                @punt()
+            )
+
+            @punt()
+            return
 
         # test for seeking
         if @shouldSeek
+            console.log('[ shouldSeek ]')
             @shouldSeek = false
 
-            @seekDfrd = $.when(=> @scene.stop())
-                         .then(=>
+            @seeking = true
+            @seekDfrd = $.when(=>
+                            l '> stopping...'
+                            if @targetSegment != @currentElement
+                                return @scene.stop()
+                            else
+                                return @currentElement.pause()
+                        ).then(=>
+                            l '> resetting'
+                            if @targetSegment != @currentElement
+                                return @scene.reset()
+                        ).then(=>
+                            l '> seeking...'
                             @currentElement = @targetSegment
+                            @currentSegment(@currentElement)
+                            console.log(@currentElement)
                             @currentElement.seek(@targetTime)
                         ).then(=>
+                            @seeking = false
                             @shouldRun = true
                         )
 
-            @seeking = true
-
         if @seeking
-            if $.when(@seekDfrd).isResolved()
-                @seeking = false
-            else
-                @punt()
+            console.log('[ seeking ]')
+            @punt()
+            return
 
         if @shouldRun
+            console.log('[ shouldRun ]')
             @shouldRun = false
             @running = true
-            @runningDfrd = @advance()
+            @runningDfrd = @currentElement.run()
+                            # .then(=>
+                            #     l 'finishing'
+                            #     @currentElement.finish())
+            @punt()
+            return
 
         # check for completion
         if @running
-            if $.when(@runningDfrd).isResolved()
-
+            # console.log('[ running ]')
+            if $.when(@runningDfrd).state() == 'resolved'
                 @running = false
-                @runningDfrd = @advance()
+                if @currentElement.willYieldOnNext()
+                    @currentElement.finish()
+                @currentElement = @currentElement.next()
+                @currentSegment(@currentElement)
+                @currentTime(0.0)
+                @runningDfrd = @currentElement.run()
                 @running = true
-                @punt(0)
-            else
-                @punt()
+
+            @punt()
+            return
 
         @punt()
 
@@ -164,237 +199,15 @@ class mcb80x.SceneController
     pause: ->
         @shouldPause = true
 
+    resume: ->
+        @shouldRun = true
+
     run: ->
         @shouldRun = true
 
     stop: ->
         @shouldRun = false
         @shouldStop = true
-
-
-
-class mcb80x.SceneControllerOld
-
-    constructor: (@scene) ->
-
-        @paused = ko.observable(false)
-
-        # a flag to inform the callback chain to
-        # abort and stop
-        @stopping = false
-
-        # a flag to indicate that the scene has
-        # successfully parked
-        @stopped = false
-
-        @currentElement = @scene
-
-        # knockout.js bindings, inherited from the scene
-        # object
-        @currentSegment = @scene.currentSegment
-        @currentTime = @scene.currentTime
-
-        # a callId object to keep track of
-        # different run invokations
-        @currentCallId = undefined
-
-        # a flag to prevent multiple runAtSegment
-        # calls from piling up.
-        @runAtSegmentInvoked = false
-
-    run: (t) ->
-        console.log('Scene controller: running...')
-
-        # unset the stop flags
-        @stopping = false
-        @stopped = false
-
-        # get a unique ID for this stream of
-        # run execution
-        @currentCallId = uniqueCbId()
-
-        # set the scene in motion
-        @advance(@currentCallId, t)
-
-
-    runAtSegment: (seg, t) ->
-        console.log('Running from segment: ')
-        console.log('t = ' + t)
-
-        if @runAtSegmentInvoked
-            # already working on one these
-            console.log('WARNING: multiple invocations of runAtSegment')
-            # TODO: stop the existing invocation
-            # return
-
-        @runAtSegmentInvoked = true
-
-        if seg == @currentElement
-            $.when(@currentElement.pause())
-             .then(=>
-                @runAtSegmentInvoked = false
-                @run(t)
-            )
-
-        else
-            # dim the stage lights right away to
-            # let the user know the click registered
-            $.when(util.indicateLoading(true).promise()).then(=>
-                console.log('waiting for stop')
-                return @stop().promise()
-            ).then(=>
-                console.log('reseting...')
-                return @reset().promise()
-            ).then(=>
-                return util.indicateLoading(false).promise()
-            ).then(=>
-                console.log('running scene')
-                @currentElement = seg
-                @runAtSegmentInvoked = false
-                @run(t)
-            )
-
-
-    advance: (cbId, t) ->
-
-        console.log('advance: callId = ' + cbId)
-
-        if not @currentElement?
-            # no element to run
-            return
-
-        if cbId != @currentCallId
-            # another call chain has been initated, bail on this one
-            console.log('bailing')
-            return
-
-        if @stopping
-            # a stop request issued
-            @stopping = false
-            @stopped = true
-            return
-
-
-        console.log('Scene controller: running ' + @currentElement.elementId)
-        console.log(@currentElement)
-        @currentTime(undefined)
-        @currentSegment(@currentElement)
-
-        dfrd = undefined
-
-        if t?
-            @runAtSegmentInvoked = false  # TODO: ?
-            dfrd = $.when(@currentElement.seek(t))
-                    .then(=> @currentElement.run())
-        else
-            # Run it. dfrd is a jQuery deferred object
-            dfrd = @currentElement.run()
-
-        console.log('waiting for element to finish running')
-        checkForCompletion = =>
-
-            if @stopping
-                @stopped = true
-                @stopping = false
-                # fall out
-                console.log('stopping is true')
-                return
-
-            if $.when(dfrd).state() == 'pending' or @paused()
-                # schedule another pass
-                setTimeout(checkForCompletion, 100)
-                return
-
-            else
-
-                if cbId != @currentCallId
-                    # another call chain has been initated, bail on this one
-                    console.log('bailing 2')
-                    return
-
-                console.log('Scene controller: finishing ' + @currentElement.elementId)
-
-                if @currentElement.willYieldOnNext() or @stopping
-                    @currentElement.finish()
-
-                if @stopping
-                    @stopping = false
-                    @stopped = true
-                    return
-
-                @currentElement = @currentElement.next()
-                console.log('Scene controller: next element is ' + @currentElement)
-                @advance(cbId)
-
-        checkForCompletion()
-
-    pause: ->
-        # set up a deferred pause
-        # @deferredPause = $.Deferred()
-
-        @paused(true)
-
-        # freeze execution of the current element
-        @currentElement.pause()
-
-
-    resume: ->
-
-        @paused(false)
-
-        # resume the current element
-        @currentElement.resume()
-
-        # release the pause deferred
-        # @deferredPause.resolve()
-
-    stop: ->
-
-        # set the stopping flag
-        @stopping = true
-        @paused(false)
-
-        # reject the pause deferred, this will cause any
-        # execution waiting on the pause deferred to
-        # fall through and go away
-        # console.log('rejecting deferredPause')
-        # @deferredPause.reject()
-        # console.log('rejected')
-
-        deferredStopped = $.Deferred()
-
-        # instruct all elements in the scene to stop
-        deferredSceneStop = $.Deferred()
-
-        stopit = =>
-            @scene.stop()
-            deferredSceneStop.resolve()
-
-        setTimeout(stopit, 0)
-
-        checkStopped = =>
-            if @stopped
-                @stopping = false
-                deferredStopped.resolve()
-                return
-            setTimeout(checkStopped, 100)
-
-        setTimeout(checkStopped, 100)
-
-        return $.when(deferredStopped, deferredSceneStop)
-
-    reset: ->
-        @currentElement = @scene
-
-        dfrd = $.Deferred()
-        resetEverything = =>
-            @currentElement.reset()
-            dfrd.resolve()
-
-        setTimeout(resetEverything, 0)
-
-        return dfrd
-
 
 
 # Lesson Elements
@@ -459,8 +272,6 @@ class mcb80x.LessonElement
     nextAfterIndex: (childIndex) ->
 
         nextIndex = childIndex + 1
-        console.log(nextIndex)
-        console.log(@children[nextIndex])
         if @children[nextIndex]?
             return @children[nextIndex]
         else if @parent?
@@ -482,7 +293,7 @@ class mcb80x.LessonElement
             return false
 
     next: ->
-        console.log('currentChild = ' + @currentChild)
+        # console.log('currentChild = ' + @currentChild)
 
         if @children? and @children.length
             if @currentChild < @children.length
@@ -513,13 +324,10 @@ class mcb80x.LessonElement
             child.stop()
 
     pause: ->
-        console.log('base pause')
 
     resume: ->
-        console.log('base resume')
 
     finish: ->
-        console.log('base finish')
 
 
 LessonElement = mcb80x.LessonElement
@@ -596,7 +404,6 @@ class mcb80x.Interactive extends LessonElement
 
         @playSoundtrack() if @hasSoundtrack
 
-        console.log('stage: ' + @stageObj)
         if @stageObj?
             return @stageObj.show()
 
@@ -640,21 +447,6 @@ class mcb80x.Video extends LessonElement
     # init is called after the DOM is ready
     init: ->
 
-        # f = @media(@preferredFormat)
-
-        # # Load the media on the player object
-        # if @preferredFormat == 'vimeo'
-        #     f = 'http://player.vimeo.com/video/' + f
-
-        # console.log('video parent: ' + @parent)
-        # if not globalPop?
-        #     if @preferredFormat is 'vimeo'
-        #         globalPop = Popcorn.vimeo(videoPlayerDivSelector, f)
-        #     else
-        #         globalPop = Popcorn.smart(videoPlayerDivSelector, f)
-
-        # @pop = globalPop
-
         # hide the video player by default
         $(videoPlayerDivSelector).attr('style', 'opacity: 0.0;')
 
@@ -668,7 +460,7 @@ class mcb80x.Video extends LessonElement
         console.log('Resetting video')
         t = 0.0 if not t?
         @seek(t)
-        # @finish()
+
         @hide()
 
         super()
@@ -816,7 +608,6 @@ class mcb80x.Video extends LessonElement
 
     finish: ->
         # unregister callbacks
-        console.log('unregistering callbacks on video')
         @pop.off('ended', @yieldCb) if @yieldCb
         @pop.off('updatetime', @updateTimeCb) if @updateTimeCb
 
@@ -842,8 +633,7 @@ class mcb80x.Video extends LessonElement
 
             # yield when the view has ended
             @yieldCb = ->
-                console.log('video finished')
-                console.log('parent: ' + @parent)
+                console.log('video finished cb')
                 dfrd.resolve()
             @pop.on('ended', @yieldCb)
 
@@ -938,8 +728,6 @@ class mcb80x.Line extends LessonElement
             return undefined
 
     run: ->
-        console.log('Running line...')
-
         childDeferred = true
 
         # If there are child actions, we'll run these in
@@ -966,8 +754,7 @@ class mcb80x.Line extends LessonElement
             audioDeferred.resolve()
         )
 
-        console.log('playing audio')
-        console.log(@audio)
+        console.log('playing audio: ' + @audioFile)
         @audio.load()
         @audio.play()
 
@@ -1037,7 +824,6 @@ class mcb80x.PlayAction extends LessonElement
         super()
 
     run: ->
-        console.log('running play action')
         @parent.stage().play()
 
 
@@ -1073,8 +859,6 @@ class mcb80x.WaitForChoice extends LessonElement
 
         obs = @parent.stage()[@observableName]
 
-        # console.log('clearing ' + @observableName)
-        # obs(undefined)
 
         console.log('installing waitForChoice subscription on ' + @observableName)
         @dfrd = $.Deferred()
@@ -1133,7 +917,6 @@ class mcb80x.FSM extends LessonElement
 
     init: ->
         @stage = @parent.stage()
-        console.log('got stage = ' + @stage)
         super()
 
     getElapsedTime: ->
