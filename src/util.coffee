@@ -8,6 +8,17 @@ $(window).resize( ->
 
 util =
 
+    showTitleBanner: (duration) ->
+        # show it
+        $('#title-banner').show('slide', direction: 'down')
+
+        # schedule hiding
+        hideit = ->
+            $('#title-banner').hide('slide', direction: 'down')
+
+        setTimeout(hideit, duration)
+
+
     indicateLoading: (v, duration) ->
         if not duration?
             duration = 1000

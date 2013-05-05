@@ -176,6 +176,12 @@ class mcb80x.SceneController
                 if @currentElement.willYieldOnNext()
                     @currentElement.finish()
                 @currentElement = @currentElement.next()
+
+                if @currentElement is undefined
+                    @stopped = true
+                    punt()
+                    return
+
                 @currentSegment(@currentElement)
                 @currentTime(0.0)
                 @runningDfrd = @currentElement.run()
@@ -349,10 +355,12 @@ class mcb80x.Scene extends LessonElement
         @currentTime = ko.observable(undefined)
 
     run: ->
-        @init()
-        util.indicateLoading(false)
         console.log('scene[' + @elementId + ']')
-        return super()
+
+        @init()
+        return $.when(util.indicateLoading(false))
+                .then(=> util.showTitleBanner(5000.0))
+                .then(=> super())
 
 
 class mcb80x.Interactive extends LessonElement
@@ -397,7 +405,7 @@ class mcb80x.Interactive extends LessonElement
 
     playSoundtrack: ->
         @soundtrackAudio.load()
-        @soundtrackAudio.play().setVolume(10)
+        @soundtrackAudio.play().setVolume(8)
 
     run: () ->
         console.log('running interactive')
@@ -410,10 +418,13 @@ class mcb80x.Interactive extends LessonElement
         return super()
 
     reset: ->
-        # @stage().reset() if (@stage() and @stage().reset?)
+        @soundtrackAudio.stop() if @soundtrackAudio?
+        @stage().stop() if (@stage() and @stage().stop?)
+
         super()
 
     stop: ->
+        console.log('>>>>>>>> stop audio')
         @soundtrackAudio.stop() if @soundtrackAudio?
         @stage().stop() if (@stage() and @stage().stop?)
         super()
@@ -735,18 +746,7 @@ class mcb80x.Line extends LessonElement
         if @children? and @children.length
 
             childDeferred = runChained(@children)
-            # # copy the array of children
-            # childrenCopy = @children.slice(0)
 
-            # # take off the first child and start it running
-            # childDeferred = childrenCopy.shift().run()
-
-            # # chain together run methods of subsequent children
-            # # using deferred's and $.when
-            # for child in childrenCopy
-            #     childDeferred = $.when(childDeferred).done(->
-            #         child.run()
-            #     )
 
         audioDeferred = $.Deferred()
 
@@ -762,22 +762,6 @@ class mcb80x.Line extends LessonElement
         # both the audio and the children
         return $.when(audioDeferred, childDeferred)
 
-        # for now, just enable audio; we'll need to figure
-        # out how to accomodate text
-        # else
-
-        #     @div.text(@text)
-        #     @div.dialog(
-        #         dialogClass: 'noTitleStuff'
-        #         resizable: true
-        #         title: null
-        #         height: 300
-        #         modal: true
-        #         buttons:
-        #             'continue': ->
-        #                 $(this).dialog('close')
-        #                 cb()
-        #     )
 
 
 class mcb80x.ShowAction extends LessonElement
@@ -870,10 +854,6 @@ class mcb80x.WaitForChoice extends LessonElement
         )
 
         return @dfrd
-
-    # stop: ->
-    #     @subs.dispose() if @subs?
-    #     @dfrd.resolve() if @dfrd?
 
 
 

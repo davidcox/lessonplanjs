@@ -46,22 +46,37 @@ svg {
   shape-rendering: crispEdges;
 }
 
+
+.wrapper {
+  position: relative;
+  width: 100%; /* <-- just a default, can be anything. */
+}
+
+.three-by-two.aspect-ratio { padding-bottom: 66.666% }
+.four-by-three.aspect-ratio { padding-bottom: 75% }
+.sixteen-by-nine.aspect-ratio { padding-bottom: 56.25% }
+
+.content {
+  position: absolute;
+  top: 0;  bottom: 0;  left: 0;  right: 0;
+  /*padding: 0 24px;*/
+  padding-bottom: 40px;
+}
+
+
+
 #art {
   z-index: 100;
 }
 
 .properties-pane {
-  /*background-color: #ccc;*/
   width: 100%;
   height:100%;
-  /*padding: 10px;*/
-  /*border: 2px solid #000;*/
   font-family: 'Arial', sans-serif;
   font-weight: bold;
   text-align: left;
   z-index: 100;
-/*  display: none;*/
-  /*opacity:0;*/
+
 }
 
 #floatrect {
@@ -79,6 +94,7 @@ svg {
   width: 100%;
   height: 100%;
   position: absolute;
+  margin-bottom: 40;
 }
 
 #video iframe{
@@ -115,17 +131,17 @@ svg {
 
 #timeline-controls {
   width: 100%;
-  height: 40;
+  height: 30;
   bottom: 0;
   position: absolute;
-  opacity: 0.0;
+  opacity: 0.7;
   z-index: 101;
 }
 
 .timeline-container {
   top: 0;
   bottom: 0;
-  left: 40;
+  left: 30;
   right: 0;
   position: absolute;
 }
@@ -144,7 +160,7 @@ svg {
 
 .timeline-button {
   height: 100%;
-  width: 40;
+  width: 30;
   margin: 0;
   padding: 0;
   opacity: 0.5;
@@ -168,3 +184,33 @@ svg {
    margin-left: -27px;
    margin-top: -27px;
 }
+
+.logo-overlay {
+  position: absolute;
+  left: 10;
+  top: 10;
+  width:125;
+  opacity: .5;
+  z-index:1000;
+}
+
+.lower-third {
+  position: absolute;
+  height: 40;
+  left: 0;
+  right: 0;
+  bottom: 30;
+  background-color: #444;
+  opacity: 0.8;
+  z-index: 1000;
+  padding: 10;
+  display: none;
+}
+
+.lower-third-title {
+  font-size: 30px;
+  font-family: sans-serif;
+  color: #fff;
+}
+
+

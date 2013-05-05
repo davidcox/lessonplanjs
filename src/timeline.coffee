@@ -96,17 +96,17 @@ class mcb80x.Timeline
 
 
         # Show / Hide the timeline on mmouseover
-        @parentDiv.on('mouseover', ->
-            d3.select(this).transition()
-                .style('opacity', 1.0)
-                .duration(250)
-        )
+        # @parentDiv.on('mouseover', ->
+        #     d3.select(this).transition()
+        #         .style('opacity', 1.0)
+        #         .duration(250)
+        # )
 
-        @parentDiv.on('mouseout', ->
-            d3.select(this).transition()
-                .style('opacity', 0.0)
-                .duration(250)
-        )
+        # @parentDiv.on('mouseout', ->
+        #     d3.select(this).transition()
+        #         .style('opacity', 0.0)
+        #         .duration(250)
+        # )
 
         timeline = this
         @svg.on('click', ->
