@@ -88,6 +88,31 @@ util =
         resizeHandlers.push(resizeIt)
         f() for f in resizeHandlers
 
+    maintainAspect: (evt) ->
+        target = 16.0 / 9.0
+
+        width = window.innerWidth + 0
+        height = window.innerHeight + 0
+
+        current_aspect = width / height
+
+        console.log(target)
+        console.log(width)
+        console.log(width / target)
+        console.log(current_aspect)
+
+        if current_aspect < target
+            # height constrains
+            $('#stage').width(width)
+            $('#stage').height(width / target)
+        else
+            $('#stage').width(height * target)
+            $('#stage').height(height)
+
+
 
 root = window ? exports
 root.util = util
+
+util.maintainAspect()
+window.onresize = util.maintainAspect
