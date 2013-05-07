@@ -359,7 +359,7 @@ class mcb80x.Scene extends LessonElement
 
         @init()
         return $.when(util.indicateLoading(false))
-                .then(=> util.showTitleBanner(5000.0))
+                .then(=> util.showTitleBanner(@title, 5000.0))
                 .then(=> super())
 
 

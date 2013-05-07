@@ -8,7 +8,10 @@ $(window).resize( ->
 
 util =
 
-    showTitleBanner: (duration) ->
+    showTitleBanner: (title, duration) ->
+
+        $('.lower-third-title').text(title)
+
         # show it
         $('#title-banner').show('slide', direction: 'down')
 
@@ -96,6 +99,9 @@ util =
 
         current_aspect = width / height
 
+        width -= 20
+        height -= 20
+
         console.log(target)
         console.log(width)
         console.log(width / target)
@@ -109,10 +115,15 @@ util =
             $('#stage').width(height * target)
             $('#stage').height(height)
 
+            offset =
+                top: 0
+                left: (width - height * target) / 2.0
+
+            $('#stage').offset(offset)
+
 
 
 root = window ? exports
 root.util = util
 
-util.maintainAspect()
 window.onresize = util.maintainAspect
