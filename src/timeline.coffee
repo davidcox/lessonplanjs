@@ -4,32 +4,27 @@ class mcb80x.Timeline
 
     constructor: (selector, @sceneController) ->
 
-        @scene = @sceneController.scene
-
         @paused = ko.observable(false)
         @playing = ko.observable(true)
         @self = ko.observable(this)
 
-        @orderedSegments = []
-        @segmentLookup = {}
-
-        @displayedSegment = undefined
-
         @parentDiv = d3.select(selector)
+        @markers = undefined
 
-        console.log('parentdiv = ' + @parentDiv)
+
+        @markerSmall = '5'
+        @markerLarge = '7'
+
+        @progressbarTop = '30%'
+        @progressbarHeight = '35%'
+        @progressbarCenter = '50%'
+
 
         @div = @parentDiv.select('#timeline')
 
-        @scene.currentTime.subscribe( (v) =>
-            @update(@sceneController.currentElement, v)
-        )
-
-        @scene.currentSegment.subscribe( (v) =>
-            @update(@sceneController.currentElement, @sceneController.currentTime)
-        )
-
         @svg = @div.append('svg').attr('id', 'timeline-svg')
+
+        # Add a cross-hatch pattern to the svg defs
         defs = @svg.append('svg:defs')
         defs.append('svg:pattern')
                 .attr('id', 'patstripes')
@@ -45,55 +40,62 @@ class mcb80x.Timeline
                 .attr('y', 0)
                 .attr('xlink:href', 'images/stripes.png')
 
-
+        # The background rectangle of the timeline
         @bgRect = @svg.append('rect')
             .attr('width', '100%')
             .attr('height', '100%')
             .attr('class', 'timeline-background-rect')
 
+        # A background for the unfilled portion of the timeline
+        @progressbarBackground = @svg.append('rect')
+            .attr('width', '100%')
+            .attr('height', @progressbarHeight)
+            .attr('x', '0')
+            .attr('y', @progressbarTop)
+            .attr('class', 'timeline-progressbar-background')
+
+        # The progress bar
         @progressbar = @svg.append('rect')
             .attr('width', 0.0)
-            .attr('height', '30%')
+            .attr('height', @progressbarHeight)
             .attr('x', '0')
-            .attr('y', '35%')
+            .attr('y', @progressbarTop)
             .attr('class', 'timeline-progressbar')
 
+        # A cross-hatched progress bar to fill a variable-time region
         @activebar = @svg.append('rect')
             .attr('width', 0.0)
-            .attr('height', '30%')
+            .attr('height', @progressbarHeight)
             .attr('x', '0')
-            .attr('y', '35%')
+            .attr('y', @progressbarTop)
             .attr('class', 'timeline-activebar')
             .attr('fill', 'url(#patstripes)')
             # .attr('fill', '#666')
 
-        @orderedSegments = []
-        @segmentLookup = {}
+        @sceneIndicatorDiv = d3.select('#scene-indicator')
+        @sceneIndicatorSVG = @sceneIndicatorDiv.append('svg').attr('class', 'scene-indicator-group')
 
-        for beat in @scene.children
-            console.log(beat)
-
-            duration = 1.0
-            if beat.duration.subscribe?
-                beat.duration.subscribe(=> @setupTiming())
-            else
-                duration = beat.duration()
-
-            segId = beat.elementId
-
-            segment =
-                segId: segId
-                title: segId
-                duration: duration
-
-            console.log(segment)
-            @orderedSegments.push(segment)
-            @segmentLookup[segId] = segment
 
         @currentTime = 0.0
 
-        @setupTiming()
+        @sceneController.currentTime.subscribe( (v) =>
+            @update(@sceneController.currentElement, v)
+        )
 
+        @sceneController.currentSegment.subscribe( (v) =>
+            @update(@sceneController.currentElement, @sceneController.currentTime)
+        )
+
+
+        @sceneController.currentScene.subscribe( (v) =>
+            @loadScene(v)
+            @setupTiming()
+            @setupSceneIndicator()
+        )
+
+        @sceneController.currentSceneIndex.subscribe( (v) =>
+            @updateSceneIndicator(v)
+        )
 
         # Show / Hide the timeline on mmouseover
         # @parentDiv.on('mouseover', ->
@@ -121,6 +123,37 @@ class mcb80x.Timeline
         # html UI.  This will let us control the play/pause state, etc.
         ko.applyBindings(this, @parentDiv.node())
 
+
+    loadScene: (@scene) ->
+
+        @orderedSegments = []
+        @segmentLookup = {}
+
+        @displayedSegment = undefined
+
+        @orderedSegments = []
+        @segmentLookup = {}
+
+        for beat in @scene.children
+            console.log(beat)
+
+            duration = 1.0
+            if beat.duration.subscribe?
+                beat.duration.subscribe(=> @setupTiming())
+            else
+                duration = beat.duration()
+
+            segId = beat.elementId
+
+            segment =
+                segId: segId
+                title: segId
+                duration: duration
+
+            console.log(segment)
+            @orderedSegments.push(segment)
+            @segmentLookup[segId] = segment
+
     setupTiming: ->
         console.log('[timeline]: adjusting timing...')
         runningTime = 0.0
@@ -144,6 +177,7 @@ class mcb80x.Timeline
             .domain([0.0, @totalDuration])
             .range([0.0, 100.0])
 
+
         @markers = @svg.selectAll('.timeline-segment-marker')
                         .data(@orderedSegments)
                         .attr('cx', (d) =>
@@ -153,26 +187,30 @@ class mcb80x.Timeline
 
         @markers.enter()
                 .append('circle')
-                .attr('cy', '50%')
+                .attr('cy', @progressbarCenter)
                 .attr('cx', (d) =>
                     console.log('marker at: ' + @tScale(d.start))
                     @tScale(d.start) + '%'
                 )
-                .attr('r', 5)
+                .attr('r', @markerSmall)
                 .attr('class', 'timeline-segment-marker')
                 .attr('timelinetooltip', (d) -> d.title)
+
+        @markers.exit().remove()
 
         # Marker mouseover effects
         console.log('[timeline]: installing mouseovers...')
 
+        ms = @markerSmall
+        ml = @markerLarge
         @markers.on('mouseover', (d) ->
             d3.select(this).transition()
-                .attr('r', 7)
+                .attr('r', ml)
                 .duration(250)
         )
         @markers.on('mouseout', (d) ->
             d3.select(this).transition()
-                .attr('r', 5)
+                .attr('r', ms)
                 .duration(250)
         )
 
@@ -197,6 +235,52 @@ class mcb80x.Timeline
 
         console.log('Done setting up timeline.')
 
+
+    setupSceneIndicator: ->
+
+        # setup scene display
+        nscenes = @sceneController.sceneList.length
+
+        @sceneMarkers = []
+
+        @sceneBlockWidth = .02
+        @sceneBlockHeight = 1.0
+        @sceneBlockSpacing = .005
+        @sceneBlockLineHeight = 0.2
+
+        # connector line
+        @sceneIndicatorSVG.append('rect')
+            .attr('width', 100 * (nscenes*@sceneBlockWidth + (nscenes-1)*@sceneBlockSpacing) + '%')
+            .attr('height', 100 * @sceneBlockLineHeight + '%')
+            .attr('y', (0.5 - @sceneBlockLineHeight/2.0) * 100 + '%')
+            .attr('x', '0%')
+            .attr('class', 'scene-indicator-inactive')
+
+        for s in [0..nscenes-1]
+            m = @sceneIndicatorSVG.append('rect')
+                .attr('width', @sceneBlockWidth * 100 + '%')
+                .attr('height', @sceneBlockHeight * 100 + '%')
+                .attr('y', '0%')
+                .attr('x', s * (@sceneBlockWidth + @sceneBlockSpacing) * 100 + '%')
+                .attr('class', 'scene-indicator-inactive')
+            @sceneMarkers[s] = m
+            do (m, s) =>
+                m.on('click', =>
+                    @sceneController.selectScene(s)
+                )
+
+
+
+    updateSceneIndicator: (currentScene) ->
+
+        for m in @sceneMarkers
+            m.attr('class', 'scene-indicator-inactive')
+
+        @sceneMarkers[currentScene].attr('class', 'scene-indicator-active')
+
+
+
+    # Update the current timeline display
     update: (segment, t) ->
         console.log('[timeline]: updating timeline')
         if not segment?
