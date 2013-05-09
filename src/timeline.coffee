@@ -269,6 +269,14 @@ class mcb80x.Timeline
                     @sceneController.selectScene(s)
                 )
 
+                title = @sceneController.sceneList[s].title
+
+                $(m.node()).tipsy(
+                    #gravity: $.fn.tipsy.autoNS
+                    gravity:'sw'
+                    title: -> title
+                )
+
 
 
     updateSceneIndicator: (currentScene) ->

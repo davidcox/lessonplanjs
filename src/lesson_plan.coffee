@@ -146,6 +146,13 @@ class mcb80x.LessonElement
 
     finish: ->
 
+    # Cleanup any persisting affects of having run
+    # No guarantee that the element will still work
+    # after this operation
+    cleanup: ->
+        for child in @children
+            child.cleanup()
+
 
 LessonElement = mcb80x.LessonElement
 
@@ -315,6 +322,11 @@ class mcb80x.Video extends LessonElement
         d3.select(videoPlayerDivSelector).transition().style('opacity', 0.0).duration(1000)
         #d3.select(videoPlayerDivSelector).style('display', 'none')
         @playerNode.setAttribute('style', 'opacity: 0.0;') if @playerNode?
+
+
+    cleanup: ->
+        @playerNode.remove() if @playerNode
+        @playerNode = undefined
 
     # playWhenReady: ->
     #     if @pop.readyState() >= 4
