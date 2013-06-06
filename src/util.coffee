@@ -5,6 +5,10 @@ $(window).resize( ->
     f() for f in resizeHandlers
 )
 
+mcb80xConfig =
+
+    apiBaseUrl: "http://app.mcb80x.org"
+
 
 util =
 
@@ -120,6 +124,7 @@ util =
                 left: (width - height * target) / 2.0
 
             $('#stage').offset(offset)
+
 
 
 

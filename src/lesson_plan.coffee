@@ -1,4 +1,5 @@
 #<< mcb80x/util
+#<< mcb80x/milestones
 
 root = window ? exports
 
@@ -145,6 +146,9 @@ class mcb80x.LessonElement
     resume: ->
 
     finish: ->
+
+    ready: -> true
+
 
     # Cleanup any persisting affects of having run
     # No guarantee that the element will still work
@@ -488,6 +492,12 @@ class mcb80x.Video extends LessonElement
         @hide()
         super()
 
+    ready: ->
+        if @pop?
+            return (@pop.readyState() == 4)
+        else
+            return false
+
 
 # a helper
 runChained = (actions) ->
@@ -624,6 +634,18 @@ class mcb80x.SetAction extends LessonElement
         stage = @parent.stage()
         stage[@property](@value)
 
+
+class mcb80x.MilestoneAction extends LessonElement
+
+    constructor: (@name) ->
+        super()
+
+    run: ->
+        # post the milestone
+        path = util.currentScenePath()
+        alert(path)
+        console.log 'calling completeMilestone'
+        milestones.completeMilestone(path, @name)
 
 # Actions to "instruct" a demo to do something
 class mcb80x.PlayAction extends LessonElement
@@ -897,6 +919,13 @@ root.subtitles = (f) ->
 
 root.duration = (t) ->
     currentObj.duration(t) if currentObj.duration?
+
+
+root.milestone = (name) ->
+    alert('boogie1')
+    milestoneObj = new mcb80x.MilestoneAction(name)
+
+    currentObj.addChild(milestoneObj)
 
 root.play = (name) ->
     runObj = new mcb80x.PlayAction(name)
