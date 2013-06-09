@@ -1,4 +1,4 @@
-# << mcb80x/util
+# << util
 
 
 milestones =
@@ -8,7 +8,7 @@ milestones =
 		if not value?
 			value = 1.0
 
-		url = mcb80xConfig.apiBaseUrl + '/' + path + '/' + name
+		url = lessonplanConfig.apiBaseUrl + '/' + path + '/' + name
 		$.ajax(
 			url: url,
 			type: 'PUT',

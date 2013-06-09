@@ -1,7 +1,7 @@
-#<< mcb80x/properties
+#<< properties
 
 
-class mcb80x.sim.GHKSim extends mcb80x.PropsEnabled
+class sim.GHKSim extends lessonplan.PropsEnabled
 
     constructor: ->
 
@@ -62,4 +62,4 @@ class mcb80x.sim.GHKSim extends mcb80x.PropsEnabled
         @E_m(v)
 
 
-mcb80x.sim.GHK = -> new mcb80x.sim.GHKSim()
+lessonplan.sim.GHK = -> new lessonplan.sim.GHKSim()

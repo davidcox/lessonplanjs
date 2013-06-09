@@ -1,13 +1,13 @@
-#<< mcb80x/properties
-#<< mcb80x/sim/hh_rk
+#<< properties
+#<< sim/hh_rk
 
-class mcb80x.sim.LinearCompartmentModelSim extends mcb80x.PropsEnabled
+class sim.LinearCompartmentModelSim extends lessonplan.PropsEnabled
 
 
 	constructor: (@nCompartments) ->
 
 		@cIDs = [0..@nCompartments-1]
-		@compartments = (mcb80x.sim.HodgkinHuxleyNeuron() for c in @cIDs)
+		@compartments = (lessonplan.sim.HodgkinHuxleyNeuron() for c in @cIDs)
 
 		# Tie all compartments to a global membrane capacitance property
 		@C_m = @prop 1.1
@@ -75,4 +75,4 @@ class mcb80x.sim.LinearCompartmentModelSim extends mcb80x.PropsEnabled
 
 		@unpackArrays()
 
-mcb80x.sim.LinearCompartmentModel = (c) -> new mcb80x.sim.LinearCompartmentModelSim(c)
+lessonplan.sim.LinearCompartmentModel = (c) -> new lessonplan.sim.LinearCompartmentModelSim(c)

@@ -1,10 +1,10 @@
-#<< mcb80x/lesson_plan
+#<< lesson_plan
 
 # A simple controller that implements a run loop to poke its
 # head up periodically to check whether something needs to be
 # done
 
-class mcb80x.SceneController
+class lessonplan.SceneController
 
     constructor: (@sceneList) ->
 
@@ -54,7 +54,7 @@ class mcb80x.SceneController
 
         # Hard-coded for now... should probably
         # show some kind of outro
-        @exitTarget = 'http://mcb80x.org/map'
+        @exitTarget = 'http://lessonplan.org/map'
 
 
 

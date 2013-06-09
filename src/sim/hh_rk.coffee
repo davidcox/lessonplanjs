@@ -1,7 +1,7 @@
-#<< mcb80x/properties
+#<< properties
 
 
-class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
+class sim.HHSimulationRK4 extends lessonplan.PropsEnabled
 
     constructor: ->
 
@@ -196,4 +196,4 @@ class mcb80x.sim.HHSimulationRK4 extends mcb80x.PropsEnabled
         dy = [dv, dm, dn, dh]
         return dy
 
-mcb80x.sim.HodgkinHuxleyNeuron = -> new mcb80x.sim.HHSimulationRK4()
+lessonplan.sim.HodgkinHuxleyNeuron = -> new lessonplan.sim.HHSimulationRK4()

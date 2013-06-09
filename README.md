@@ -1,4 +1,4 @@
-# Common components and code for mcb80x modules
+# Common components and code for lessonplan modules
 
 
 ## License

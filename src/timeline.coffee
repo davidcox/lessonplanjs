@@ -1,6 +1,6 @@
 
 
-class mcb80x.Timeline
+class lessonplan.Timeline
 
     constructor: (selector, @sceneController) ->
 

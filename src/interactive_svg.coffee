@@ -1,6 +1,6 @@
-#<< mcb80x/properties
+#<< properties
 
-class mcb80x.InteractiveSVG extends mcb80x.ViewModel
+class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
     constructor: (@svgFileName) ->
 

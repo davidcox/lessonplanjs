@@ -1,7 +1,7 @@
-#<< mcb80x/sim/linear_compartment
-#<< mcb80x/sim/passive_membrane
+#<< sim/linear_compartment
+#<< sim/passive_membrane
 
-class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
+class sim.MyelinatedLinearCompartmentModelSim extends lessonplan.PropsEnabled
 
     constructor: (@nCompartments, @nNodes) ->
 
@@ -26,7 +26,7 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
         @compartments = []
         for n in [1..@nNodes]
             # add a "node"
-            node = new mcb80x.sim.HHSimulationRK4()
+            node = new lessonplan.sim.HHSimulationRK4()
                 .dt(@dt_effective)
                 .C_m(@C_node)
                 .g_L(@g_L_node)
@@ -42,7 +42,7 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
             # add a span of "internodes"
             if n < @nNodes
                 for c in [1..interNodeDistance]
-                    internode = new mcb80x.sim.HHSimulationRK4()
+                    internode = new lessonplan.sim.HHSimulationRK4()
                         .C_m(@C_internode)
                         .g_L(@g_L_internode)
                         .passiveMembrane(@passiveInternodes)
@@ -134,4 +134,4 @@ class mcb80x.sim.MyelinatedLinearCompartmentModelSim extends mcb80x.PropsEnabled
 
         @unpackArrays()
 
-mcb80x.sim.MyelinatedLinearCompartmentModel = (c, n) -> new mcb80x.sim.MyelinatedLinearCompartmentModelSim(c,n)
+lessonplan.sim.MyelinatedLinearCompartmentModel = (c, n) -> new lessonplan.sim.MyelinatedLinearCompartmentModelSim(c,n)

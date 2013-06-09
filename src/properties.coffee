@@ -1,6 +1,6 @@
 
 
-class mcb80x.PropsEnabled
+class lessonplan.PropsEnabled
 
     prop: (defaultVal, cb) ->
         owner = this
@@ -34,7 +34,7 @@ class mcb80x.PropsEnabled
             this[name] = @prop(defaultVal)
 
 
-class mcb80x.ViewModel extends mcb80x.PropsEnabled
+class lessonplan.ViewModel extends lessonplan.PropsEnabled
     constructor: ->
 
     inheritProperties: (target, keys) ->

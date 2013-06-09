@@ -1,4 +1,4 @@
-#<< mcb80x/util
+#<< util
 
 # A knockout jquery-ui handler
 ko.bindingHandlers.slider =

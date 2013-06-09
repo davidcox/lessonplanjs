@@ -1,5 +1,5 @@
-#<< mcb80x/util
-#<< mcb80x/milestones
+#<< util
+#<< milestones
 
 root = window ? exports
 
@@ -36,7 +36,7 @@ interactiveDivSelector = '#interactive'
 # basically functional
 
 # Base LessonElement
-class mcb80x.LessonElement
+class lessonplan.LessonElement
 
     constructor: (@elementId) ->
 
@@ -158,11 +158,11 @@ class mcb80x.LessonElement
             child.cleanup()
 
 
-LessonElement = mcb80x.LessonElement
+LessonElement = lessonplan.LessonElement
 
 
 # Top-level "Scene"
-class mcb80x.Scene extends LessonElement
+class lessonplan.Scene extends LessonElement
     constructor: (@title, elId) ->
         if not elId?
             elId = @title
@@ -185,7 +185,7 @@ class mcb80x.Scene extends LessonElement
                 .then(=> super())
 
 
-class mcb80x.Interactive extends LessonElement
+class lessonplan.Interactive extends LessonElement
 
     constructor: (elId) ->
         @duration = ko.observable(1.0)
@@ -253,7 +253,7 @@ class mcb80x.Interactive extends LessonElement
 
 
 # A somewhat hacked up video object
-class mcb80x.Video extends LessonElement
+class lessonplan.Video extends LessonElement
     constructor: (elId) ->
         @preferredFormat = 'mp4'
         # @preferredFormat = 'youtube'
@@ -529,7 +529,7 @@ runChained = (actions) ->
 # over-top some demo.  If audio is disabled, it will
 # display a modal dialog box (audio not yet enabled)
 
-class mcb80x.Line extends LessonElement
+class lessonplan.Line extends LessonElement
 
     constructor: (@audioFile, @text) ->
         super()
@@ -597,7 +597,7 @@ class mcb80x.Line extends LessonElement
 
 
 
-class mcb80x.ShowAction extends LessonElement
+class lessonplan.ShowAction extends LessonElement
 
     constructor: (@selectors)  ->
         super()
@@ -610,7 +610,7 @@ class mcb80x.ShowAction extends LessonElement
     #     stage = @parent.stage()
     #     stage.hideElement('#' + s) for s in @selectors
 
-class mcb80x.HideAction extends LessonElement
+class lessonplan.HideAction extends LessonElement
 
     constructor: (@selectors)  ->
         super()
@@ -625,7 +625,7 @@ class mcb80x.HideAction extends LessonElement
 
 
 
-class mcb80x.SetAction extends LessonElement
+class lessonplan.SetAction extends LessonElement
 
     constructor: (@property, @value)  ->
         super()
@@ -635,7 +635,7 @@ class mcb80x.SetAction extends LessonElement
         stage[@property](@value)
 
 
-class mcb80x.MilestoneAction extends LessonElement
+class lessonplan.MilestoneAction extends LessonElement
 
     constructor: (@name) ->
         super()
@@ -648,7 +648,7 @@ class mcb80x.MilestoneAction extends LessonElement
         milestones.completeMilestone(path, @name)
 
 # Actions to "instruct" a demo to do something
-class mcb80x.PlayAction extends LessonElement
+class lessonplan.PlayAction extends LessonElement
     constructor: (@stageId) ->
         super()
 
@@ -656,7 +656,7 @@ class mcb80x.PlayAction extends LessonElement
         @parent.stage().play()
 
 
-class mcb80x.StopAndResetAction extends LessonElement
+class lessonplan.StopAndResetAction extends LessonElement
 
     constructor: (@stageId) ->
         super()
@@ -665,7 +665,7 @@ class mcb80x.StopAndResetAction extends LessonElement
         @parent.stage().stop()
 
 
-class mcb80x.WaitAction extends LessonElement
+class lessonplan.WaitAction extends LessonElement
     constructor: (@delay) ->
         super()
 
@@ -680,7 +680,7 @@ class mcb80x.WaitAction extends LessonElement
 
 
 
-class mcb80x.WaitForChoice extends LessonElement
+class lessonplan.WaitForChoice extends LessonElement
     constructor: (@observableName) ->
         super()
 
@@ -705,7 +705,7 @@ class mcb80x.WaitForChoice extends LessonElement
 # A finite state machine
 # The idea here is to have a simple state machine so
 # that simple interactive goals can be easily defined
-class mcb80x.FSM extends LessonElement
+class lessonplan.FSM extends LessonElement
 
     constructor: (@states) ->
 
@@ -825,7 +825,7 @@ popCurrent = ->
 
 
 root.scene = (sceneId, title) ->
-    sceneObj = new mcb80x.Scene(sceneId, title)
+    sceneObj = new lessonplan.Scene(sceneId, title)
 
     (f) ->
         currentObj = sceneObj
@@ -833,7 +833,7 @@ root.scene = (sceneId, title) ->
 
 root.interactive = (beatId) ->
     #register the id
-    beatObj = new mcb80x.Interactive(beatId)
+    beatObj = new lessonplan.Interactive(beatId)
 
     currentObj.addChild(beatObj)
 
@@ -848,7 +848,7 @@ root.stage = (name, propertiesMap) ->
         s = stages[name]()
     else
         console.log('loading interactive svg by name: ' + svgRoot + name)
-        s = new mcb80x.InteractiveSVG(svgRoot + name)
+        s = new lessonplan.InteractiveSVG(svgRoot + name)
 
     console.log('name: ' + name)
     console.log('propertiesMap: ' + propertiesMap)
@@ -866,7 +866,7 @@ root.soundtrack = (s) ->
     currentObj.soundtrack(s)
 
 root.line = (text, audio, actions) ->
-    lineObj = new mcb80x.Line(text, audio)
+    lineObj = new lessonplan.Line(text, audio)
 
     if actions?
         pushCurrent(lineObj)
@@ -879,22 +879,22 @@ root.line = (text, audio, actions) ->
 root.lines = line
 
 root.show = (selectors...) ->
-    showObj = new mcb80x.ShowAction(selectors)
+    showObj = new lessonplan.ShowAction(selectors)
 
     currentObj.addChild(showObj)
 
 root.hide = (selectors...) ->
-    hideObj = new mcb80x.HideAction(selectors)
+    hideObj = new lessonplan.HideAction(selectors)
 
     currentObj.addChild(hideObj)
 
 root.set_property = (property, value) ->
-    setObj = new mcb80x.SetAction(property, value)
+    setObj = new lessonplan.SetAction(property, value)
 
     currentObj.addChild(setObj)
 
 root.video = (name) ->
-    videoObj = new mcb80x.Video(name)
+    videoObj = new lessonplan.Video(name)
     currentObj.addChild(videoObj)
 
     (f) ->
@@ -923,29 +923,29 @@ root.duration = (t) ->
 
 root.milestone = (name) ->
     alert('boogie1')
-    milestoneObj = new mcb80x.MilestoneAction(name)
+    milestoneObj = new lessonplan.MilestoneAction(name)
 
     currentObj.addChild(milestoneObj)
 
 root.play = (name) ->
-    runObj = new mcb80x.PlayAction(name)
+    runObj = new lessonplan.PlayAction(name)
     currentObj.addChild(runObj)
 
 
 root.wait = (delay) ->
-    waitObj = new mcb80x.WaitAction(delay)
+    waitObj = new lessonplan.WaitAction(delay)
     currentObj.addChild(waitObj)
 
 root.stop_and_reset = (name) ->
-    stopResetObj = new mcb80x.StopAndResetAction(name)
+    stopResetObj = new lessonplan.StopAndResetAction(name)
     currentObj.addChild(stopResetObj)
 
 root.goal = (f) ->
-    goalObj = new mcb80x.FSM(f())
+    goalObj = new lessonplan.FSM(f())
     currentObj.addChild(goalObj)
 
 root.choice = (o) ->
-    choiceObj = new mcb80x.WaitForChoice(o)
+    choiceObj = new lessonplan.WaitForChoice(o)
     currentObj.addChild(choiceObj)
 
 root.fsm = goal

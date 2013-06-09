@@ -5,9 +5,9 @@ $(window).resize( ->
     f() for f in resizeHandlers
 )
 
-mcb80xConfig =
+lessonplanConfig =
 
-    apiBaseUrl: "http://app.mcb80x.org"
+    apiBaseUrl: "http://app.lessonplan.org"
 
 
 util =

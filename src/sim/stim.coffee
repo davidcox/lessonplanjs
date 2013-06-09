@@ -1,7 +1,7 @@
-#<< mcb80x/properties
+#<< properties
 
 
-class mcb80x.sim.SquareWavePulseSim extends mcb80x.PropsEnabled
+class sim.SquareWavePulseSim extends lessonplan.PropsEnabled
 
 	constructor: ->
 		@interval = @prop 5.0			# mS
@@ -20,10 +20,10 @@ class mcb80x.sim.SquareWavePulseSim extends mcb80x.PropsEnabled
 			@I_stim(0.0)
 			@stimOn(false)
 
-mcb80x.sim.SquareWavePulse = -> new mcb80x.sim.SquareWavePulseSim()
+lessonplan.sim.SquareWavePulse = -> new lessonplan.sim.SquareWavePulseSim()
 
 
-class mcb80x.sim.CurrentPulseSim extends mcb80x.PropsEnabled
+class sim.CurrentPulseSim extends lessonplan.PropsEnabled
 
 	constructor: ->
 		@amplitude = @prop 15			# uA
@@ -53,4 +53,4 @@ class mcb80x.sim.CurrentPulseSim extends mcb80x.PropsEnabled
 
 
 
-mcb80x.sim.CurrentPulse = -> new mcb80x.sim.CurrentPulseSim()
+lessonplan.sim.CurrentPulse = -> new lessonplan.sim.CurrentPulseSim()
