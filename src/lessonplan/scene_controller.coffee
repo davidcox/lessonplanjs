@@ -294,7 +294,7 @@ class lessonplan.SceneController
 
         @unloadScene()
 
-        url = window.static_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
+        url = window.app_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
         return $.when(
                     $.ajax(url)
                 ).then( (data, textStatus, jqXHR) =>
