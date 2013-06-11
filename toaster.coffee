@@ -18,6 +18,6 @@ toast 'src'
   # minify: true
 
   # => HTTPFOLDER (optional), RELEASE / DEBUG (required)
-  httpfolder: '/static/lessonplan'
+  #httpfolder: '/static/lessonplan'
   release: 'js/lessonplan.js'
   debug: 'js/lessonplan-debug.js'
