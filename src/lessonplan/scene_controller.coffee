@@ -294,14 +294,14 @@ class lessonplan.SceneController
 
         @unloadScene()
 
-        l = window.location;
-        base_url = l.protocol + "//" + l.host + "/" + l.pathname.split('/')[1];
-        url = window.app_url + '/static/lesson_plans/' + scene_path + '/' + name + '.js'
+        url = window.static_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
         return $.when(
                     $.ajax(url)
                 ).then( (data, textStatus, jqXHR) =>
                     console.log(data)
-                    $('head').append('<script id="sceneCode">' + data + '</script>')
+                    eval(data)
+                    # $('head').append('<script id="sceneCode">' + data + '</script>')
+                    # $('head').append('<script id="sceneCode" src="' + url + '"/>')
                     @scene = window.scenes[name]
                 ).then(=>
                     # update the bindings
