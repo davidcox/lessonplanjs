@@ -1,4 +1,5 @@
 #<< lessonplan/lessonplan
+#<< lessonplan/util
 
 # A simple controller that implements a run loop to poke its
 # head up periodically to check whether something needs to be
@@ -294,16 +295,19 @@ class lessonplan.SceneController
 
         @unloadScene()
 
-        url = window.app_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
-        return $.when(
-                    $.ajax(url)
-                ).then( (data, textStatus, jqXHR) =>
-                    console.log(data)
-                    eval(data)
-                    # $('head').append('<script id="sceneCode">' + data + '</script>')
-                    # $('head').append('<script id="sceneCode" src="' + url + '"/>')
+        url = window.static_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
+
+        console.log 'Loading code: ' + url
+
+        dfrd = $.Deferred()
+        util.loadScript(url, ->
+            console.log('... code ran successfully')
+            dfrd.resolve()
+        )
+
+        return $.when(dfrd)
+                .then( =>
                     @scene = window.scenes[name]
-                ).then(=>
                     # update the bindings
                     @currentElement = @scene
                     @sceneIndex = index
@@ -317,5 +321,28 @@ class lessonplan.SceneController
                     # start things in motion
                     @startRunLoop()
                 )
+
+        # return $.when(
+        #             $.ajax(url)
+        #         ).then( (data, textStatus, jqXHR) =>
+        #             console.log(data)
+        #             eval(data)
+        #             # $('head').append('<script id="sceneCode">' + data + '</script>')
+        #             # $('head').append('<script id="sceneCode" src="' + url + '"/>')
+        #             @scene = window.scenes[name]
+        #         ).then(=>
+        #             # update the bindings
+        #             @currentElement = @scene
+        #             @sceneIndex = index
+        #             @scene.currentTime = @currentTime
+        #             @scene.currentSegment = @currentSegment
+
+        #             # notify bindings
+        #             @currentScene(@scene)
+        #             @currentSceneIndex(index)
+
+        #             # start things in motion
+        #             @startRunLoop()
+        #         )
 
 

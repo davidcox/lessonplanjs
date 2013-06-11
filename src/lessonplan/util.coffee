@@ -126,6 +126,25 @@ util =
             $('#stage').offset(offset)
 
 
+    loadScript: (url, callback) ->
+
+        script = document.createElement("script")
+        script.type = "text/javascript";
+
+        if (script.readyState)  # IE
+            script.onreadystatechange = ->
+                if (script.readyState == "loaded" ||
+                        script.readyState == "complete")
+                    script.onreadystatechange = null
+                    callback()
+
+        else  # Others
+            script.onload = ->
+                callback()
+
+
+        script.src = url;
+        document.getElementsByTagName("head")[0].appendChild(script);
 
 
 root = window ? exports
