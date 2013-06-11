@@ -143,8 +143,10 @@ util =
                 callback()
 
 
-        script.src = url;
-        document.getElementsByTagName("head")[0].appendChild(script);
+        console.log('setting script src')
+        script.src = url
+        console.log('set script src')
+        document.getElementsByTagName("head")[0].appendChild(script)
 
 
 root = window ? exports
