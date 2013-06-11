@@ -129,7 +129,8 @@ util =
     loadScript: (url, callback) ->
 
         script = document.createElement("script")
-        script.type = "text/javascript";
+        script.type = "text/javascript"
+        script.id = "sceneCode"
 
         if (script.readyState)  # IE
             script.onreadystatechange = ->
