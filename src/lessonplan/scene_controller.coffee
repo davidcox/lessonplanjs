@@ -296,9 +296,10 @@ class lessonplan.SceneController
 
         l = window.location;
         base_url = l.protocol + "//" + l.host + "/" + l.pathname.split('/')[1];
-        url = window.static_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
-        return $.when($.ajax(url))
-                .then( (data, textStatus, jqXHR) =>
+        url = window.app_url + '/static/lesson_plans/' + scene_path + '/' + name + '.js'
+        return $.when(
+                    $.ajax(url)
+                ).then( (data, textStatus, jqXHR) =>
                     console.log(data)
                     $('head').append('<script id="sceneCode">' + data + '</script>')
                     @scene = window.scenes[name]
