@@ -1,4 +1,4 @@
-#<< lesson_plan
+#<< lessonplan/lessonplan
 
 # A simple controller that implements a run loop to poke its
 # head up periodically to check whether something needs to be
@@ -290,13 +290,13 @@ class lessonplan.SceneController
     loadScene: (index) ->
 
         name = @sceneList[index].name
-        scene_path = @sceneList[index].path
+        scene_path = window.module_id + '/' + window.lesson_id
 
         @unloadScene()
 
         l = window.location;
         base_url = l.protocol + "//" + l.host + "/" + l.pathname.split('/')[1];
-        url = base_url + '/' + scene_path + '/' + name + '.js'
+        url = window.static_base_url + '/lesson_plans/' + scene_path + '/' + name + '.js'
         return $.when($.ajax(url))
                 .then( (data, textStatus, jqXHR) =>
                     console.log(data)

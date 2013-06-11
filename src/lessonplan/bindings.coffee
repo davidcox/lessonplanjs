@@ -1,4 +1,4 @@
-#<< util
+#<< lessonplan/util
 
 # A knockout jquery-ui handler
 ko.bindingHandlers.slider =

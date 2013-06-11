@@ -1,4 +1,4 @@
-#<< properties
+#<< lessonplan/properties
 
 class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 

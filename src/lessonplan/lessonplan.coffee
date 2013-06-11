@@ -1,5 +1,5 @@
-#<< util
-#<< milestones
+#<< lessonplan/util
+#<< lessonplan/milestones
 
 root = window ? exports
 
@@ -20,9 +20,11 @@ uniqueCbId = ->
     return cbCounter
 
 soundReady = false
-audioRoot = '/audio/'
-svgRoot = '/svg/'
-videoRoot = '/video/'
+module_path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id
+audioRoot = root.audio_base_url + '/' + module_path
+svgRoot = root.static_base_url + '/interactives'
+soundtrackRoot = root.audio_base_url + '/soundtracks'
+# videoRoot = '/video/'
 videoPlayerDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
@@ -55,7 +57,7 @@ class lessonplan.LessonElement
         @currentChild = 0
 
     addChild: (child) ->
-        console.log('adding ' + child.elementId + ' to ' + @elementId)
+        # console.log('adding ' + child.elementId + ' to ' + @elementId)
         child.parent = this
         child.parentScene = @parentScene
         @children.push(child)
@@ -213,7 +215,7 @@ class lessonplan.Interactive extends LessonElement
         @loadSoundtrack(s)
 
     loadSoundtrack: (s) ->
-        @soundtrackAudio = new buzz.sound(audioRoot + s,
+        @soundtrackAudio = new buzz.sound(soundtrackRoot + '/' + s,
             preload:true
             loop: true
         )
@@ -540,7 +542,7 @@ class lessonplan.Line extends LessonElement
 
     loadAudio: (af) ->
         console.log('loading: ' + af)
-        @audio = new buzz.sound(audioRoot + af,
+        @audio = new buzz.sound(audioRoot + '/' + af,
             preload: true
         )
         @audio.load()
@@ -587,7 +589,7 @@ class lessonplan.Line extends LessonElement
             audioDeferred.resolve()
         )
 
-        console.log('playing audio: ' + @audioFile)
+        console.log('playing audio: ' + audioRoot + '/' + @audioFile)
         @audio.load()
         @audio.play()
 
@@ -642,10 +644,9 @@ class lessonplan.MilestoneAction extends LessonElement
 
     run: ->
         # post the milestone
-        path = util.currentScenePath()
-        alert(path)
+        path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id
         console.log 'calling completeMilestone'
-        milestones.completeMilestone(path, @name)
+        # milestones.completeMilestone(path, @name)
 
 # Actions to "instruct" a demo to do something
 class lessonplan.PlayAction extends LessonElement
@@ -686,8 +687,11 @@ class lessonplan.WaitForChoice extends LessonElement
 
     run: ->
 
+        s = @parent.stage()
         obs = @parent.stage()[@observableName]
 
+        console.log('stage = ' + s + ', obs = ' + obs)
+        console.log(s)
 
         console.log('installing waitForChoice subscription on ' + @observableName)
         @dfrd = $.Deferred()
@@ -847,8 +851,9 @@ root.stage = (name, propertiesMap) ->
     if stages[name]?
         s = stages[name]()
     else
-        console.log('loading interactive svg by name: ' + svgRoot + name)
-        s = new lessonplan.InteractiveSVG(svgRoot + name)
+        fpath = svgRoot + '/' + name + '/' + name + '.svg'
+        console.log('loading interactive svg by name: ' + fpath)
+        s = new lessonplan.InteractiveSVG(fpath)
 
     console.log('name: ' + name)
     console.log('propertiesMap: ' + propertiesMap)
@@ -922,7 +927,6 @@ root.duration = (t) ->
 
 
 root.milestone = (name) ->
-    alert('boogie1')
     milestoneObj = new lessonplan.MilestoneAction(name)
 
     currentObj.addChild(milestoneObj)

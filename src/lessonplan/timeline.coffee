@@ -38,7 +38,7 @@ class lessonplan.Timeline
                 .attr('height', 15)
                 .attr('x', 0)
                 .attr('y', 0)
-                .attr('xlink:href', 'images/stripes.png')
+                .attr('xlink:href', static_base_url + '/images/stripes.png')
 
         # The background rectangle of the timeline
         @bgRect = @svg.append('rect')
