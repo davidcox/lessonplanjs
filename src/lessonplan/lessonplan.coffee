@@ -331,7 +331,8 @@ class lessonplan.Video extends LessonElement
 
 
     cleanup: ->
-        @playerNode.remove() if @playerNode
+        if @playerNode? and @playerNode.remove?
+            @playerNode.remove()
         @playerNode = undefined
 
     # playWhenReady: ->

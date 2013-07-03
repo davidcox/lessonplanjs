@@ -7,7 +7,7 @@ $(window).resize( ->
 
 lessonplanConfig =
 
-    apiBaseUrl: "http://app.lessonplan.org"
+    apiBaseUrl: "http://www.mcb80x.org"
 
 
 util =

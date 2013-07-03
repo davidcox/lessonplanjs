@@ -55,7 +55,7 @@ class lessonplan.SceneController
 
         # Hard-coded for now... should probably
         # show some kind of outro
-        @exitTarget = 'http://lessonplan.org/map'
+        @exitTarget = '/course'
 
 
 
@@ -197,7 +197,7 @@ class lessonplan.SceneController
             @sceneIndex += 1
             if @sceneIndex > @sceneList.length
                 @stopped = true
-                window.location = @exitTarget
+                #window.location = @exitTarget
                 return
 
             @advancingSceneDfrd = @loadScene(@sceneIndex)
