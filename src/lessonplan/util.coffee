@@ -1,9 +1,9 @@
 
 resizeHandlers = []
 
-$(window).resize( ->
-    f() for f in resizeHandlers
-)
+# $(window).resize( ->
+#     f() for f in resizeHandlers
+# )
 
 lessonplanConfig =
 
@@ -11,6 +11,12 @@ lessonplanConfig =
 
 
 util =
+
+    showBackdrop: (flag) ->
+        if flag
+            $('.backdrop').css('opacity', 1.0)
+        else
+            $('.backdrop').css('opacity', 0.0)
 
     showTitleBanner: (title, duration) ->
 
@@ -67,7 +73,7 @@ util =
         svg = d3.select(svgSelector).node()
         rect = d3.select(rectSelector).node()
         div = d3.select(divSelector)
-        div.style('position', 'absolute')
+        div.style('position', 'fixed')
 
         d3.select(rectSelector).attr('opacity', 0.0)
 
@@ -153,4 +159,6 @@ util =
 root = window ? exports
 root.util = util
 
-window.onresize = util.maintainAspect
+window.onresize = ->
+    util.maintainAspect()
+    f() for f in resizeHandlers

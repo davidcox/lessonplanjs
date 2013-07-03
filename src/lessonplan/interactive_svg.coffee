@@ -44,6 +44,10 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     show: ->
         console.log('showing interactive: ' + @svgFileName)
 
+        # Hide the video
+        $('#video').css('opacity', 0.0)
+
+
         dfrd = $.Deferred()
 
         # d3.xml(@svgFileName, 'image/svg+xml', (xml) => @svgDocumentReady(xml, cb1))
