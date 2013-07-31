@@ -12,11 +12,10 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         # Attach the SVG to the DOM in the appropriate place
         importedNode = document.importNode(xml.documentElement, true)
 
-        # hollow out the 'art' node to remove anything there previously
-        $('#art').empty()
+        # hollow out the 'interactive' node to remove anything there previously
+        $('#interactive').empty()
 
-        d3.select('#art').node().appendChild(importedNode)
-        d3.select('#art').transition().style('opacity', 1.0).duration(1000)
+        d3.select('#interactive').node().appendChild(importedNode)
         d3.select('#interactive').transition().style('opacity', 1.0).duration(1000)
 
         @svg = d3.select(importedNode)
@@ -43,6 +42,9 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
     show: ->
         console.log('showing interactive: ' + @svgFileName)
+
+        # raise the house lights
+        util.showBackdrop(false)
 
         # Hide the video
         $('#video').css('opacity', 0.0)
@@ -73,6 +75,7 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     hide: ->
         dfrd = $.Deferred()
 
+        # hollow out the 'interactive' node to remove anything there previously
         @runSimulation = false
         d3.select('#interactive').transition()
             .style('opacity', 0.0)
@@ -81,4 +84,10 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
                 dfrd.resolve()
             )
 
+        $('#interactive').empty()
+
         return dfrd
+
+    reset: ->
+        @hide()
+

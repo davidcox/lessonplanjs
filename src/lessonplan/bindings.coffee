@@ -4,23 +4,31 @@
 ko.bindingHandlers.slider =
 
     init: (element, valueAccessor, allBindingsAccessor)  ->
+        console.log element
+        console.log valueAccessor
+        console.log allBindingsAccessor
+
         options = allBindingsAccessor().sliderOptions || {}
         $(element).slider(options)
         ko.utils.registerEventHandler(element, 'slidechange', (event, ui) ->
+            console.log 'slidechange from ko'
             observable = valueAccessor()
             observable(ui.value)
         )
 
         ko.utils.domNodeDisposal.addDisposeCallback(element, () ->
+            console.log 'domNodeDisposal'
             $(element).slider('destroy')
         )
 
         ko.utils.registerEventHandler(element, 'slide', (event, ui) ->
+            console.log 'slide event, from ko'
             observable = valueAccessor()
             observable(ui.value)
         )
 
     update: (element, valueAccessor) ->
+        console.log 'called update on slide ko binding'
         value = ko.utils.unwrapObservable(valueAccessor())
         if (isNaN(value))
             value = 0
@@ -151,6 +159,12 @@ svgbind =
             mapping = d3.scale.linear().domain([0,1]).range([0,1])
 
         box = d3.select(boxSelector)
+
+        if not box?
+            console.log("Couldn't find " + boxSelector)
+
+        window.box = box
+
         if orientation is 'h'
             minCoord = 0 # box.node().x.animVal.value
             maxCoord = minCoord + box.node().width.animVal.value
@@ -162,6 +176,7 @@ svgbind =
         else
             maxCoord = 0 # box.node().y.animVal.value
             minCoord = - box.node().height.animVal.value
+            #minCoord = - box.node().getBBox().height
 
             normalizedScale = d3.scale.linear()
                 .domain([maxCoord, minCoord])
@@ -174,6 +189,7 @@ svgbind =
             .on("drag", (d,i) ->
                 if orientation is 'h'
                     d.x += d3.event.dx
+                    console.log d.x
                     if d.x > maxCoord
                         d.x = maxCoord
                     if d.x < minCoord

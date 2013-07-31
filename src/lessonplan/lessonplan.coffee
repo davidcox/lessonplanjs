@@ -22,7 +22,7 @@ uniqueCbId = ->
 soundReady = false
 module_path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id
 audioRoot = root.audio_base_url + '/' + module_path
-svgRoot = root.static_base_url + '/interactives'
+svgRoot = root.static_base_url + '/slides'
 soundtrackRoot = root.audio_base_url + '/soundtracks'
 # videoRoot = '/video/'
 videoPlayerDivSelector = '#video'
@@ -245,6 +245,7 @@ class lessonplan.Interactive extends LessonElement
         @soundtrackAudio.stop() if @soundtrackAudio?
         @stage().stop() if (@stage() and @stage().stop?)
 
+        @stage().reset() if (@stage() and @stage().reset?)
         super()
 
     stop: ->
@@ -323,6 +324,8 @@ class lessonplan.Video extends LessonElement
         d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
         d3.select(videoPlayerDivSelector).style('display', 'inline')
         d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
+
+        util.showBackdrop(true)
 
     hide: ->
         d3.select(videoPlayerDivSelector).transition().style('opacity', 0.0).duration(1000)
@@ -850,10 +853,11 @@ root.interactive = (beatId) ->
 root.stage = (name, propertiesMap) ->
 
     if stages[name]?
+        console.log('loading registered interactive svg object: ' + name)
         s = stages[name]()
     else
-        fpath = svgRoot + '/' + name + '/' + name + '.svg'
-        console.log('loading interactive svg by name: ' + fpath)
+        fpath = svgRoot + '/' + name
+        console.log('loading interactive svg by filename: ' + fpath)
         s = new lessonplan.InteractiveSVG(fpath)
 
     console.log('name: ' + name)
