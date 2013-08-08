@@ -1,5 +1,7 @@
 # << lessonplan/util
 
+# Convenience methods for interacting with the
+# milestones REST api.
 
 milestones =
 

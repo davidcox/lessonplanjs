@@ -1,4 +1,14 @@
-
+# Utilities and syntactic sugar for making bindings
+# more seamless.
+#
+# A prop object wraps the Knockout.js low-level
+# bindings API, reproducing the functionality of the
+# KO bindings, but also allowing a prop to assigned
+# to another prop, binding them together.
+#
+# Convenience functions for inheriting all properties
+# from another object, and for defining them en-masse
+# are also provided.
 
 class lessonplan.PropsEnabled
 

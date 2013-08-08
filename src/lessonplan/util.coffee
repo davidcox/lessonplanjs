@@ -1,3 +1,5 @@
+# Assorted utilities that didn't obviously
+# belong anywhere else.
 
 resizeHandlers = []
 

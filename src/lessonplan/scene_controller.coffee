@@ -3,7 +3,8 @@
 
 # A simple controller that implements a run loop to poke its
 # head up periodically to check whether something needs to be
-# done
+# done.  This object ultimately governs movement through the
+# lessons finite state machine.
 
 class lessonplan.SceneController
 

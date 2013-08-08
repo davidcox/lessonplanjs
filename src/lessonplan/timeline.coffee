@@ -1,17 +1,18 @@
-
+# An object controlling the appearance and UI on the unified
+# video / interactive / etc. timeline
+#
 
 class lessonplan.Timeline
 
     constructor: (selector, @sceneController) ->
 
+        # Player state bindings
         @paused = ko.observable(false)
         @playing = ko.observable(true)
         @self = ko.observable(this)
 
-        @parentDiv = d3.select(selector)
-        @markers = undefined
 
-
+        # Look and Feel parameters
         @markerSmall = '5'
         @markerLarge = '7'
 
@@ -19,6 +20,9 @@ class lessonplan.Timeline
         @progressbarHeight = '35%'
         @progressbarCenter = '50%'
 
+        # Visual elements
+        @parentDiv = d3.select(selector)
+        @markers = undefined
 
         @div = @parentDiv.select('#timeline')
 
@@ -76,6 +80,8 @@ class lessonplan.Timeline
         @sceneIndicatorSVG = @sceneIndicatorDiv.append('svg').attr('class', 'scene-indicator-group')
 
 
+        # Setup timeline bindings
+
         @currentTime = 0.0
 
         @sceneController.currentTime.subscribe( (v) =>
@@ -97,18 +103,6 @@ class lessonplan.Timeline
             @updateSceneIndicator(v)
         )
 
-        # Show / Hide the timeline on mmouseover
-        # @parentDiv.on('mouseover', ->
-        #     d3.select(this).transition()
-        #         .style('opacity', 1.0)
-        #         .duration(250)
-        # )
-
-        # @parentDiv.on('mouseout', ->
-        #     d3.select(this).transition()
-        #         .style('opacity', 0.0)
-        #         .duration(250)
-        # )
 
         timeline = this
         @svg.on('click', ->

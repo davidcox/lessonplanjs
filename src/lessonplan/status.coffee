@@ -1,3 +1,6 @@
+# Convenience methods for interacting with the backend REST api
+# (possibly should be factored out of this library at some point)
+
 status =
 
 	getStatus: (path, name) ->
