@@ -26,7 +26,7 @@ class lessonplan.Timeline
 
         @div = @parentDiv.select('#timeline')
 
-        @svg = @div.append('svg').attr('id', 'timeline-svg')
+        @svg = @div.append('svg').attr('id', 'timeline-svg').attr('class', 'timeline-svg')
 
         # Add a cross-hatch pattern to the svg defs
         defs = @svg.append('svg:defs')

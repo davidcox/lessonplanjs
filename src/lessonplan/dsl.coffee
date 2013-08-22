@@ -106,6 +106,8 @@ root.mp4 = (f) ->
     dsl.currentObj.media('mp4', f)
 root.webm = (f) ->
     dsl.currentObj.media('webm', f)
+root.ogv = (f) ->
+    dsl.currentObj.media('ogv', f)
 root.vimeo = (f) ->
     dsl.currentObj.media('vimeo', f)
 root.youtube = (f) ->

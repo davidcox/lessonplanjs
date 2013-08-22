@@ -19,7 +19,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         @preferredFormat = 'mp4'
         # @preferredFormat = 'youtube'
         @duration = ko.observable(1.0)
-        @mediaUrls = {}
+        @mediaUrlDict = {}
+        @mediaUrls = []
 
         @playerReady = $.Deferred()
         super(elId)
@@ -27,12 +28,14 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     media: (fileType, url) ->
         if url?
-            @mediaUrls[fileType] = url
+            @mediaUrlDict[fileType] = url
+            @mediaUrls.push(url)
         else
-            return @mediaUrls[fileType]
+            return @mediaUrlDict[fileType]
 
     mediaTypes: ->
-        return [k for k of @mediaUrls]
+        return [k for k of @mediaUrlDict]
+
 
     subtitles: (f) ->
         # fill me in
@@ -163,7 +166,10 @@ class lessonplan.Video extends lessonplan.LessonElement
             setTimeout(preparePlayer, 0)
 
         else
-            @pop = Popcorn.smart(videoPlayerDivSelector, f)
+            console.log('==============================')
+            console.log(@mediaUrls)
+            @pop = Popcorn.smart(videoPlayerDivSelector, @mediaUrls)
+            # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
             @playerNode = @pop.video
             if @playerNode.hasAttribute('controls')
