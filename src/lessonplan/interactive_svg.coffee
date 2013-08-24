@@ -47,6 +47,7 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         util.showBackdrop(false)
 
         # Hide the video
+        # TODO: necessary?
         $('#video').css('opacity', 0.0)
 
 
@@ -58,7 +59,8 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
             dataType: 'xml'
         ).success((xml) =>
             @svgDocumentReady(xml)
-            d3.select('#interactive').transition()
+            d3.select('#interactive').style('display', 'inline')
+                .transition()
                 .style('opacity', 1.0)
                 .duration(1000)
                 .each(->
@@ -75,12 +77,12 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     hide: ->
         dfrd = $.Deferred()
 
-        # hollow out the 'interactive' node to remove anything there previously
         @runSimulation = false
         d3.select('#interactive').transition()
             .style('opacity', 0.0)
             .duration(1000)
             .each('end', ->
+                d3.select('#interactive').style('display', 'none')
                 dfrd.resolve()
             )
 
