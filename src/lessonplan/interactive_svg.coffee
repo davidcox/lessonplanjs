@@ -1,4 +1,5 @@
 #<< lessonplan/properties
+#<< lessonplan/util
 
 class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
@@ -52,6 +53,7 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
 
         dfrd = $.Deferred()
+        util.indicateLoading(true)
 
         # d3.xml(@svgFileName, 'image/svg+xml', (xml) => @svgDocumentReady(xml, cb1))
         $.ajax(
@@ -65,6 +67,7 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
                 .duration(1000)
                 .each(->
                     # console.log('finished loading interactive onto stage')
+                    util.indicateLoading(false)
                     dfrd.resolve()
                 )
         ).fail( ->
