@@ -1,5 +1,6 @@
 #<< lessonplan/util
 #<< lessonplan/milestones
+#<< lessonplan/status
 
 # A series of object for defining guided-interactive
 # educational scripts.
@@ -9,7 +10,6 @@ root = window ? exports
 root.registry = []
 root.scenes = {}
 root.stages = []
-
 
 # Some basic infrastructure for uniquely ID'ing elements
 elementCounter = -1
@@ -298,6 +298,7 @@ class lessonplan.Line extends LessonElement
 
     init: ->
         @loadAudio(@audioFile)
+        @subtitleContainer = $('#subtitle-container')
         super()
 
     loadAudio: (af) ->
@@ -329,6 +330,8 @@ class lessonplan.Line extends LessonElement
         # don't navigate children normally (as in super()); they will run
         # concurrent with the line
         if @parent?
+            @subtitleContainer.empty()
+            # $('.interactive-subtitle').remove()
             return @parent.nextAfterChild(this)
         else
             return undefined
@@ -352,6 +355,8 @@ class lessonplan.Line extends LessonElement
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
         @audio.load()
         @audio.play()
+
+        @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
 
         # return a deferred object that is contingent on
         # both the audio and the children

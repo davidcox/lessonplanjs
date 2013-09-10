@@ -124,6 +124,7 @@ root.video = (name) ->
         dsl.popCurrent()
 
 root.subtitles = (f) ->
+    console.log('adding subtitles: ' + f)
     dsl.currentObj.subtitles(f)
 
 root.duration = (t) ->

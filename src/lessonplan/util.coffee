@@ -7,10 +7,6 @@ resizeHandlers = []
 #     f() for f in resizeHandlers
 # )
 
-lessonplanConfig =
-
-    apiBaseUrl: "http://www.mcb80x.org"
-
 
 util =
 

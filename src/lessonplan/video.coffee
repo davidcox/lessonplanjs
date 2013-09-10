@@ -39,6 +39,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     subtitles: (f) ->
         # fill me in
+        @subtitlesFile = f
 
 
     # init is called after the DOM is ready
@@ -169,6 +170,9 @@ class lessonplan.Video extends lessonplan.LessonElement
             console.log(@mediaUrls)
             @pop = Popcorn.smart(videoPlayerDivSelector, @mediaUrls)
             # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
+
+            if @subtitlesFile?
+                @pop.parseJSON(@subtitlesFile)
 
             @playerNode = @pop.video
             if @playerNode.hasAttribute('controls')
