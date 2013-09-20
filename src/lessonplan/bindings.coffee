@@ -39,15 +39,15 @@ ko.bindingHandlers.slider =
 
 svgbind =
 
-    batchBindVisible: (selectorMap, duration) ->
+    batchBindVisible: (svg, selectorMap, duration) ->
         for k in Object.keys(selectorMap)
-            @bindVisible(k, selectorMap, duration)
+            @bindVisible(svg, k, selectorMap, duration)
 
-    bindVisible: (selector, observable, duration) ->
+    bindVisible: (svg, selector, observable, duration) ->
         if duration is undefined
             duration = 500
 
-        el = d3.select(selector)
+        el = svg.select(selector)
 
         thisobj = this
         setter = (newVal) ->
@@ -60,9 +60,9 @@ svgbind =
         setter(observable())
 
 
-    bindAttr: (selector, attr, observable, mapping) ->
+    bindAttr: (svg, selector, attr, observable, mapping) ->
 
-        el = d3.select(selector)
+        el = svg.select(selector)
 
         setter = (newVal) ->
             el.attr(attr, mapping(newVal))
@@ -70,8 +70,8 @@ svgbind =
         observable.subscribe(setter)
         setter(observable())
 
-    bindText: (selector, observable, centered) ->
-        el = d3.select(selector)
+    bindText: (svg, selector, observable, centered) ->
+        el = svg.select(selector)
 
         bbox = el.node().getBBox()
 
@@ -97,19 +97,19 @@ svgbind =
         observable.subscribe(setter)
         setter(observable())
 
-    bindMultiState: (selectorMap, observable, duration) ->
+    bindMultiState: (svg, selectorMap, observable, duration) ->
         if duration is undefined
             duration = 10
         keys = Object.keys(selectorMap)
         values = (selectorMap[k] for k in keys)
-        elements = (d3.select(s) for s in keys)
+        elements = (svg.select(s) for s in keys)
 
         setter = (val) ->
             # hide all of the alternatives
             util.hideElement(el) for el in elements
 
             matchSelectors = (keys[i] for i in [0 .. keys.length] when values[i] == val)
-            matchElements = (d3.select(s) for s in matchSelectors)
+            matchElements = (svg.select(s) for s in matchSelectors)
             util.showElement(el) for el in matchElements
 
         observable.subscribe(setter)
@@ -117,35 +117,35 @@ svgbind =
         setter(observable())
 
 
-    bindAsToggle: (onSelector, offSelector, observable) ->
+    bindAsToggle: (svg, onSelector, offSelector, observable) ->
         selectorMap = {}
         selectorMap[onSelector] = true
         selectorMap[offSelector] = false
 
         # bind the selectorMap to the observable
-        @bindMultiState(selectorMap, observable)
+        @bindMultiState(svg, selectorMap, observable)
 
         # register on click handles for every selector in the map
         for s in Object.keys(selectorMap)
             d3.select(s).on('click', -> observable(!observable()))
 
-    bindAsMomentaryButton: (onSelector, offSelector, observable) ->
+    bindAsMomentaryButton: (svg, onSelector, offSelector, observable) ->
 
         selectorMap = {}
         selectorMap[onSelector] = true
         selectorMap[offSelector] = false
 
         # bind the selectorMap to the observable
-        @bindMultiState(selectorMap, observable)
+        @bindMultiState(svg, selectorMap, observable)
 
         for s in Object.keys(selectorMap)
             d3.selectAll(s).on('mousedown', -> observable(true))
             d3.selectAll(s).on('mouseup', -> observable(false))
 
-    bindMultipleChoice: (selectorMap, observable) ->
+    bindMultipleChoice: (svg, selectorMap, observable) ->
 
         for k in Object.keys(selectorMap)
-            el = d3.select(k)
+            el = svg.select(k)
             v = selectorMap[k]
             el.on('click', ->
                 observable(undefined)
@@ -153,12 +153,12 @@ svgbind =
             )
 
 
-    bindSlider: (knobSelector, boxSelector, orientation, observable, mapping) ->
+    bindSlider: (svg, knobSelector, boxSelector, orientation, observable, mapping) ->
 
         if mapping is undefined
             mapping = d3.scale.linear().domain([0,1]).range([0,1])
 
-        box = d3.select(boxSelector)
+        box = svg.select(boxSelector)
 
         if not box?
             console.log("Couldn't find " + boxSelector)
@@ -209,15 +209,15 @@ svgbind =
             )
 
 
-        d3.select(knobSelector)
+        svg.select(knobSelector)
             .data([ {'x' : 0, 'y': 0}])
             .call(drag)
 
 
-    bindScale: (selector, observable, scaleMapping, anchorType) ->
+    bindScale: (svg, selector, observable, scaleMapping, anchorType) ->
 
 
-        bbox = d3.select(selector).node().getBBox()
+        bbox = svg.select(selector).node().getBBox()
 
         if anchorType is 'sw'
             anchor = [bbox.x, bbox.y + bbox.height]
@@ -240,7 +240,7 @@ svgbind =
 
             return transform
 
-        @bindAttr(selector, 'transform', observable, transformFn)
+        @bindAttr(svg, selector, 'transform', observable, transformFn)
 
     # exposeOutputBindings: (sourceObj, keys, viewModel) ->
     #     @bindOutput(sourceObj, key, viewModel) for key in keys

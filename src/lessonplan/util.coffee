@@ -33,6 +33,7 @@ util =
     indicateLoading: (v, duration) ->
         if not duration?
             duration = 1000
+
         dfrd = $.Deferred()
         resolve = -> dfrd.resolve()
 
@@ -131,6 +132,7 @@ util =
 
 
     loadScript: (url, callback) ->
+        console.log 'Loading external script from URL: ' + url
 
         script = document.createElement("script")
         script.type = "text/javascript"

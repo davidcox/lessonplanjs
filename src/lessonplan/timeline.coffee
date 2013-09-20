@@ -23,6 +23,7 @@ class lessonplan.Timeline
         # Visual elements
         @parentDiv = d3.select(selector)
         @markers = undefined
+        @submarkers = undefined
 
         @div = @parentDiv.select('#timeline')
 
@@ -123,19 +124,34 @@ class lessonplan.Timeline
         @orderedSegments = []
         @segmentLookup = {}
 
+        @subsegments = []
+
         @displayedSegment = undefined
 
-        @orderedSegments = []
-        @segmentLookup = {}
 
         for beat in @scene.children
             console.log(beat)
 
-            duration = 1.0
+            console.log beat.findMilestones
+            if beat.findMilestones?
+                milestones = beat.findMilestones()
+                console.log '============= MILESTONES =================='
+                console.log milestones
+            else
+                milestones = []
+
+            duration = 0.0
+            totalDuration = 0.0
             if beat.duration.subscribe?
                 beat.duration.subscribe(=> @setupTiming())
             else
-                duration = beat.duration()
+                if milestones.length
+                    duration = 0
+                    totalDuration = beat.duration()
+                else
+                    duration = beat.duration()
+                    totalDuration = duration
+
 
             segId = beat.elementId
 
@@ -148,6 +164,23 @@ class lessonplan.Timeline
             @orderedSegments.push(segment)
             @segmentLookup[segId] = segment
 
+
+            # collect up milestones so that they can be added to the
+            # timeline as well
+            if beat.findMilestones?
+                milestones = beat.findMilestones()
+                for m in milestones
+                    # subSegId = segId + '/' + m.name
+                    subSegId = m.elementId
+                    subsegment =
+                        segId: subSegId
+                        title: ''
+                        duration: totalDuration / milestones.length
+
+                    @subsegments.push(subsegment)
+                    @segmentLookup[subSegId] = subsegment
+
+
     setupTiming: ->
         console.log('[timeline]: adjusting timing...')
         runningTime = 0.0
@@ -157,8 +190,20 @@ class lessonplan.Timeline
             duration = beat.duration()
             @segmentLookup[segId].obj = beat
             @segmentLookup[segId].duration = duration
-            @segmentLookup[segId].start = runningTime
+            segmentStart = runningTime
+            @segmentLookup[segId].start = segmentStart
             runningTime += duration
+
+            if beat.findMilestones?
+                milestones = beat.findMilestones()
+                for m, i in milestones
+                    # subSegId = segId + '/' + m.name
+                    subSegId = m.elementId
+                    milestoneDuration = duration / (milestones.length + 1)
+                    @segmentLookup[subSegId].obj = beat
+                    @segmentLookup[subSegId].duration = milestoneDuration
+                    @segmentLookup[subSegId].start = segmentStart + (i+1)*milestoneDuration
+                    @segmentLookup[subSegId].subtarget = m.name
 
         @totalDuration = runningTime
 
@@ -227,6 +272,74 @@ class lessonplan.Timeline
                 d3.select(this).attr('timelinetooltip')
         )
 
+
+        # Subsegment Markers
+        console.log ')))))))))))'
+        console.log @subsegments
+        console.log @submarkers
+
+        @submarkers = @svg.selectAll('.timeline-subsegment-marker')
+                .data(@subsegments)
+                .attr('cx', (d) =>
+                    console.log d
+                    console.log('subseg marker at: ' + @tScale(d.start))
+                    @tScale(d.start) + '%'
+                )
+
+        @submarkers.enter()
+                .append('circle')
+                .attr('cy', @progressbarCenter)
+                .attr('cx', (d) =>
+                    console.log d
+                    console.log('subseg marker at: ' + @tScale(d.start))
+                    @tScale(d.start) + '%'
+                )
+                .attr('r', @markerSmall)
+                .attr('class', 'timeline-subsegment-marker')
+                .attr('timelinetooltip', (d) -> d.title)
+
+        @submarkers.exit().remove()
+
+        # Marker mouseover effects
+        console.log('[timeline]: installing mouseovers...')
+
+        @submarkers.on('mouseover', (d) ->
+            d3.select(this).transition()
+                .attr('r', ml)
+                .duration(250)
+        )
+        @submarkers.on('mouseout', (d) ->
+            d3.select(this).transition()
+                .attr('r', ms)
+                .duration(250)
+        )
+
+        console.log('[timeline]: installing click handlers...')
+
+        # Marker click action
+        @submarkers.on('click', (d) =>
+
+            console.log('marker click: ' + d.obj + ', to target: ' + d.subtarget)
+            obj = d.obj # @segmentLookup[d.segId].obj
+            if d.subtarget?
+                t = d.subtarget
+            else
+                t = 0
+            @sceneController.seek(obj, t)
+            d3.event.stopPropagation()
+            )
+
+
+        # No tooltips on subsegment markers yet
+        #
+        # $('.timeline-subsegment-marker').tipsy(
+        #     #gravity: $.fn.tipsy.autoNS
+        #     gravity:'sw'
+        #     title: ->
+        #         d3.select(this).attr('timelinetooltip')
+        # )
+
+
         console.log('Done setting up timeline.')
 
 
@@ -284,7 +397,7 @@ class lessonplan.Timeline
 
     # Update the current timeline display
     update: (segment, t) ->
-        console.log('[timeline]: updating timeline')
+        # console.log('[timeline]: updating timeline')
         if not segment?
             console.log('[timeline]: warning: empty segment in timeline')
             return

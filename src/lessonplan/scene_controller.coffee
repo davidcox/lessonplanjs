@@ -87,12 +87,13 @@ class lessonplan.SceneController
             @shouldStop = false
             @stopping = true
             # tell the system to stop, get a promise back
-            @stopDfrd = $.when(=> @scene.stop())
-                         .then(=> @scene.reset())
-                         .then(=>
-                            @stopping = false
-                            @stopped = true
-                            @running = false)
+            @stopDfrd = $.when(@scene.stop()).then(=>
+                            $.when(@scene.reset()).then(=>
+                                @stopping = false
+                                @stopped = true
+                                @running = false
+                            )
+                        )
 
         if @stopping
             console.log('[ stopping ]')
@@ -153,30 +154,45 @@ class lessonplan.SceneController
             @buffering = false
 
             @seeking = true
-            @seekDfrd = $.when(=>
-                            l '> stopping...'
-                            if @targetSegment != @currentElement
-                                return @scene.stop()
-                            else
-                                return @currentElement.pause()
-                        ).then(=>
-                            util.indicateLoading(true)
-                        ).then(=>
-                            l '> resetting'
-                            if @targetSegment != @currentElement
-                                return @scene.reset()
-                        ).then(=>
-                            l '> seeking...'
-                            @currentElement = @targetSegment
-                            @currentSegment(@currentElement)
-                            console.log(@currentElement)
-                            @currentElement.seek(@targetTime)
-                        ).then(=>
-                            util.indicateLoading(false)
-                        ).then(=>
-                            @seeking = false
-                            @shouldRun = true
-                        )
+
+            l '> stopping...'
+
+            stopDfrd = undefined
+            if @targetSegment != @currentElement
+                stopDfrd = @scene.stop()
+            else
+                stopDfrd = @currentElement.pause()
+
+            @seekDfrd = $.Deferred()
+
+            $.when(stopDfrd).then(=>
+                return util.indicateLoading(true)
+
+            ).then(=>
+                l '> resetting'
+                sceneResetReturn = @scene.reset()
+                console.log 'srr'
+                console.log sceneResetReturn
+                console.log sceneResetReturn.state()
+                return sceneResetReturn
+
+            ).then(=>
+                l '> seeking...'
+                @currentElement = @targetSegment
+                @currentSegment(@currentElement)
+
+                return @currentElement.seek(@targetTime)
+
+            ).then(=>
+                return util.indicateLoading(false)
+
+            ).then(=>
+
+                @seekDfrd.resolve()
+                @seeking = false
+                @shouldRun = true
+            )
+
 
         if @seeking
             console.log('[ seeking ]')
@@ -221,6 +237,7 @@ class lessonplan.SceneController
         if @running
             # console.log('[ running ]')
             if $.when(@runningDfrd).state() == 'resolved'
+
                 @running = false
                 if @currentElement.willYieldOnNext()
                     @currentElement.finish()
@@ -232,6 +249,7 @@ class lessonplan.SceneController
                     @punt()
                     return
 
+                # update the KO bindings
                 @currentSegment(@currentElement)
                 @currentTime(0.0)
                 @runningDfrd = @currentElement.run()
@@ -322,28 +340,4 @@ class lessonplan.SceneController
                     # start things in motion
                     @startRunLoop()
                 )
-
-        # return $.when(
-        #             $.ajax(url)
-        #         ).then( (data, textStatus, jqXHR) =>
-        #             console.log(data)
-        #             eval(data)
-        #             # $('head').append('<script id="sceneCode">' + data + '</script>')
-        #             # $('head').append('<script id="sceneCode" src="' + url + '"/>')
-        #             @scene = window.scenes[name]
-        #         ).then(=>
-        #             # update the bindings
-        #             @currentElement = @scene
-        #             @sceneIndex = index
-        #             @scene.currentTime = @currentTime
-        #             @scene.currentSegment = @currentSegment
-
-        #             # notify bindings
-        #             @currentScene(@scene)
-        #             @currentSceneIndex(index)
-
-        #             # start things in motion
-        #             @startRunLoop()
-        #         )
-
 

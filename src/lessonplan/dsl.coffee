@@ -1,17 +1,18 @@
 #<< lessonplan/lessonplan
 #<< lessonplan/video
 
-root = window ? exports
-
-# TODO: unify placement of defines like this
-svgRoot = root.static_base_url + '/slides'
-
 
 # Imperative Domain Specific Language bits
 # Some slightly abused coffescript syntax to make
 # the final script read more like an outline or
 # "script" in the lines-in-a-documentary sense of the
 # word
+
+root = window ? exports
+
+# TODO: unify placement of defines like this
+svgRoot = root.static_base_url + '/slides'
+
 
 # Infrastructure for managing the 'current' object
 # in our little imperative DSL
@@ -35,6 +36,13 @@ root.scene = (sceneId, title) ->
     (f) ->
         dsl.currentObj = sceneObj
         f()
+
+root.message = (msg) ->
+
+    consoleObj = new lessonplan.Message(msg)
+
+    dsl.currentObj.addChild(consoleObj)
+
 
 root.interactive = (beatId) ->
     #register the id
@@ -100,18 +108,18 @@ root.set_property = (property, value) ->
 
     dsl.currentObj.addChild(setObj)
 
-root.m4v = (f) ->
-    dsl.currentObj.media('m4v', f)
-root.mp4 = (f) ->
-    dsl.currentObj.media('mp4', f)
-root.webm = (f) ->
-    dsl.currentObj.media('webm', f)
-root.ogv = (f) ->
-    dsl.currentObj.media('ogv', f)
-root.vimeo = (f) ->
-    dsl.currentObj.media('vimeo', f)
-root.youtube = (f) ->
-    dsl.currentObj.media('youtube', f)
+root.m4v = (f, quality='default') ->
+    dsl.currentObj.media('m4v', f, quality)
+root.mp4 = (f, quality='default') ->
+    dsl.currentObj.media('mp4', f, quality)
+root.webm = (f, quality='default') ->
+    dsl.currentObj.media('webm', f, quality)
+root.ogv = (f, quality='default') ->
+    dsl.currentObj.media('ogv', f, quality)
+root.vimeo = (f, quality='default') ->
+    dsl.currentObj.media('vimeo', f, quality)
+root.youtube = (f, quality='default') ->
+    dsl.currentObj.media('youtube', f, quality)
 
 
 root.video = (name) ->
@@ -130,6 +138,21 @@ root.subtitles = (f) ->
 root.duration = (t) ->
     dsl.currentObj.duration(t) if dsl.currentObj.duration?
 
+root.cue = (t, actions) ->
+
+    cueObj = new lessonplan.LessonElement()
+    if actions?
+        dsl.pushCurrent(cueObj)
+        actions()
+        dsl.popCurrent()
+
+    dsl.currentObj.cue(t, cueObj)
+
+root.at = (t) ->
+    newContext = (t1) ->
+        return (a) -> root.cue(t1, a)
+
+    return newContext(t)
 
 root.milestone = (name) ->
     milestoneObj = new lessonplan.MilestoneAction(name)

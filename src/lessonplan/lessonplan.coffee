@@ -95,6 +95,8 @@ class lessonplan.LessonElement
         if @children[nextIndex]?
             return @children[nextIndex]
         else if @parent?
+            # TODO: this is awkward
+            @finish()
             return @parent.nextAfterChild(this)
         else
             console.log('nextAfterIndex: no parent to yield to...')
@@ -128,20 +130,25 @@ class lessonplan.LessonElement
 
 
     # Run through this element and all of its children
-    run: ->
+    run: (seeking=false)->
         return true
 
 
     reset: (t) ->
         @currentChild = 0
 
+        deferreds = []
         for child in @children
-            child.reset()
+            dfrd = child.reset()
+            deferreds.push(dfrd)
+
+        # deferreds = [child.reset() for child in @children]
+
+        return $.when.apply($, deferreds)
 
 
     stop: ->
-        for child in @children
-            child.stop()
+        return $.when.apply($, [child.stop() for child in @children])
 
     pause: ->
 
@@ -156,8 +163,7 @@ class lessonplan.LessonElement
     # No guarantee that the element will still work
     # after this operation
     cleanup: ->
-        for child in @children
-            child.cleanup()
+        return $.when.apply($, [child.cleanup() for child in @children])
 
 
 LessonElement = lessonplan.LessonElement
@@ -178,7 +184,7 @@ class lessonplan.Scene extends LessonElement
         @currentSegment = ko.observable(undefined)
         @currentTime = ko.observable(undefined)
 
-    run: ->
+    run: (seeking=false) ->
         console.log('scene[' + @elementId + ']')
 
         @init()
@@ -186,6 +192,14 @@ class lessonplan.Scene extends LessonElement
                 .then(=> util.showTitleBanner(@title, 5000.0))
                 .then(=> super())
 
+
+class lessonplan.Message extends LessonElement
+
+    constructor: (@msg) ->
+        super()
+
+    run: () ->
+        console.log @msg
 
 # An "interactive" element; e.g. an animated SVG that can
 # be marionetted
@@ -196,6 +210,7 @@ class lessonplan.Interactive extends LessonElement
         @soundtrackFile = undefined
         @soundtrackLoaded = false
         @hasSoundtrack = false
+        @justSeeked = false
         super(elId)
 
     stage: (s) ->
@@ -225,44 +240,153 @@ class lessonplan.Interactive extends LessonElement
     finish: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
 
-        # hide the stage
-        @stageObj.hide() if @stageObj? and @stageObj.hide?
+        stopPromise = true
+        hidePromise = true
 
+        # stop the simulation if appropriate
+        if @stageObj? and @stageObj.stop?
+            stopPromise = @stageObj.stop()
+
+        # hide the stage
+        if @stageObj? and @stageObj.hide?
+            hidePromise = @stageObj.hide()
+
+        return $.when(stopPromise, hidePromise)
 
     playSoundtrack: ->
         @soundtrackAudio.load()
-        @soundtrackAudio.play().setVolume(8)
+        # @soundtrackAudio.play().setVolume(8)
+        @soundtrackAudio.play().setVolume(0)
 
-    run: () ->
-        console.log('running interactive')
+    run: (seeking=false) ->
+
+        # If we're in seeking mode, just blast through without
+        # running anything.
+        if seeking
+            return true
 
         @playSoundtrack() if @hasSoundtrack
 
-        if @stageObj?
+        # this will show the interactive SVG,
+        # loading the SVG itself if necessary
+        # @stageObj.show() if @stageObj? and @stageObj.show?
+
+        if @stageObj? and not @justSeeked
             return @stageObj.show()
+
+        if @justSeeked
+            @justSeeked = false
 
         return super()
 
     reset: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
-        @stage().stop() if (@stage() and @stage().stop?)
 
-        @stage().reset() if (@stage() and @stage().reset?)
-        super()
+        stopPromise = true
+        resetDfrd = $.Deferred()
+
+        if @stage()?
+
+            $.when(@stage().stop()).then(=>
+                return @stage().reset()
+
+            ).then(=>
+                resetDfrd.resolve()
+            )
+        else
+            console.log 'no stage'
+
+
+        return $.when(resetDfrd, super())
 
     stop: ->
-        console.log('>>>>>>>> stop audio')
+
         @soundtrackAudio.stop() if @soundtrackAudio?
-        @stage().stop() if (@stage() and @stage().stop?)
-        super()
+
+        stopPromise = true
+        hidePromise = true
+        if @stage() and @stage().stop?
+            stopPromise = @stage().stop()
+
+        if @stage() and @stage().hide?
+            hidePromise = @stage().hide()
+        return $.when(stopPromise, hidePromise, super())
 
 
+    # Find a particular milestone and return it
+    # If `seeking` is set to true, all of the elements along the
+    # way will be run in "seeking" mode
+    findMilestone: (name, el, seeking=false) ->
+        # do a depth-first search until we find a milestone with this name
+
+        if not el?
+            el = this
+
+        if el instanceof lessonplan.MilestoneAction and el.name is name
+            return el
+
+        if seeking
+            el.run(true)  # run "silently"
+
+        for child in el.children
+            el2 = @findMilestone(name, child, seeking)
+            if el2?
+                return el2
+
+        return null
+
+
+    # find and return a list of all milestones
+    findMilestones: (el, milestones) ->
+
+        if not el?
+            el = this
+
+        if not milestones?
+            milestones = []
+
+        if el instanceof lessonplan.MilestoneAction
+            milestones.push(el)
+
+        for child in el.children
+            @findMilestones(child, milestones)
+
+        return milestones
+
+    seek: (name) ->
+
+        # don't try to seek to a milestone that
+        # doesn't exist
+        if not name? or not @findMilestone(name, this)
+            return true
+
+        dfrd = $.Deferred()
+
+        if @stageObj?
+            stage_dfrd = @stageObj.show()
+        else
+            stage_dfrd = true
+
+        $.when(stage_dfrd).then(=>
+            el = @findMilestone(name, this, true)
+
+            # hack the current state
+            if el?
+                @currentChild = @children.indexOf(el)
+                if not @currentChild? or @currentChild < 0
+                    @currentChild = 0
+            dfrd.resolve()
+
+            @justSeeked = true
+        )
+
+        return dfrd
 
 
 # A helper for running a sequence of deferred actions
 # in order
 
-runChained = (actions) ->
+lessonplan.runChained = (actions, seeking=false) ->
     # a deferred to return for the whole sequence
     sdfrd = $.Deferred()
 
@@ -277,7 +401,7 @@ runChained = (actions) ->
             sdfrd.resolve()
             return
 
-        dfrd = a.shift().run()
+        dfrd = a.shift().run(seeking)
         $.when(dfrd).then(-> chainIt(a))
 
     chainIt(actionsCopy)
@@ -310,7 +434,7 @@ class lessonplan.Line extends LessonElement
 
     reset: ->
         @stop()
-        super()
+        return super()
 
     stage: ->
         return @parent.stage()
@@ -336,15 +460,19 @@ class lessonplan.Line extends LessonElement
         else
             return undefined
 
-    run: ->
+    run: (seeking=false) ->
+
+
         childDeferred = true
 
         # If there are child actions, we'll run these in
         # tandem with the line/voiceover
         if @children? and @children.length
 
-            childDeferred = runChained(@children)
+            childDeferred = lessonplan.runChained(@children, seeking)
 
+        if seeking
+            return true
 
         audioDeferred = $.Deferred()
 
@@ -370,8 +498,9 @@ class lessonplan.ShowAction extends LessonElement
     constructor: (@selectors)  ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
         stage = @parent.stage()
+
         stage.showElement('#' + s) for s in @selectors
 
 
@@ -381,7 +510,7 @@ class lessonplan.HideAction extends LessonElement
     constructor: (@selectors)  ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
         stage = @parent.stage()
         stage.hideElement('#' + s) for s in @selectors
 
@@ -393,7 +522,7 @@ class lessonplan.SetAction extends LessonElement
     constructor: (@property, @value)  ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
         stage = @parent.stage()
         stage[@property](@value)
 
@@ -402,14 +531,18 @@ class lessonplan.SetAction extends LessonElement
 # of a milestone
 class lessonplan.MilestoneAction extends LessonElement
 
-    constructor: (@name) ->
+    constructor: (@name, @title=null) ->
         super()
 
-    run: ->
+    run: (seeking=false)  ->
+
+        if seeking
+            return true
+
         # post the milestone
-        path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id
+        path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id + '/' + @name
         console.log 'calling completeMilestone'
-        # milestones.completeMilestone(path, @name)
+        milestones.completeMilestone(path, @name)
 
 
 # "Play" an interactive (if it has a notion of playing and stopping)
@@ -417,7 +550,7 @@ class lessonplan.PlayAction extends LessonElement
     constructor: (@stageId) ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
         @parent.stage().play()
 
 
@@ -426,7 +559,7 @@ class lessonplan.StopAndResetAction extends LessonElement
     constructor: (@stageId) ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
         @parent.stage().stop()
 
 
@@ -435,7 +568,11 @@ class lessonplan.WaitAction extends LessonElement
     constructor: (@delay) ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
+
+        if seeking
+            return true
+
         console.log('waiting ' + @delay + ' ms...')
         @dfrd = $.Deferred()
         cb = =>
@@ -452,7 +589,10 @@ class lessonplan.WaitForChoice extends LessonElement
     constructor: (@observableName) ->
         super()
 
-    run: ->
+    run: (seeking=false) ->
+
+        if seeking
+            return
 
         s = @parent.stage()
         obs = @parent.stage()[@observableName]
@@ -552,7 +692,7 @@ class lessonplan.FSM extends LessonElement
         dfrd = $.Deferred().resolve()
 
         if @states[state].action? and @states[state].action.children.length
-            dfrd = runChained(@states[state].action.children)
+            dfrd = lessonplan.runChained(@states[state].action.children)
 
         dfrd.done(=> @transitionState(state))
 
@@ -563,7 +703,11 @@ class lessonplan.FSM extends LessonElement
         else
             return undefined
 
-    run: ->
+    run: (seeking=false) ->
+
+        if seeking
+            return true
+
         @statesDfrd = $.Deferred()
         # start = => @runState('initial')
         # setTimeout(start, 0)

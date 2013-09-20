@@ -15,27 +15,45 @@ videoPlayerDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 class lessonplan.Video extends lessonplan.LessonElement
-    constructor: (elId) ->
+    constructor: (elId, @videoQuality='default') ->
         @preferredFormat = 'mp4'
         # @preferredFormat = 'youtube'
+
         @duration = ko.observable(1.0)
         @mediaUrlDict = {}
-        @mediaUrls = []
+        @mediaUrls = {}
+
+        @cues = []
 
         @playerReady = $.Deferred()
         super(elId)
 
 
-    media: (fileType, url) ->
-        if url?
-            @mediaUrlDict[fileType] = url
-            @mediaUrls.push(url)
+    quality: (q) ->
+        if q?
+            @videoQuality = q
         else
-            return @mediaUrlDict[fileType]
+            return @videoQuality
 
-    mediaTypes: ->
-        return [k for k of @mediaUrlDict]
+    qualities: () ->
+        return keys(@mediaUrlDict)
 
+    media: (fileType, url, quality='default') ->
+        if url?
+            if not @mediaUrls[quality]?
+                @mediaUrls[quality] = []
+            @mediaUrls[quality].push(url)
+        else
+            if @mediaUrlDict[quality]?
+                return @mediaUrlDict[quality][fileType]
+            else
+                return null
+
+    mediaTypes: (quality='default') ->
+        if @mediaUrlDict[quality]?
+            return [k for k of @mediaUrlDict[quality]]
+        else
+            return []
 
     subtitles: (f) ->
         # fill me in
@@ -63,12 +81,27 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         super()
 
+    lookupMilestone: (n) ->
+        for [t, actions] in @cues
+            for a in actions
+                if a instanceof lessonplan.Milestone and a.name is n
+                    return t
+
+        return null
+
     seek: (t) ->
         console.log('seeking video to ' + t)
-        @pop.pause()
-        @pop.currentTime(t)
 
         dfrd = $.Deferred()
+
+        if typeof(t) != 'number'
+            t = @lookupMilestone(t)
+            if not t?
+                dfrd.fail()
+                return dfrd
+
+        @pop.pause()
+        @pop.currentTime(t)
 
         checkIfSeeking = =>
             if not @pop.seeking()
@@ -83,7 +116,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @playerNode.setAttribute('style', 'display: inline; opacity: 1.0;')
 
-        d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
+        # d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
         d3.select(videoPlayerDivSelector).style('display', 'inline')
         d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
 
@@ -111,79 +144,92 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     load: ->
 
-        f = @media(@preferredFormat)
+        dfrd = $.Deferred()
 
-        # Load the media on the player object
-        if @preferredFormat == 'vimeo' or @preferredFormat == 'youtube'
+        # f = @media(@preferredFormat)
 
-            if @preferredFormat == 'vimeo'
-                url = 'http://player.vimeo.com/video/' + f
-                console.log('f: ' + f)
-                # @pop.url = f
-                @pop = Popcorn.vimeo(videoPlayerDivSelector, url)
-            else
-                url = 'http://www.youtube.com/embed/' + f + '?controls=0&enablejsapi=1&modestbranding=1&showinfo=0&rel=0'
-                @pop = Popcorn.youtube(videoPlayerDivSelector, url)
+        # # Load the media on the player object
 
-            #  Need to do some machinations to get our hands on the correct iframe node
-            console.log(videoPlayerDivSelector + ' iframe')
 
-            preparePlayer = =>
-                console.log('preparing player')
-                iframes = $(videoPlayerDivSelector + ' iframe')
+        # For the sake of cleanliness, removing the unused Vimeo/Youtube code...
+        # may reinstate later...
 
-                console.log(iframes)
-                window.iframes = iframes
-                iframes.each( (i, v) =>
-                    console.log('iframe')
-                    console.log(v)
-                    src = v.getAttribute('src')
-                    r = new RegExp(f, 'g')
-                    window.r = r
-                    window.src = src
-                    console.log('src: ' + src + ', f: ' + f)
-                    m = src.match(r)
-                    if m? and m.length > 0
-                        console.log('found correct iframe')
-                        console.log(v)
-                        @playerNode = v
-                )
+        # if @preferredFormat == 'vimeo' or @preferredFormat == 'youtube'
 
-                if not @playerNode?
-                    setTimeout(preparePlayer, 100)
-                    return
+        #     if @preferredFormat == 'vimeo'
+        #         url = 'http://player.vimeo.com/video/' + f
+        #         console.log('f: ' + f)
+        #         # @pop.url = f
+        #         @pop = Popcorn.vimeo(videoPlayerDivSelector, url)
+        #     else
+        #         url = 'http://www.youtube.com/embed/' + f + '?controls=0&enablejsapi=1&modestbranding=1&showinfo=0&rel=0'
+        #         @pop = Popcorn.youtube(videoPlayerDivSelector, url)
 
-                # @playerNode.setAttribute('style', 'display:none;')
+        #     #  Need to do some machinations to get our hands on the correct iframe node
+        #     console.log(videoPlayerDivSelector + ' iframe')
 
-                if @preferredFormat is 'youtube'
-                    @youtubePreload()
-                else
-                    @playerReady.resolve()
+        #     preparePlayer = =>
+        #         console.log('preparing player')
+        #         iframes = $(videoPlayerDivSelector + ' iframe')
 
-            # this must run as a separate evt since the
-            # injected player won't be available until after this
-            # function ends
-            setTimeout(preparePlayer, 0)
+        #         console.log(iframes)
+        #         window.iframes = iframes
+        #         iframes.each( (i, v) =>
+        #             console.log('iframe')
+        #             console.log(v)
+        #             src = v.getAttribute('src')
+        #             r = new RegExp(f, 'g')
+        #             window.r = r
+        #             window.src = src
+        #             console.log('src: ' + src + ', f: ' + f)
+        #             m = src.match(r)
+        #             if m? and m.length > 0
+        #                 console.log('found correct iframe')
+        #                 console.log(v)
+        #                 @playerNode = v
+        #         )
 
+        #         if not @playerNode?
+        #             setTimeout(preparePlayer, 100)
+        #             return
+
+        #         # @playerNode.setAttribute('style', 'display:none;')
+
+        #         if @preferredFormat is 'youtube'
+        #             @youtubePreload()
+        #         else
+        #             @playerReady.resolve()
+
+        #     # this must run as a separate evt since the
+        #     # injected player won't be available until after this
+        #     # function ends
+        #     setTimeout(preparePlayer, 0)
+
+        # else
+
+        if @mediaUrls[@videoQuality]?
+            urls = @mediaUrls[@videoQuality]
+        else if @mediaUrls['default']?
+            @videoQuality = 'default'
+            urls = @mediaUrls[@videoQuality]
         else
-            console.log('==============================')
-            console.log(@mediaUrls)
-            @pop = Popcorn.smart(videoPlayerDivSelector, @mediaUrls)
-            # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
+            dfrd.fail()
 
-            if @subtitlesFile?
-                @pop.parseJSON(@subtitlesFile)
+        console.log(urls)
+        @pop = Popcorn.smart(videoPlayerDivSelector, urls)
+        # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
-            @playerNode = @pop.video
-            if @playerNode.hasAttribute('controls')
-                @playerNode.removeAttribute('controls')
+        if @subtitlesFile?
+            @pop.parseJSON(@subtitlesFile)
 
-            @playerNode.setAttribute('style', 'opacity: 0;')
-            @playerNode.setAttribute('style', 'display:none;')
+        @playerNode = @pop.video
+        if @playerNode.hasAttribute('controls')
+            @playerNode.removeAttribute('controls')
 
-            @playerReady.resolve()
+        @playerNode.setAttribute('style', 'opacity: 0;')
+        @playerNode.setAttribute('style', 'display:none;')
 
-        console.log('loading ' + f)
+        @playerReady.resolve()
 
         @pop.on('durationchange', =>
             console.log('duration changed!:' + @pop.duration())
@@ -191,36 +237,59 @@ class lessonplan.Video extends lessonplan.LessonElement
             @duration(dur)
         )
 
+        @pop.on('canplaythrough', ->
+            dfrd.resolve()
+        )
+
+        @pop.on('error', ->
+            dfrd.fail()
+        )
+
+        # create new function context so the closure on
+        # `a` points to the right object
+        cueIt = (t, a) =>
+            @pop.cue(t, ->
+                console.log('running cued actions')
+                lessonplan.runChained(a.children)
+            )
+
+        for [t, a] in @cues
+            console.log('here')
+            console.log(a)
+            cueIt(t, a)
+
         @pop.load()
+        return dfrd
 
+    # youtubePreload: ->
 
-    youtubePreload: ->
+    #     console.log('preloading youtube')
 
-        console.log('preloading youtube')
+    #     @playerNode.setAttribute('style', 'opacity: 0; display: inline')
+    #     @pop.mute()
+    #     @pop.play()
 
-        @playerNode.setAttribute('style', 'opacity: 0; display: inline')
-        @pop.mute()
-        @pop.play()
+    #     checkReady = =>
+    #         if @pop.readyState() is 4
+    #             @pop.pause(0)
+    #             @pop.unmute()
+    #             # @playerNode.setAttribute('style', 'opacity:1.0;')
+    #             @playerNode.setAttribute('style', 'opacity:0.0;')
+    #             console.log('youtube video loaded')
+    #             @playerReady.resolve()
+    #         else
+    #             console.log(@pop.readyState())
+    #             setTimeout(checkReady, 500)
 
-        checkReady = =>
-            if @pop.readyState() is 4
-                @pop.pause(0)
-                @pop.unmute()
-                # @playerNode.setAttribute('style', 'opacity:1.0;')
-                @playerNode.setAttribute('style', 'opacity:0.0;')
-                console.log('youtube video loaded')
-                @playerReady.resolve()
-            else
-                console.log(@pop.readyState())
-                setTimeout(checkReady, 500)
-
-        checkReady()
+    #     checkReady()
 
 
     finish: ->
         # unregister callbacks
-        @pop.off('ended', @yieldCb) if @yieldCb
-        @pop.off('updatetime', @updateTimeCb) if @updateTimeCb
+        @pop.off('ended')
+        @pop.off('timeupdate')
+        @pop.off('error')
+        @pop.off('canplaythrough')
 
         # hide the video
         @hide()
@@ -248,14 +317,22 @@ class lessonplan.Video extends lessonplan.LessonElement
                 dfrd.resolve()
             @pop.on('ended', @yieldCb)
 
-            # @pop.currentTime(0)
             @pop.play()
         )
 
         return dfrd
 
     pause: ->
+
+        dfrd = $.Deferred()
+
+        @pop.on('pause', ->
+            dfrd.resolve()
+        )
+
         @pop.pause() if @pop
+
+        return dfrd
 
     resume: ->
         @pop.play() if @pop
@@ -270,4 +347,10 @@ class lessonplan.Video extends lessonplan.LessonElement
             return (@pop.readyState() == 4)
         else
             return false
+
+    # store a time associated cue; these will be
+    # cued against the popcorn obj when it is created
+    # (in `load`)
+    cue: (t, actions) ->
+        @cues.push([t, actions])
 

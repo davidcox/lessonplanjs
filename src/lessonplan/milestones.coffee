@@ -10,17 +10,23 @@ milestones =
 		if not value?
 			value = 1.0
 
-		url = lessonplanConfig.apiBaseUrl + '/' + path + '/' + name
+		url = window.app_base_url + '/progress/' + path
+
 		$.ajax(
-			url: url,
-			type: 'PUT',
-			data: 'value=' + value,
+			url: url
+			type: 'PUT'
+			data: 'value=' + value
 			success: -> console.log('boogie')
+			failure: -> console.log('failed to set milestone')
 		)
 
 	completeMilestone: (path, name) ->
-		console.log 'called completeMilstone[' + path + ' , ' + name ']'
-		return setMilestone(path, name, 1.0)
+		console.log 'called completeMilstone[' + path + ' , ' + name + ']'
+		return @setMilestone(path, name, 1.0)
 
 	resetMilestone: (path, name) ->
-		return setMilestone(path, name, 0.0)
+		return @setMilestone(path, name, 0.0)
+
+
+root = window ? exports
+root.milestones = milestones
