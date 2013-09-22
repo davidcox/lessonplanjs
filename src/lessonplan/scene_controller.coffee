@@ -49,6 +49,9 @@ class lessonplan.SceneController
         @currentScene = ko.observable(undefined)
         @currentSceneIndex = ko.observable(undefined)
 
+        @playingObservable = ko.observable(false)
+        @pausedObservable = ko.observable(false)
+
         # The current scene
         @scene = @loadScene(@sceneIndex)
 
@@ -112,6 +115,8 @@ class lessonplan.SceneController
             $.when(@pauseDfrd)
              .then(=>
                 @paused = true
+                @pausedObservable(true)
+                @playingObservable(false)
                 @pausing = false
             )
 
@@ -203,6 +208,7 @@ class lessonplan.SceneController
             console.log('[ shouldRun ]')
             @shouldRun = false
             @running = true
+            @playingObservable(true)
             @runningDfrd = @currentElement.run()
             @stallCount = 0
 
@@ -254,6 +260,8 @@ class lessonplan.SceneController
                 @currentTime(0.0)
                 @runningDfrd = @currentElement.run()
                 @running = true
+                @playingObservable(true)
+                @pausedObservable(false)
 
 
             if not @currentElement.ready

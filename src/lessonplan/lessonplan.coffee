@@ -372,6 +372,7 @@ class lessonplan.Interactive extends LessonElement
 
             # hack the current state
             if el?
+                el.disarm()
                 @currentChild = @children.indexOf(el)
                 if not @currentChild? or @currentChild < 0
                     @currentChild = 0
@@ -532,12 +533,20 @@ class lessonplan.SetAction extends LessonElement
 class lessonplan.MilestoneAction extends LessonElement
 
     constructor: (@name, @title=null) ->
+        @disarmed = false
         super()
+
+    disarm: ->
+        @disarmed = true
 
     run: (seeking=false)  ->
 
         if seeking
             return true
+
+        if @disarmed
+            @disarmed = false
+            return
 
         # post the milestone
         path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id + '/' + @name

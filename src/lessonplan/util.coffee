@@ -34,12 +34,17 @@ util =
         if not duration?
             duration = 1000
 
-        dfrd = $.Deferred()
-        resolve = -> dfrd.resolve()
-
         veil = $('#loading-indicator')
+
+        dfrd = $.Deferred()
+        resolve = ->
+            if not v
+                veil.css('display', 'none')
+            dfrd.resolve()
+
         if v
             console.log('showing veil')
+            veil.css('display', 'inline')
             veil.fadeIn(duration, resolve)
         else
             console.log('hiding veil')

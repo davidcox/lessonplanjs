@@ -7,8 +7,11 @@ class lessonplan.Timeline
     constructor: (selector, @sceneController) ->
 
         # Player state bindings
-        @paused = ko.observable(false)
-        @playing = ko.observable(true)
+        # @paused = ko.observable(false)
+        # @playing = ko.observable(true)
+        @paused = @sceneController.pausedObservable
+        @playing = @sceneController.playingObservable
+
         @self = ko.observable(this)
 
 
@@ -274,9 +277,6 @@ class lessonplan.Timeline
 
 
         # Subsegment Markers
-        console.log ')))))))))))'
-        console.log @subsegments
-        console.log @submarkers
 
         @submarkers = @svg.selectAll('.timeline-subsegment-marker')
                 .data(@subsegments)
@@ -301,7 +301,6 @@ class lessonplan.Timeline
         @submarkers.exit().remove()
 
         # Marker mouseover effects
-        console.log('[timeline]: installing mouseovers...')
 
         @submarkers.on('mouseover', (d) ->
             d3.select(this).transition()
@@ -314,12 +313,10 @@ class lessonplan.Timeline
                 .duration(250)
         )
 
-        console.log('[timeline]: installing click handlers...')
 
         # Marker click action
         @submarkers.on('click', (d) =>
 
-            console.log('marker click: ' + d.obj + ', to target: ' + d.subtarget)
             obj = d.obj # @segmentLookup[d.segId].obj
             if d.subtarget?
                 t = d.subtarget
@@ -327,7 +324,7 @@ class lessonplan.Timeline
                 t = 0
             @sceneController.seek(obj, t)
             d3.event.stopPropagation()
-            )
+        )
 
 
         # No tooltips on subsegment markers yet
@@ -383,7 +380,6 @@ class lessonplan.Timeline
                     gravity:'sw'
                     title: -> title
                 )
-
 
 
     updateSceneIndicator: (currentScene) ->
@@ -467,14 +463,14 @@ class lessonplan.Timeline
 
     play: ->
         console.log('[timeline]: play')
-        @playing(true)
-        @paused(false)
+        # @playing(true)
+        # @paused(false)
         @sceneController.resume()
 
     pause: ->
         console.log('[timeline]: pause')
-        @playing(false)
-        @paused(true)
+        # @playing(false)
+        # @paused(true)
         @sceneController.pause()
 
 
