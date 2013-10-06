@@ -221,6 +221,7 @@ class lessonplan.SceneController
             if @sceneIndex > @sceneList.length
                 @stopped = true
                 #window.location = @exitTarget
+                window.history.back()
                 return
 
             @advancingSceneDfrd = @loadScene(@sceneIndex)
