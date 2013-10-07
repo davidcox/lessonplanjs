@@ -29,4 +29,4 @@ milestones =
 
 
 root = window ? exports
-root.milestones = milestones
+root.lessonplan.milestones = milestones

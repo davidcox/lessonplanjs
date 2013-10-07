@@ -551,7 +551,7 @@ class lessonplan.MilestoneAction extends LessonElement
         # post the milestone
         path = root.module_id + '/' + root.lesson_id + '/' + root.segment_id + '/' + @name
         console.log 'calling completeMilestone'
-        milestones.completeMilestone(path, @name)
+        lessonplan.milestones.completeMilestone(path, @name)
 
 
 # "Play" an interactive (if it has a notion of playing and stopping)
