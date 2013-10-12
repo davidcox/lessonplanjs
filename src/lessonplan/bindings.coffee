@@ -1,5 +1,21 @@
 #<< lessonplan/util
 
+logInteraction = (type, target, value) ->
+
+    data =
+        type: type
+        target: target
+        value: value
+
+    $.ajax(
+        url: '/log-interaction'
+        type: 'POST'
+        data: JSON.stringify(data)
+        dataType: 'json'
+        contentType: 'application/json'
+    )
+
+
 # A knockout jquery-ui handler
 ko.bindingHandlers.slider =
 
@@ -127,7 +143,13 @@ svgbind =
 
         # register on click handles for every selector in the map
         for s in Object.keys(selectorMap)
-            d3.select(s).on('click', -> observable(!observable()))
+            d3.select(s).on('click', ->
+                observable(!observable())
+                try
+                    logInteraction('toggle', {'on': onSelector, 'off': offSelector}, observable())
+                catch e
+                    console.log 'unable to log interaction'
+            )
 
     bindAsMomentaryButton: (svg, onSelector, offSelector, observable) ->
 
@@ -139,8 +161,20 @@ svgbind =
         @bindMultiState(svg, selectorMap, observable)
 
         for s in Object.keys(selectorMap)
-            d3.selectAll(s).on('mousedown', -> observable(true))
-            d3.selectAll(s).on('mouseup', -> observable(false))
+            d3.selectAll(s).on('mousedown', ->
+                observable(true)
+                try
+                    logInteraction('momentary-down', {'on': onSelector, 'off': offSelector}, observable())
+                catch e
+                    console.log 'unable to log interaction'
+            )
+            d3.selectAll(s).on('mouseup', ->
+                observable(false)
+                try
+                    logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
+                catch e
+                    console.log 'unable to log interaction'
+            )
 
     bindMultipleChoice: (svg, selectorMap, observable) ->
 
@@ -150,6 +184,10 @@ svgbind =
             el.on('click', ->
                 observable(undefined)
                 observable(v)
+                try
+                    logInteraction('multiple-choice', {'selectors': selectorMap}, observable())
+                catch e
+                    console.log 'unable to log interaction'
             )
 
 
