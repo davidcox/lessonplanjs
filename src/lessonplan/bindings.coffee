@@ -241,6 +241,11 @@ svgbind =
                         d.y = minCoord
                     observable(mapping(normalizedScale(d.y)))
 
+                try
+                    logInteraction('slider-drag', knobSelector, observable())
+                catch e
+                    console.log 'unable to log interaction'
+
                 d3.select(this).attr("transform", (d2,i) ->
                     return "translate(" + [ d2.x, d2.y ] + ")"
                 )
