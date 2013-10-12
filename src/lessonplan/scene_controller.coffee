@@ -218,7 +218,7 @@ class lessonplan.SceneController
         if @shouldAdvanceScene
 
             @sceneIndex += 1
-            if @sceneIndex > @sceneList.length
+            if @sceneIndex >= @sceneList.length
                 @stopped = true
                 #window.location = @exitTarget
                 window.history.back()
