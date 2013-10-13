@@ -1,6 +1,8 @@
 #<< lessonplan/lessonplan
 #<< lessonplan/util
 
+root = window ? exports
+
 # A simple controller that implements a run loop to poke its
 # head up periodically to check whether something needs to be
 # done.  This object ultimately governs movement through the
@@ -51,6 +53,14 @@ class lessonplan.SceneController
 
         @playingObservable = ko.observable(false)
         @pausedObservable = ko.observable(false)
+
+        # check to see if we should be loading a segement
+        # other than the first one
+        if root.segment_id?
+            for s, i in @sceneList
+                if s.name is root.segment_id
+                    @sceneIndex = i
+                    break
 
         # The current scene
         @scene = @loadScene(@sceneIndex)
