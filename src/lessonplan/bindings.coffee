@@ -211,7 +211,8 @@ svgbind =
 
         # create a drag "behavior" in d3
         drag = d3.behavior.drag()
-            .origin(Object)
+            # .origin(Object)
+            .origin((d) -> d)
             .on("drag", (d,i) ->
                 if orientation is 'h'
                     d.x += d3.event.dx
@@ -220,6 +221,9 @@ svgbind =
                         d.x = maxCoord
                     if d.x < minCoord
                         d.x = minCoord
+                    console.log 'd.x = '
+                    console.log d.x
+                    console.log mapping(normalizedScale(d.x))
                     observable(mapping(normalizedScale(d.x)))
                 else
                     d.y += d3.event.dy
@@ -239,9 +243,24 @@ svgbind =
                 )
             )
 
+        initial = normalizedScale.invert(mapping.invert(observable()))
+        console.log '^^^^^^^^^^^^^^^^^^^'
+        console.log initial
+
+        getPosition = ->
+            if orientation is 'h'
+                d = {'x' : initial, 'y': 0}
+                cx = svg.select(knobSelector).attr('cx')
+                console.log cx
+                console.log Number(cx) + initial
+                svg.select(knobSelector).attr('cx', Number(cx) + initial)
+            else
+                d = {'x' : 0, 'y': initial}
+
+        d = {'x': 0, 'y':0}
 
         svg.select(knobSelector)
-            .data([ {'x' : 0, 'y': 0}])
+            .data([d])
             .call(drag)
 
 

@@ -12,6 +12,9 @@
 
 class lessonplan.PropsEnabled
 
+    constructor: ->
+        @allProps = []
+
     prop: (defaultVal, cb) ->
         owner = this
 
@@ -37,15 +40,21 @@ class lessonplan.PropsEnabled
                 return obs()
         f.observable = obs
         f.subscribe = (f2) -> obs.subscribe(f2)
+
+        @allProps.push(f)
         return f
 
     defineProps: (names, defaultVal) ->
         for name in names
             this[name] = @prop(defaultVal)
 
+    updateAllProps: ->
+        p(p()) for p in @allProps
+
 
 class lessonplan.ViewModel extends lessonplan.PropsEnabled
     constructor: ->
+        super()
 
     inheritProperties: (target, keys) ->
         if not keys?

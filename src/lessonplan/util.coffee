@@ -3,10 +3,6 @@
 
 resizeHandlers = []
 
-# $(window).resize( ->
-#     f() for f in resizeHandlers
-# )
-
 
 util =
 

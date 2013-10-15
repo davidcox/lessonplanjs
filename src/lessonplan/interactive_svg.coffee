@@ -6,6 +6,8 @@ window.interactiveSVGCounter = 0
 class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
     constructor: (@svgFileName) ->
+        super()
+
         @svg = undefined
         @svgId = 'svg' + interactiveSVGCounter
         interactiveSVGCounter += 1
