@@ -180,6 +180,31 @@ root.choice = (o) ->
     choiceObj = new lessonplan.WaitForChoice(o)
     dsl.currentObj.addChild(choiceObj)
 
+    subf = (options) ->
+        if options?
+            dsl.pushCurrent(choiceObj)
+            options()
+            dsl.popCurrent()
+
+    return subf
+
+root.option = (v) ->
+    optionObj = new lessonplan.LessonElement()
+    optionObj.value = v
+
+    if dsl.currentObj.addOption?
+        dsl.currentObj.addOption(optionObj)
+
+    subf = (actions) ->
+        if actions?
+            dsl.pushCurrent(optionObj)
+            actions()
+            dsl.popCurrent()
+
+    return subf
+
+
+
 root.fsm = goal
 
 root.dsl = dsl
