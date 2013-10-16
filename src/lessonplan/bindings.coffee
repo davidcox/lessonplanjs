@@ -133,10 +133,7 @@ svgbind =
         for s in Object.keys(selectorMap)
             d3.select(s).on('click', ->
                 observable(!observable())
-                try
-                    logInteraction('toggle', {'on': onSelector, 'off': offSelector}, observable())
-                catch e
-                    console.log 'unable to log interaction'
+                logInteraction('toggle', {'on': onSelector, 'off': offSelector}, observable())
             )
 
     bindAsMomentaryButton: (svg, onSelector, offSelector, observable) ->
@@ -151,17 +148,11 @@ svgbind =
         for s in Object.keys(selectorMap)
             d3.selectAll(s).on('mousedown', ->
                 observable(true)
-                try
-                    logInteraction('momentary-down', {'on': onSelector, 'off': offSelector}, observable())
-                catch e
-                    console.log 'unable to log interaction'
+                logInteraction('momentary-down', {'on': onSelector, 'off': offSelector}, observable())
             )
             d3.selectAll(s).on('mouseup', ->
                 observable(false)
-                try
-                    logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
-                catch e
-                    console.log 'unable to log interaction'
+                logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
             )
 
     bindMultipleChoice: (svg, selectorMap, observable) ->
@@ -169,99 +160,119 @@ svgbind =
         for k in Object.keys(selectorMap)
             el = svg.select(k)
             v = selectorMap[k]
-            el.on('click', ->
-                observable(undefined)
-                observable(v)
-                try
+
+            observable.extend(notify: 'always')
+
+            # JS charm
+            f = (v) ->
+                el.on('click', ->
+                    # observable(undefined)
+                    observable(v)
                     logInteraction('multiple-choice', {'selectors': selectorMap}, observable())
-                catch e
-                    console.log 'unable to log interaction'
-            )
+                )
+            f(v)
 
 
     bindSlider: (svg, knobSelector, boxSelector, orientation, observable, mapping) ->
 
+        # value (observable coords) -> actual value (e.g. voltage)
+        # Slider coords -> [0, 1] (i.e. this side to that side)
+        # Svg coords -> svg pixels
+
+        # mapping is from [0, 1] -> [observable value]
         if mapping is undefined
             mapping = d3.scale.linear().domain([0,1]).range([0,1])
 
+        sliderCoordsToValue = mapping
+        valueToSliderCoords = mapping.invert
+
         box = svg.select(boxSelector)
 
+        window.box = box
         if not box?
             console.log("Couldn't find " + boxSelector)
 
-        window.box = box
-
+        # build mapping from svg coords to slider coords
         if orientation is 'h'
             minCoord = 0 # box.node().x.animVal.value
             maxCoord = minCoord + box.node().width.animVal.value
 
-            normalizedScale = d3.scale.linear()
+            svgCoordsToSliderCoords = d3.scale.linear()
                 .domain([minCoord, maxCoord])
                 .range([0.0, 1.0]).clamp(true)
 
         else
-            maxCoord = 0 # box.node().y.animVal.value
+            maxCoord = 0
             minCoord = - box.node().height.animVal.value
-            #minCoord = - box.node().getBBox().height
 
-            normalizedScale = d3.scale.linear()
+            svgCoordsToSliderCoords = d3.scale.linear()
                 .domain([maxCoord, minCoord])
                 .range([0.0, 1.0]).clamp(true)
 
 
+        sliderCoordsToSvgCoords = svgCoordsToSliderCoords.invert
+
+        svgCoordsToValue = (svgCoord) ->
+            return sliderCoordsToValue(svgCoordsToSliderCoords(svgCoord))
+
+        valueToSvgCoords = (v) ->
+            return sliderCoordsToSvgCoords(valueToSliderCoords(v))
+
+        sliderTransform = (d,i) ->
+            console.log 'sliderTransform'
+            console.log 'value='
+            console.log d.value
+            console.log 'sliderCoords='
+            console.log valueToSliderCoords(d.value)
+            console.log 'svgCoords='
+            console.log valueToSvgCoords(d.value)
+
+            svgCoord = valueToSvgCoords(d.value)
+            coord = [0, 0]
+            if orientation is 'h'
+                coord[0] = svgCoord
+            else
+                coord[1] = svgCoord
+
+            return "translate(" + coord + ")"
+
+
+
         # create a drag "behavior" in d3
         drag = d3.behavior.drag()
-            # .origin(Object)
-            .origin((d) -> d)
             .on("drag", (d,i) ->
+
                 if orientation is 'h'
-                    d.x += d3.event.dx
-                    console.log d.x
-                    if d.x > maxCoord
-                        d.x = maxCoord
-                    if d.x < minCoord
-                        d.x = minCoord
-                    console.log 'd.x = '
-                    console.log d.x
-                    console.log mapping(normalizedScale(d.x))
-                    observable(mapping(normalizedScale(d.x)))
+                    svgCoord = d3.event.x - box.node().x.animVal.value
                 else
-                    d.y += d3.event.dy
-                    if d.y > maxCoord
-                        d.y = maxCoord
-                    if d.y < minCoord
-                        d.y = minCoord
-                    observable(mapping(normalizedScale(d.y)))
+                    svgCoord = d3.event.y - box.node().y.animVal.value
 
-                try
-                    logInteraction('slider-drag', knobSelector, observable())
-                catch e
-                    console.log 'unable to log interaction'
+                d.value = svgCoordsToValue(svgCoord)
 
-                d3.select(this).attr("transform", (d2,i) ->
-                    return "translate(" + [ d2.x, d2.y ] + ")"
-                )
+                observable(d.value)
+
+                logInteraction('slider-drag', knobSelector, observable())
+
+
             )
 
-        initial = normalizedScale.invert(mapping.invert(observable()))
-        console.log '^^^^^^^^^^^^^^^^^^^'
-        console.log initial
+        d = {value: observable()}
 
-        getPosition = ->
-            if orientation is 'h'
-                d = {'x' : initial, 'y': 0}
-                cx = svg.select(knobSelector).attr('cx')
-                console.log cx
-                console.log Number(cx) + initial
-                svg.select(knobSelector).attr('cx', Number(cx) + initial)
-            else
-                d = {'x' : 0, 'y': initial}
 
-        d = {'x': 0, 'y':0}
+        knob = svg.select(knobSelector)
 
-        svg.select(knobSelector)
-            .data([d])
+        knob.data([d])
+            .attr("transform", sliderTransform)
             .call(drag)
+
+        # subscribe to the observable
+        observable.subscribe((v) ->
+            console.log 'setting new data: '
+            console.log v
+            knob.data([{value: v}])
+                .attr("transform", sliderTransform)
+                .call(drag)
+        )
 
 
     bindScale: (svg, selector, observable, scaleMapping, anchorType) ->

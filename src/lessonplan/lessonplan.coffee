@@ -597,6 +597,10 @@ class lessonplan.WaitAction extends LessonElement
 class lessonplan.WaitForChoice extends LessonElement
     constructor: (@observableName) ->
         super()
+        @options = []
+
+    addOption: (opt) ->
+        @options.push(opt)
 
     run: (seeking=false) ->
 
@@ -612,9 +616,28 @@ class lessonplan.WaitForChoice extends LessonElement
         console.log('installing waitForChoice subscription on ' + @observableName)
         @dfrd = $.Deferred()
 
-        @subs = obs.subscribe( =>
+        @subs = obs.subscribe( (v) =>
             console.log('waitForChoice yielding')
+            console.log v
             @subs.dispose()
+
+            for opt in @options
+                console.log opt
+                if opt.value is v
+                    console.log 'opt.value = ' + opt
+                    console.log opt
+                    if opt.children?
+                        opt.stage = => @parent.stage()
+                        console.log '----34234'
+                        console.log @parent
+                        option_dfrd = lessonplan.runChained(opt.children)
+                        $.when(option_dfrd).then(=>
+                            @dfrd.resolve()
+                        )
+                        return
+                    else
+                        break
+
             @dfrd.resolve()
         )
 
