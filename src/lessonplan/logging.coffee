@@ -23,7 +23,8 @@ logging =
                 dataType: 'json'
                 contentType: 'application/json'
             )
-        catch
+
+        catch e
             console.log 'Unable to log interaction'
 
 root.logging = logging
