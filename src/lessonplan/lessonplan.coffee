@@ -602,6 +602,11 @@ class lessonplan.WaitForChoice extends LessonElement
     addOption: (opt) ->
         @options.push(opt)
 
+    init: ->
+        for opt in @options
+            opt.init()
+        super()
+
     run: (seeking=false) ->
 
         if seeking
