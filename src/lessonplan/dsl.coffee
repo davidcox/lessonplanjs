@@ -188,7 +188,7 @@ root.choice = (o) ->
 
     return subf
 
-root.option = (v) ->
+root.option = (v...) ->
     optionObj = new lessonplan.LessonElement()
     optionObj.value = v
 

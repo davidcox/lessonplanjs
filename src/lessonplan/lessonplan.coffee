@@ -623,13 +623,11 @@ class lessonplan.WaitForChoice extends LessonElement
 
             for opt in @options
                 console.log opt
-                if opt.value is v
+                if v in opt.value
                     console.log 'opt.value = ' + opt
                     console.log opt
                     if opt.children?
                         opt.stage = => @parent.stage()
-                        console.log '----34234'
-                        console.log @parent
                         option_dfrd = lessonplan.runChained(opt.children)
                         $.when(option_dfrd).then(=>
                             @dfrd.resolve()

@@ -219,6 +219,7 @@ class lessonplan.SceneController
             @shouldRun = false
             @running = true
             @playingObservable(true)
+            @pausedObservable(false)
             @runningDfrd = @currentElement.run()
             @stallCount = 0
 
