@@ -67,6 +67,79 @@ util =
         else
             el.transition().attr('opacity', 1.0).duration(duration)
 
+    transitionGroups: (gsel1, gsel2, duration) ->
+        console.log gsel1
+        console.log gsel2
+        g1 = d3.select('#' + gsel1)
+        g2 = d3.select('#' + gsel2)
+
+        root.g1 = g1
+        g1Children = [d3.select(node) for node in g1[0][0].childNodes when node.nodeType != 3][0]
+        g2Children = [d3.select(node) for node in g2[0][0].childNodes when node.nodeType != 3][0]
+
+        root.g1Children = g1Children
+
+        g1ChildIds = ['#' + el.attr('id') for el in g1Children when (el? and el.attr?)][0]
+        g2ChildIds = ['#' + el.attr('id') for el in g2Children when (el? and el.attr?)][0]
+
+        g1ChildIdStems = [elId.split('-')[0] for elId in g1ChildIds][0]
+        g2ChildIdStems = [elId.split('-')[0] for elId in g2ChildIds][0]
+
+        console.log g2ChildIdStems
+
+        for childId, i in g1ChildIdStems
+            console.log 'Child ID: '
+            g1Child = d3.select(g1ChildIds[i])
+            console.log childId
+            if childId in g2ChildIdStems
+                g2ChildId = g2ChildIds[g2ChildIdStems.indexOf(childId)]
+                g2Child = d3.select(g2ChildId)
+
+                console.log 'move ' + childId
+                console.log g2Child.attr('id')
+                console.log g1Child.attr('id')
+
+                # if it has a transform attribute, it'll be easy sailing
+                if g1Child.attr('transform')
+                    g2Child.attr('display', 'none')
+                    g1Child.transition().duration(1000).attr('transform', g2Child.attr('transform'))
+                else
+                    bbox1 = g1Child[0][0].getBBox()
+                    bbox2 = g2Child[0][0].getBBox()
+
+                    dx = bbox2.x - bbox1.x
+                    dy = bbox2.y - bbox1.y
+
+                    sw = bbox2.width / bbox1.width
+                    sh = bbox2.height / bbox1.height
+
+                    identityTransform = 'translate(0 0) scale(1 1)'
+                    targetTransform =  'translate(' + (bbox2.x) + ' ' + (bbox2.y) + ') scale(' + sw + ' ' + sh + ') translate(' + (-bbox1.x) + ' ' + (-bbox1.y) + ')'
+
+                    g2Child.attr('display', 'none')
+                    g1Child.attr('transform', identityTransform)
+                    g1Child.transition().duration(1000).attr('transform', targetTransform)
+
+            else
+                console.log 'fade out ' + childId
+                g1Child.transition().duration(1000).attr('opacity', 0.0)
+
+
+        g2.attr('opacity', 0.0)
+        g2.attr('display', 'inline')
+        g2.transition().duration(1000).attr('opacity', 1.0)
+
+        # for childId, i in g2ChildIdStems
+
+        #     if childId not in g1ChildIdStems
+        #         console.log 'fade in ' + childId
+        #         g2Child = d3.select(g2ChildIds[i])
+        #         g2Child.attr('opacity', 0.0)
+        #         g2Child.transition().duration(1000).attr('opacity', 1.0)
+
+
+
+
     # Float a div element over top of an SVG rect element
     floatOverRect: (svgSelector, rectSelector, divSelector) ->
 

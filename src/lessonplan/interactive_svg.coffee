@@ -60,6 +60,12 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     hideElement: (s) ->
         util.hideElement(@svg.select(s), 250)
 
+    glowElement: (s) ->
+        console.log 'Glowing ' + s
+        @svg.select(s).classed('glowing', true)
+
+    unglowElement: (s) ->
+        @svg.select(s).classed('glowing', false)
 
     # Reveal the interactive SVG, loading as needed
     show: ->

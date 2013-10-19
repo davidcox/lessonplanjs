@@ -203,7 +203,19 @@ root.option = (v...) ->
 
     return subf
 
+root.glow = (targets...) ->
+    glowObj = new lessonplan.GlowAction(targets)
+    dsl.currentObj.addChild(glowObj)
 
+root.unglow = (targets...) ->
+    unglowObj = new lessonplan.UnglowAction(targets)
+    dsl.currentObj.addChild(unglowObj)
+
+root.transition = (groupFrom, groupTo) ->
+    transitionObj = new lessonplan.GroupTransitionAction(groupFrom, groupTo)
+    console.log '-------======'
+    console.log transitionObj
+    dsl.currentObj.addChild(transitionObj)
 
 root.fsm = goal
 

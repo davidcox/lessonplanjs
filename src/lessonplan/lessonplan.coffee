@@ -516,6 +516,39 @@ class lessonplan.HideAction extends LessonElement
         stage.hideElement('#' + s) for s in @selectors
 
 
+class lessonplan.GlowAction extends LessonElement
+    constructor: (@selectors)  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        stage.glowElement('#' + s) for s in @selectors
+
+
+class lessonplan.UnglowAction extends LessonElement
+    constructor: (@selectors)  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        stage.unglowElement('#' + s) for s in @selectors
+
+class lessonplan.GroupTransitionAction extends LessonElement
+    constructor: (@fromSel, @toSel) ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+
+        if seeking
+            console.log 'Hiding: #' + @fromSel
+            stage.hideElement('#' + @fromSel)
+            stage.showElement('#' + @toSel)
+
+        else
+            util.transitionGroups(@fromSel, @toSel)
+
+
 # Set a variable / property on an interactive svg
 # (e.g. simulation parameter)
 class lessonplan.SetAction extends LessonElement
@@ -589,6 +622,7 @@ class lessonplan.WaitAction extends LessonElement
 
         setTimeout(cb, @delay)
         return @dfrd
+
 
 
 # Wait for an observable (e.g. KnockOut.js binding) to

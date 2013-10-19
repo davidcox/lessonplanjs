@@ -7,3 +7,6 @@ dir:
 
 js: dir
 	toaster -d -c
+
+watch: dir
+	toaster -d -c -w &
