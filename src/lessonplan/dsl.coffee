@@ -176,6 +176,16 @@ root.goal = (f) ->
     goalObj = new lessonplan.FSM(f())
     dsl.currentObj.addChild(goalObj)
 
+root.multiple_choice = (vname) ->
+
+    multipleChoiceObj = new lessonplan.MultipleChoiceQuestion(vname)
+    dsl.currentObj.addChild(multipleChoiceObj)
+
+    subf = (m) ->
+        multipleChoiceObj.mapping(m())
+
+    return subf
+
 root.choice = (o) ->
     choiceObj = new lessonplan.WaitForChoice(o)
     dsl.currentObj.addChild(choiceObj)

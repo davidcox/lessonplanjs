@@ -44,6 +44,35 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         @svgDiv.style('width', '100%')
         @svgDiv.style('height', '100%')
 
+        stdDeviation = 5
+        colorMatrix = '0 0 0 1.0 0 0 0 0 0 0.2 0 0 0 0 0.2 0 0 0 1 0'
+
+        defs = @svg.append('defs')
+
+        filter = defs.append('filter')
+            .attr('id', 'glow')
+            .attr('x', '-20%')
+            .attr('y', '-20%')
+            .attr('width', '140%')
+            .attr('height', '140%')
+            .call(->
+                this.append('feColorMatrix')
+                    .attr('type', 'matrix')
+                    .attr('values', colorMatrix)
+                this.append('feGaussianBlur')
+                    .attr('stdDeviation', stdDeviation)
+                    .attr('result', 'coloredBlur')
+            )
+
+        filter.append('feMerge')
+            .call(->
+                this.append('feMergeNode')
+                    .attr('in', 'coloredBlur')
+                this.append('feMergeNode')
+                    .attr('in', 'SourceGraphic')
+            )
+
+
         @init()
 
         cb() if cb?
@@ -62,10 +91,12 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
     glowElement: (s) ->
         console.log 'Glowing ' + s
-        @svg.select(s).classed('glowing', true)
+        # @svg.select(s).classed('glowing', true)
+        @svg.select(s).style('filter', 'url(#glow)')
 
     unglowElement: (s) ->
-        @svg.select(s).classed('glowing', false)
+        # @svg.select(s).classed('glowing', false)
+        @svg.select(s).style('filter', '')
 
     # Reveal the interactive SVG, loading as needed
     show: ->

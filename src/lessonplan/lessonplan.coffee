@@ -1,6 +1,7 @@
 #<< lessonplan/util
 #<< lessonplan/milestones
 #<< lessonplan/status
+#<< lessonplan/bindings
 
 # A series of object for defining guided-interactive
 # educational scripts.
@@ -547,6 +548,31 @@ class lessonplan.GroupTransitionAction extends LessonElement
 
         else
             util.transitionGroups(@fromSel, @toSel)
+
+class lessonplan.MultipleChoiceQuestion extends LessonElement
+    constructor: (@varname) ->
+        @observable = ko.observable 'none'
+        super()
+
+    mapping: (m) ->
+
+        @map = {}
+        for k in Object.keys(m)
+            @map['#' + k] = m[k]
+
+
+    run: (seeking=false) ->
+        stage= @parent.stage()
+
+        stage[@varname] = @observable
+
+        console.log '============'
+        console.log stage.svg
+        console.log @map
+        console.log @observable
+        console.log stage
+
+        svgbind.bindMultipleChoice(stage.svg, @map, @observable)
 
 
 # Set a variable / property on an interactive svg
