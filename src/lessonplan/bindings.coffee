@@ -8,9 +8,6 @@ logInteraction = logging.logInteraction
 ko.bindingHandlers.slider =
 
     init: (element, valueAccessor, allBindingsAccessor)  ->
-        console.log element
-        console.log valueAccessor
-        console.log allBindingsAccessor
 
         options = allBindingsAccessor().sliderOptions || {}
         $(element).slider(options)
@@ -219,13 +216,6 @@ svgbind =
             return sliderCoordsToSvgCoords(valueToSliderCoords(v))
 
         sliderTransform = (d,i) ->
-            console.log 'sliderTransform'
-            console.log 'value='
-            console.log d.value
-            console.log 'sliderCoords='
-            console.log valueToSliderCoords(d.value)
-            console.log 'svgCoords='
-            console.log valueToSvgCoords(d.value)
 
             svgCoord = valueToSvgCoords(d.value)
             coord = [0, 0]
@@ -267,8 +257,6 @@ svgbind =
 
         # subscribe to the observable
         observable.subscribe((v) ->
-            console.log 'setting new data: '
-            console.log v
             knob.data([{value: v}])
                 .attr("transform", sliderTransform)
                 .call(drag)
