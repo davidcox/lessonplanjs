@@ -1,5 +1,6 @@
 #<< lessonplan/lessonplan
 #<< lessonplan/util
+#<< lessonplan/logging
 
 root = window ? exports
 
@@ -116,6 +117,8 @@ class lessonplan.SceneController
         # test for pausing
         if @shouldPause
             console.log('[ shouldPause ]')
+            logging.logInteraction('timeline', 'pause', true)
+
             @shouldPause = false
             @pausing = true
             @pauseDfrd = @currentElement.pause()
@@ -164,6 +167,10 @@ class lessonplan.SceneController
         # test for seeking
         if @shouldSeek
             console.log('[ shouldSeek ]')
+
+            # todo, more informative logging
+            logging.logInteraction('timeline', 'seek', @targetSegment.elementId)
+
             @shouldSeek = false
             @shouldBuffer = false
             @buffering = false
@@ -216,6 +223,8 @@ class lessonplan.SceneController
 
         if @shouldRun
             console.log('[ shouldRun ]')
+            logging.logInteraction('timeline', 'play', true)
+
             @shouldRun = false
             @running = true
             @playingObservable(true)
