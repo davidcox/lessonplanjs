@@ -98,6 +98,28 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         # @svg.select(s).classed('glowing', false)
         @svg.select(s).style('filter', '')
 
+
+    boxAroundElement: (s, color) ->
+        el = @svg.select(s)
+
+        #r = el.node().getBoundingClientRect()
+        r = el.node().getBBox()
+
+        if el.parent?
+            p = el.parent
+        else
+            p = @svg
+
+        margin = 5
+
+        p.append('rect').attr('x', r.x - margin)
+                           .attr('y', r.y - margin)
+                           .attr('width', r.width + 2*margin)
+                           .attr('height', r.height + 2*margin)
+                           .style('fill', 'none')
+                           .style('stroke-width', 2)
+                           .style('stroke', color)
+
     # Reveal the interactive SVG, loading as needed
     show: ->
 

@@ -534,6 +534,17 @@ class lessonplan.UnglowAction extends LessonElement
         stage = @parent.stage()
         stage.unglowElement('#' + s) for s in @selectors
 
+
+class lessonplan.BoxHighlightAction extends LessonElement
+    constructor: (@color, @selectors)  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        console.log 'boxing!'
+        stage.boxAroundElement('#' + s, @color) for s in @selectors
+
+
 class lessonplan.GroupTransitionAction extends LessonElement
     constructor: (@fromSel, @toSel) ->
         super()
@@ -565,12 +576,6 @@ class lessonplan.MultipleChoiceQuestion extends LessonElement
         stage= @parent.stage()
 
         stage[@varname] = @observable
-
-        console.log '============'
-        console.log stage.svg
-        console.log @map
-        console.log @observable
-        console.log stage
 
         svgbind.bindMultipleChoice(stage.svg, @map, @observable)
 
