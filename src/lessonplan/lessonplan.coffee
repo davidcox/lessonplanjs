@@ -10,7 +10,7 @@ root = window ? exports
 
 root.registry = []
 root.scenes = {}
-root.stages = []
+root.stages = {}
 
 # Some basic infrastructure for uniquely ID'ing elements
 elementCounter = -1
