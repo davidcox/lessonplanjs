@@ -225,8 +225,8 @@ root.box_highlight = (color, targets...) ->
     bhObj = new lessonplan.BoxHighlightAction(color, targets)
     dsl.currentObj.addChild(bhObj)
 
-root.box_unhighlight = (color, targets...) ->
-    unglowObj = new lessonplan.BoxUnhighlightAction(color, targets)
+root.box_unhighlight = (targets...) ->
+    unglowObj = new lessonplan.BoxUnhighlightAction(targets)
     dsl.currentObj.addChild(unglowObj)
 
 

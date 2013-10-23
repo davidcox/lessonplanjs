@@ -119,6 +119,11 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
                            .style('fill', 'none')
                            .style('stroke-width', 2)
                            .style('stroke', color)
+                           .attr('id', s[1..] + '-highlight-box')
+
+    unboxElement: (s) ->
+        @svg.select(s + '-highlight-box').remove()
+
 
     # Reveal the interactive SVG, loading as needed
     show: ->
