@@ -1,4 +1,5 @@
 #<< lessonplan/lessonplan
+#<< lessonplan/util
 
 # A somewhat hacked up video object / player
 # designed to work as a LessonElement object
@@ -18,6 +19,9 @@ class lessonplan.Video extends lessonplan.LessonElement
     constructor: (elId, @videoQuality='default') ->
         @preferredFormat = 'mp4'
         # @preferredFormat = 'youtube'
+
+        # a very coarse marker of whether the video is OK or not
+        @broken = false
 
         @duration = ko.observable(1.0)
         @mediaUrlDict = {}
@@ -68,13 +72,20 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @playerSelector = undefined
 
-        @load()
+        $.when(@load()).fail(=>
+            @broken = true
+            util.indicateLoadFail(true)
+        )
 
         super()
 
     reset: (t) ->
+        if @broken then return
+
         console.log('Resetting video')
+
         t = 0.0 if not t?
+
         @seek(t)
 
         @hide()
@@ -97,7 +108,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         if typeof(t) != 'number'
             t = @lookupMilestone(t)
             if not t?
-                dfrd.fail()
+                dfrd.reject()
                 return dfrd
 
         @pop.pause()
@@ -213,7 +224,7 @@ class lessonplan.Video extends lessonplan.LessonElement
             @videoQuality = 'default'
             urls = @mediaUrls[@videoQuality]
         else
-            dfrd.fail()
+            dfrd.reject()
 
         console.log(urls)
         @pop = Popcorn.smart(videoPlayerDivSelector, urls)
@@ -242,7 +253,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         )
 
         @pop.on('error', ->
-            dfrd.fail()
+            dfrd.reject()
         )
 
         # create new function context so the closure on
@@ -300,6 +311,11 @@ class lessonplan.Video extends lessonplan.LessonElement
         dfrd = $.Deferred()
 
         $.when(@playerReady).done( =>
+
+            if @broken
+                console.log 'Unable to play video'
+                dfrd.reject()
+                return
 
             console.log('playing video')
 

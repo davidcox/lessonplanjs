@@ -370,7 +370,9 @@ class lessonplan.Timeline
             @sceneMarkers[s] = m
             do (m, s) =>
                 m.on('click', =>
-                    @sceneController.selectScene(s)
+                    # @sceneController.selectScene(s)
+                    # hack this to work differently
+                    window.location.href = '/course/' + [module_id, lesson_id, @sceneController.sceneList[s].name].join('/')
                 )
 
                 title = @sceneController.sceneList[s].title

@@ -48,6 +48,26 @@ util =
 
         return dfrd
 
+    indicateLoadFail: (v, duration) ->
+        if not duration?
+            duration = 1000
+
+        veil = $('#load-fail-indicator')
+
+        dfrd = $.Deferred()
+        resolve = ->
+            if not v
+                veil.css('display', 'none')
+            dfrd.resolve()
+
+        if v
+            veil.css('display', 'inline')
+            veil.fadeIn(duration, resolve)
+        else
+            veil.fadeOut(duration, resolve)
+
+        return dfrd
+
     hideElement: (el, duration) ->
         if duration is undefined
             el.attr('opacity', 0.0)

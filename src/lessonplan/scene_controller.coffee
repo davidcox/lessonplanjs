@@ -249,6 +249,7 @@ class lessonplan.SceneController
             @advancingScence = true
 
         if @shouldSelectScene
+
             @advancingSceneDfrd = @loadScene(@selectedSceneIndex)
             @shouldSelectScene = false
             @advancingScence = true

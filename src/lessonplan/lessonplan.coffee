@@ -420,6 +420,7 @@ lessonplan.runChained = (actions, seeking=false) ->
 class lessonplan.Line extends LessonElement
 
     constructor: (@audioFile, @text) ->
+        @errorState = 0
         super()
 
     init: ->
@@ -431,6 +432,10 @@ class lessonplan.Line extends LessonElement
         console.log('loading: ' + af)
         @audio = new buzz.sound(audioRoot + '/' + af,
             preload: true
+        )
+        @audio.bind('error', =>
+            console.log('Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage())
+            @errorState = @audio.getErrorCode()
         )
         @audio.load()
 
@@ -477,6 +482,25 @@ class lessonplan.Line extends LessonElement
             return true
 
         audioDeferred = $.Deferred()
+
+        if @errorState == 0
+
+            @audio.bind('error', =>
+                console.log 'Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage()
+                @errorState = @audio.getErrorCode()
+                audioDeferred.resolve()
+            )
+
+            @audio.bind('ended', ->
+                audioDeferred.resolve()
+            )
+
+        else
+            console.log 'Audio [' + @audioFile + '] will not play'
+            audioDeferred.resolve()
+
+
+
 
         @audio.bind('ended', =>
             audioDeferred.resolve()
