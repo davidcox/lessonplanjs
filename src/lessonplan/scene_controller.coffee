@@ -356,6 +356,9 @@ class lessonplan.SceneController
         return $.when(dfrd)
                 .then( =>
                     @scene = window.scenes[name]
+
+                    if not @scene?
+                        console.log('Could not find scene named: ' + name)
                     # update the bindings
                     @currentElement = @scene
                     @sceneIndex = index
