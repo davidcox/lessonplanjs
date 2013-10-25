@@ -93,7 +93,10 @@ class lessonplan.Timeline
         )
 
         @sceneController.currentSegment.subscribe( (v) =>
-            @update(@sceneController.currentElement, @sceneController.currentTime)
+            console.log @sceneController.currentTime
+            console.log @sceneController.currentTime()
+            if @sceneController.currentTime?
+                @update(@sceneController.currentElement, @sceneController.currentTime())
         )
 
 
@@ -395,7 +398,6 @@ class lessonplan.Timeline
 
     # Update the current timeline display
     update: (segment, t) ->
-        # console.log('[timeline]: updating timeline')
         if not segment?
             console.log('[timeline]: warning: empty segment in timeline')
             return
@@ -407,29 +409,41 @@ class lessonplan.Timeline
 
         timelineSegment = @segmentLookup[segId]
 
+        if not timelineSegment?
+            console.log 'segment lookup failed: '
+            console.log segment
+            console.log segId
+            console.log @segmentLookup
+
+            @currentTime = undefined
+        else
+            @displayedSegment = timelineSegment
+
+
         if not @tScale?
             console.log('[timeline]: no time scale defined')
             return
 
         @currentTime = t
 
-        if not timelineSegment?
-            @currentTime = undefined
-        else
-            @displayedSegment = timelineSegment
-
-
         if not @displayedSegment?
             console.log('warning: no segment to display')
             return
 
         if not @currentTime?
+            # this is an interactive?
             progressWidth = @tScale(@displayedSegment.start)
             activebarWidth = @tScale(@displayedSegment.duration)
             @progressbar.attr('width', progressWidth + '%')
             @activebar.attr('x', progressWidth + '%')
             @activebar.attr('width', activebarWidth + '%')
+            console.log 'setting activebar width: ' + activebarWidth + '%'
+            if activebarWidth > 99
+                console.log segment
+                console.log t
+                console.barf()
         else
+            # this is a video
             newWidth = @tScale(@displayedSegment.start + @currentTime)
             @progressbar.attr('width', newWidth + '%')
             @activebar.attr('x', '0%')
@@ -460,7 +474,7 @@ class lessonplan.Timeline
         relT = t - thisSeg.start
         console.log('[timeline]: seeking to ' + thisSeg.segId + ':' + relT)
 
-        @update(thisSeg.segId, relT)
+        @update(thisSeg, relT)
         @sceneController.seek(thisSeg.obj, relT)
 
     play: ->

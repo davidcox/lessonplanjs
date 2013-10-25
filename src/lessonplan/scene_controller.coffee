@@ -64,9 +64,9 @@ class lessonplan.SceneController
                     break
 
         # The current scene
-        @scene = @loadScene(@sceneIndex)
+        @loadScene(@sceneIndex)
 
-        @interval = 100
+        @interval = 10
 
         # Hard-coded for now... should probably
         # show some kind of outro
@@ -201,7 +201,9 @@ class lessonplan.SceneController
             ).then(=>
                 l '> seeking...'
                 @currentElement = @targetSegment
-                @currentSegment(@currentElement)
+
+                # TODO: is this needed?
+                # @currentSegment(@currentElement)
 
                 return @currentElement.seek(@targetTime)
 
@@ -278,8 +280,8 @@ class lessonplan.SceneController
                     return
 
                 # update the KO bindings
-                @currentSegment(@currentElement)
                 @currentTime(0.0)
+                @currentSegment(@currentElement)
                 @runningDfrd = @currentElement.run()
                 @running = true
                 @playingObservable(true)
