@@ -438,7 +438,7 @@ class lessonplan.Line extends LessonElement
         @audio = new buzz.sound(audioRoot + '/' + af,
             preload: true
         )
-        @audio.bind('error', =>
+        @audio.bind('empty error', =>
             console.log('Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage())
             @errorState = @audio.getErrorCode()
         )
@@ -488,9 +488,10 @@ class lessonplan.Line extends LessonElement
 
         audioDeferred = $.Deferred()
 
-        if @errorState == 0
 
-            @audio.bind('error', =>
+        if @errorState == 0 and @audio.getNetworkStateCode() != 3
+
+            @audio.bind('empty.run error.run', =>
                 console.log 'Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage()
                 @errorState = @audio.getErrorCode()
                 audioDeferred.resolve()
@@ -504,15 +505,12 @@ class lessonplan.Line extends LessonElement
             console.log 'Audio [' + @audioFile + '] will not play'
             audioDeferred.resolve()
 
-
-
-
         @audio.bind('ended', =>
             audioDeferred.resolve()
         )
 
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
-        @audio.load()
+        # @audio.load()
         @audio.play()
 
         @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
