@@ -130,6 +130,11 @@ class lessonplan.LessonElement
             return undefined
 
 
+    stage: (s) ->
+        if not s?
+            if @parent? and @parent != this
+                return @parent.stage()
+
     # Run through this element and all of its children
     run: (seeking=false)->
         return true
@@ -763,7 +768,7 @@ class lessonplan.FSM extends LessonElement
         @delay = 500
         @startTime = undefined
 
-        @statesDfrd = $.Deferred()
+        @statesDfrd = $.Deferred().resolve()
         @stopping = false
 
         # convert DSL imperative action definitions
@@ -788,28 +793,63 @@ class lessonplan.FSM extends LessonElement
             # actionObj.parent = undefined
 
     init: ->
-        @stage = @parent.stage()
         super()
 
     getElapsedTime: ->
         now = new Date().getTime()
         return now - @startTime
 
+    run: (seeking=false) ->
+
+        if seeking
+            return true
+
+        # This dfrd will only be resolved on exiting the
+        # state system
+        @statesDfrd = $.Deferred()
+
+        # start the state system
+        go = => @runState('initial')
+        setTimeout(go, 0)
+
+        return @statesDfrd
+
+
+    runState: (state, cb) ->
+        console.log('ACTION: state: ' + state)
+        @startTime = new Date().getTime()
+
+        dfrd = $.Deferred()
+
+        dfrd.done =>
+            console.log 'runState'
+            @transitionState(state)
+
+        if @states[state].action? and @states[state].action.children.length
+            $.when(lessonplan.runChained(@states[state].action.children)).then ->
+                dfrd.resolve()
+        else
+            dfrd.resolve()
+
     transitionState: (state) ->
+        console.log 'transitionState: ' + state
 
         if @stopping
+            console.log 'stopping'
             @stopping = false
-            @statesDfrd = undefined
+            @statesDfrd.resolve()
             return
 
         stateObj = @states[state]
 
-        # pin some values to the object to make the DSL work
-        # as if by magic (sort of)
+        # pin some values to the object to make the DSL easier
+        # to use
         stateObj.elapsedTime = @getElapsedTime()
-        stateObj.stage = @stage
+        stateObj.stage = @stage()
 
         transitionTo = stateObj.transition()
+        console.log 'transitionTo: '
+        console.log transitionTo
 
         if transitionTo?
             if transitionTo is 'continue'
@@ -821,17 +861,6 @@ class lessonplan.FSM extends LessonElement
             t = => @transitionState(state)
             setTimeout(t, @delay)
 
-    runState: (state, cb) ->
-        console.log('ACTION: state: ' + state)
-        @startTime = new Date().getTime()
-
-        dfrd = $.Deferred().resolve()
-
-        if @states[state].action? and @states[state].action.children.length
-            dfrd = lessonplan.runChained(@states[state].action.children)
-
-        dfrd.done(=> @transitionState(state))
-
     next: ->
         # override regular next-children behavior
         if @parent?
@@ -839,21 +868,9 @@ class lessonplan.FSM extends LessonElement
         else
             return undefined
 
-    run: (seeking=false) ->
-
-        if seeking
-            return true
-
-        @statesDfrd = $.Deferred()
-        # start = => @runState('initial')
-        # setTimeout(start, 0)
-
-        @runState('initial')
-
-        return @statesDfrd
-
     stop: ->
-        @stopping = true
+        if @statesDfrd.state() == 'pending'
+            @stopping = true
 
 
 
