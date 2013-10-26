@@ -647,12 +647,26 @@ class lessonplan.MultipleChoiceQuestion extends LessonElement
 # (e.g. simulation parameter)
 class lessonplan.SetAction extends LessonElement
 
-    constructor: (@property, @value)  ->
+    constructor: (@property, @value, @time)  ->
         super()
 
     run: (seeking=false) ->
         stage = @parent.stage()
-        stage[@property](@value)
+
+        if @time == 0
+            stage[@property](@value)
+        else
+            start =
+                v: stage[@property]()
+            end =
+                v: @value
+            prop = stage[@property]
+            $(start).animate(end,
+                duration: @time
+                step: ->
+                    prop(this.v)
+            )
+
 
 
 # Communicate with a backend API to register the completion

@@ -103,8 +103,8 @@ root.hide = (selectors...) ->
 
     dsl.currentObj.addChild(hideObj)
 
-root.set_property = (property, value) ->
-    setObj = new lessonplan.SetAction(property, value)
+root.set_property = (property, value, time=0) ->
+    setObj = new lessonplan.SetAction(property, value, time)
 
     dsl.currentObj.addChild(setObj)
 

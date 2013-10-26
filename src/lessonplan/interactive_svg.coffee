@@ -206,3 +206,5 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         return dfrd
 
 
+    attr: (n, v) ->
+        this[n] = v
