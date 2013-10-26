@@ -261,8 +261,8 @@ class lessonplan.Interactive extends LessonElement
 
     playSoundtrack: ->
         @soundtrackAudio.load()
-        # @soundtrackAudio.play().setVolume(8)
-        @soundtrackAudio.play().setVolume(0)
+        @soundtrackAudio.play().setVolume(6)
+        # @soundtrackAudio.play().setVolume(0)
 
     run: (seeking=false) ->
 
