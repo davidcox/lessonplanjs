@@ -314,7 +314,10 @@ class lessonplan.Video extends lessonplan.LessonElement
         # hide the video
         @hide()
 
-    run: ->
+    run: (seeking=false) ->
+
+        if seeking
+            return
 
         if @inserted
             @show()
