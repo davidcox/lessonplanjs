@@ -571,6 +571,16 @@ class lessonplan.HideAction extends LessonElement
         stage.hideElement('#' + s) for s in @selectors
 
 
+class lessonplan.HideAllAction extends LessonElement
+
+    constructor:  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        stage.hideAllElements()
+
+
 class lessonplan.GlowAction extends LessonElement
     constructor: (@selectors)  ->
         super()

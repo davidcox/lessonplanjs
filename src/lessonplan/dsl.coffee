@@ -99,9 +99,13 @@ root.show = (selectors...) ->
     dsl.currentObj.addChild(showObj)
 
 root.hide = (selectors...) ->
-    hideObj = new lessonplan.HideAction(selectors)
+    if selectors.length == 1 and selectors[0] == '*'
+        hideObj = new lessonplan.HideAllAction()
+    else
+        hideObj = new lessonplan.HideAction(selectors)
 
     dsl.currentObj.addChild(hideObj)
+
 
 root.set_property = (property, value, time=0) ->
     setObj = new lessonplan.SetAction(property, value, time)

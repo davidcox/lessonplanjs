@@ -89,6 +89,10 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     hideElement: (s) ->
         util.hideElement(@svg.select(s), 250)
 
+    hideAllElements: (s) ->
+        children = @svg.node().children
+        util.hideElement(d3.select(child)) for child in children
+
     glowElement: (s) ->
         console.log 'Glowing ' + s
         # @svg.select(s).classed('glowing', true)
