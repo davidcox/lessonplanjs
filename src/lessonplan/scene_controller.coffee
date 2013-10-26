@@ -267,13 +267,13 @@ class lessonplan.SceneController
                 # window.history.back()
                 return
 
-            @advancingSceneDfrd = @loadScene(@sceneIndex)
+            @advancingSceneDfrd = @loadScene(@sceneIndex, true)
             @shouldAdvanceScene = false
             @advancingScence = true
 
         if @shouldSelectScene
 
-            @advancingSceneDfrd = @loadScene(@selectedSceneIndex)
+            @advancingSceneDfrd = @loadScene(@selectedSceneIndex, true)
             @shouldSelectScene = false
             @advancingScence = true
 
@@ -360,10 +360,14 @@ class lessonplan.SceneController
         @shouldSelectScene = true
 
 
-    loadScene: (index) ->
+    loadScene: (index, newpage=false) ->
 
         name = @sceneList[index].name
         scene_path = window.module_id + '/' + window.lesson_id
+
+        if newpage
+            window.location.href = '/course/' + scene_path + '/' + name
+            return
 
         @unloadScene()
 
