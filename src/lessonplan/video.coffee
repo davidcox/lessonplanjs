@@ -142,9 +142,14 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     hide: ->
 
-        d3.select(videoPlayerDivSelector).transition().style('opacity', 0.0).duration(1000)
-        #d3.select(videoPlayerDivSelector).style('display', 'none')
-        @playerNode.setAttribute('style', 'opacity: 0.0; display: none') if @playerNode?
+        d3.select(videoPlayerDivSelector)
+            .transition()
+            .style('opacity', 0.0)
+            .duration(1000)
+            .each('end', =>
+                #d3.select(videoPlayerDivSelector).style('display', 'none')
+                @playerNode.setAttribute('style', 'opacity: 0.0; display: none') if @playerNode?
+            )
 
     cleanup: ->
         if @playerNode? and @playerNode.remove?
