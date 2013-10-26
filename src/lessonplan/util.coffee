@@ -26,6 +26,12 @@ util =
         setTimeout(hideit, duration)
 
 
+    bringToFront: (selector) ->
+        console.log 'bringToFront'
+        console.log selector
+        $(selector).css('z-index', 100)
+        $(selector).siblings().css('z-index', 50)
+
     indicateLoading: (v, duration) ->
         if not duration?
             duration = 1000

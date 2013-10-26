@@ -264,6 +264,9 @@ class lessonplan.Interactive extends LessonElement
         @soundtrackAudio.play().setVolume(6)
         # @soundtrackAudio.play().setVolume(0)
 
+    show: ->
+        $('#interactive').css('z-index', 100)
+
     run: (seeking=false) ->
 
         # If we're in seeking mode, just blast through without
@@ -271,7 +274,7 @@ class lessonplan.Interactive extends LessonElement
         if seeking
             return true
 
-        @playSoundtrack() if @hasSoundtrack
+        # @playSoundtrack() if @hasSoundtrack
 
         # this will show the interactive SVG,
         # loading the SVG itself if necessary

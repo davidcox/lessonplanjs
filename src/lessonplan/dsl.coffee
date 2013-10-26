@@ -236,6 +236,15 @@ root.transition = (groupFrom, groupTo) ->
     console.log transitionObj
     dsl.currentObj.addChild(transitionObj)
 
+root.video_insert = (name) ->
+    videoObj = new lessonplan.Video(name, true)
+    dsl.currentObj.addChild(videoObj)
+
+    (f) ->
+        dsl.pushCurrent(videoObj)
+        f()
+        dsl.popCurrent()
+
 root.fsm = goal
 
 root.dsl = dsl

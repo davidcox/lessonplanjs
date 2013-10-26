@@ -16,7 +16,7 @@ videoPlayerDivSelector = '#video'
 interactiveDivSelector = '#interactive'
 
 class lessonplan.Video extends lessonplan.LessonElement
-    constructor: (elId, @videoQuality='default') ->
+    constructor: (elId, @inserted=false) ->
         @preferredFormat = 'mp4'
         # @preferredFormat = 'youtube'
 
@@ -28,6 +28,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         @mediaUrls = {}
 
         @cues = []
+
+        @videoQuality = 'default'
 
         @playerReady = $.Deferred()
         super(elId)
@@ -125,15 +127,21 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     show: ->
 
+        if @inserted
+            $('#interactive').css('z-index', 50)
+
+        $(videoPlayerDivSelector).css('z-index', 100)
         @playerNode.setAttribute('style', 'display: inline; opacity: 1.0;')
 
         # d3.select('#interactive').transition().style('opacity', 0.0).duration(1000)
         d3.select(videoPlayerDivSelector).style('display', 'inline')
         d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
 
-        util.showBackdrop(true)
+        if not @inserted
+            util.showBackdrop(true)
 
     hide: ->
+
         d3.select(videoPlayerDivSelector).transition().style('opacity', 0.0).duration(1000)
         #d3.select(videoPlayerDivSelector).style('display', 'none')
         @playerNode.setAttribute('style', 'opacity: 0.0; display: none') if @playerNode?
@@ -227,6 +235,7 @@ class lessonplan.Video extends lessonplan.LessonElement
             dfrd.reject()
 
         console.log(urls)
+        console.log videoPlayerDivSelector
         @pop = Popcorn.smart(videoPlayerDivSelector, urls)
         # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
@@ -307,6 +316,9 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     run: ->
 
+        if @inserted
+            @show()
+
         console.log('video run called')
         dfrd = $.Deferred()
 
@@ -321,10 +333,11 @@ class lessonplan.Video extends lessonplan.LessonElement
 
             @show()
 
-            @updateTimeCb = =>
-                t = @pop.currentTime()
-                @parentScene.currentTime(t)
-            @pop.on('timeupdate', @updateTimeCb)
+            if not @inserted
+                @updateTimeCb = =>
+                    t = @pop.currentTime()
+                    @parentScene.currentTime(t)
+                @pop.on('timeupdate', @updateTimeCb)
 
 
             # yield when the view has ended
@@ -335,6 +348,11 @@ class lessonplan.Video extends lessonplan.LessonElement
 
             @pop.play()
         )
+
+        if @inserted
+            dfrd.done =>
+                console.log 'hiding'
+                @hide()
 
         return dfrd
 
