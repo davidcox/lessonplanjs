@@ -29,6 +29,8 @@ class lessonplan.SceneController
         @paused = true
         @pauseDfrd = undefined
 
+        @shouldResume = false
+
         @shouldBuffer = false
         @buffering = false
 
@@ -223,6 +225,25 @@ class lessonplan.SceneController
             @punt()
             return
 
+        if @shouldResume
+            console.log '[ shouldResume ]'
+            logging.logInteraction('timeline', 'resume', true)
+
+            @shouldResume = false
+
+            if not @currentElement.resume?
+                @shouldRun = true
+            else
+                @running = true
+
+                @playingObservable(true)
+                @pausedObservable(false)
+                @runningDfrd = @currentElement.resume()
+
+                @stallCount = 0
+                @punt()
+                return
+
         if @shouldRun
             console.log('[ shouldRun ]')
             logging.logInteraction('timeline', 'play', true)
@@ -315,7 +336,7 @@ class lessonplan.SceneController
         @shouldPause = true
 
     resume: ->
-        @shouldRun = true
+        @shouldResume = true
 
     run: ->
         @shouldRun = true

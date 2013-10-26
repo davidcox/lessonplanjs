@@ -409,7 +409,13 @@ lessonplan.runChained = (actions, seeking=false) ->
             return
 
         dfrd = a.shift().run(seeking)
-        $.when(dfrd).then(-> chainIt(a))
+        $.when(dfrd).then ->
+            # check if the sequence deferred has been rejected
+            # from outside
+            if sdfrd.state() != 'rejected'
+                chainIt(a)
+            else
+                console.log 'rejected'
 
     chainIt(actionsCopy)
 
@@ -445,17 +451,35 @@ class lessonplan.Line extends LessonElement
         @audio.load()
 
     reset: ->
-        @stop()
-        return super()
+        $.when(@stop()).then =>
+            if @childDeferred
+                @childDeferred = undefined
+            super()
 
     stage: ->
         return @parent.stage()
 
     pause: ->
-        @audio.pause() if @audio
+        if @childDeferred?
+            @childDeferred.reject()
+
+            $.when(@childDeferred).then =>
+                child.reset() for child in @children
+
+        if @children? and @children.length
+            # if there are subordinate actions, then just stop the
+            # audio so we can restart from a fresh state
+            @audio.stop() if @audio
+        else
+            @audio.pause() if @audio
 
     resume: ->
-        @audio.play() if @audio
+        if @children? and @children.length
+            console.log 'restart line'
+            $.when(@reset()).then =>
+                @run()
+        else
+            @audio.play() if @audio
 
     stop: ->
         @audio.stop() if @audio
@@ -475,13 +499,13 @@ class lessonplan.Line extends LessonElement
     run: (seeking=false) ->
 
 
-        childDeferred = true
+        @childDeferred = $.Deferred().resolve()
 
         # If there are child actions, we'll run these in
         # tandem with the line/voiceover
         if @children? and @children.length
 
-            childDeferred = lessonplan.runChained(@children, seeking)
+            @childDeferred = lessonplan.runChained(@children, seeking)
 
         if seeking
             return true
@@ -510,14 +534,14 @@ class lessonplan.Line extends LessonElement
         )
 
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
-        # @audio.load()
+        @audio.load()
         @audio.play()
 
         @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
 
         # return a deferred object that is contingent on
         # both the audio and the children
-        return $.when(audioDeferred, childDeferred)
+        return $.when(audioDeferred, @childDeferred)
 
 
 
