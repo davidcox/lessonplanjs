@@ -201,34 +201,85 @@ util =
         f() for f in resizeHandlers
 
     maintainAspect: (evt) ->
-        target = 16.0 / 9.0
 
-        width = window.innerWidth + 0
-        height = window.innerHeight + 0
+        # this is the target aspect ratio for the "stage"
+        # div
+        stage_aspect_target = 16.0 / 9.0
 
-        current_aspect = width / height
+        # dimensions of current window aperture
+        width = Number(window.innerWidth)
+        height = Number(window.innerHeight)
 
-        width -= 20
-        height -= 20
+        # A few adjustments that need to taken into account
 
-        console.log(target)
-        console.log(width)
-        console.log(width / target)
-        console.log(current_aspect)
+        # NOTE: these parameters must match those in the CSS
+        # TODO: fix this
+        # fixed pixel padding around the player
+        player_padding = 30;
 
-        if current_aspect < target
-            # height constrains
-            $('#stage').width(width)
-            $('#stage').height(width / target)
+        adjusted_width = width - 2*player_padding
+
+        # there is also the player controls which need to be accounted for
+        controls_height = 50
+        subtitle_height = 60
+
+        subtitles_on = false
+        if $('#subtitle-container').css('display') != 'none'
+            subtitles_on = true
+            controls_height += subtitle_height
+
+        $('#stage').css('bottom', controls_height)
+
+        adjusted_height = height - controls_height - 2 * player_padding
+
+        # when all is said and done, this is the #stage aspect we're
+        # aiming for
+        adjusted_current_aspect = adjusted_width / adjusted_height
+
+        console.log 'adjusted_width: ' + adjusted_width
+        console.log 'adjusted_height: ' + adjusted_height
+        console.log 'adjusted_current_aspect: ' + adjusted_current_aspect
+        if adjusted_current_aspect < stage_aspect_target
+
+            # actual window is narrower than the target
+            # so we need to scale the height accordingly
+
+            console.log 'too narrow'
+
+            # max width is the desired situation
+            $('#player-wrapper').css('left', player_padding)
+            $('#player-wrapper').css('right', player_padding)
+
+            # height needs to be scaled to make the aspect correct
+            target_stage_height = (adjusted_width / stage_aspect_target)
+            target_height = target_stage_height + controls_height
+
+            # stay anchored near the top
+            $('#player-wrapper').css('top', player_padding)
+            # bottom takes up the slack
+            $('#player-wrapper').css('bottom', height - target_height)
+
+
         else
-            $('#stage').width(height * target)
-            $('#stage').height(height)
 
-            offset =
-                top: 0
-                left: (width - height * target) / 2.0
+            # actual window is wider than the target
+            # so we need to limit the width
+            console.log 'too wide'
 
-            $('#stage').offset(offset)
+            # use as much of the height as we can
+            $('#player-wrapper').css('bottom', player_padding)
+            $('#player-wrapper').css('top', player_padding)
+
+            # limit the width evenly
+            width_pad = (width - (adjusted_height * stage_aspect_target)) / 2.0
+            $('#player-wrapper').css('left', width_pad)
+            $('#player-wrapper').css('right', width_pad)
+
+            # offset =
+            #     top: 0
+            #     left: (width - height * content_aspect_target) / 2.0
+
+            # $('#stage').offset(offset)
 
 
     loadScript: (url, callback) ->
