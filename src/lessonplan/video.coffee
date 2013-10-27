@@ -377,7 +377,17 @@ class lessonplan.Video extends lessonplan.LessonElement
         return dfrd
 
     resume: ->
+        console.log 'video resuming'
+
+        # yield when the view has ended
+        dfrd = $.Deferred()
+        @yieldCb = ->
+            console.log('video finished cb')
+            dfrd.resolve()
+        @pop.on('ended', @yieldCb)
         @pop.play() if @pop
+
+        return dfrd
 
     stop: ->
         @pop.pause() if @pop
