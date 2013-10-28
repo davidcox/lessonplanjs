@@ -444,7 +444,14 @@ class lessonplan.Line extends LessonElement
 
     loadAudio: (af) ->
         console.log('loading: ' + af)
-        @audio = new buzz.sound(audioRoot + '/' + af,
+
+        if af[0] is '/'
+            audioPath = root.audio_base_url + af
+            console.log 'here: ' + audioPath
+        else
+            audioPath = audioRoot + '/' + af
+
+        @audio = new buzz.sound(audioPath,
             preload: true
         )
         @audio.bind('empty error', =>
@@ -493,7 +500,8 @@ class lessonplan.Line extends LessonElement
         # don't navigate children normally (as in super()); they will run
         # concurrent with the line
         if @parent?
-            @subtitleContainer.empty()
+            if @text?
+                @subtitleContainer.empty()
             # $('.interactive-subtitle').remove()
             return @parent.nextAfterChild(this)
         else
@@ -540,7 +548,8 @@ class lessonplan.Line extends LessonElement
         @audio.load()
         @audio.play()
 
-        @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
+        if @text?
+            @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
 
         # return a deferred object that is contingent on
         # both the audio and the children

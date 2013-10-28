@@ -80,8 +80,8 @@ root.stage = (name, propertiesMap) ->
 root.soundtrack = (s) ->
     dsl.currentObj.soundtrack(s)
 
-root.line = (text, audio, actions) ->
-    lineObj = new lessonplan.Line(text, audio)
+root.line = (audio, text, actions) ->
+    lineObj = new lessonplan.Line(audio, text)
 
     if actions?
         dsl.pushCurrent(lineObj)
@@ -92,6 +92,12 @@ root.line = (text, audio, actions) ->
 
 
 root.lines = line
+
+root.sfx = (audio) ->
+    soundObj = new lessonplan.Line(audio)
+
+    dsl.currentObj.addChild(soundObj)
+
 
 root.show = (selectors...) ->
     showObj = new lessonplan.ShowAction(selectors)
@@ -117,7 +123,7 @@ root.m4v = (f, quality='default') ->
 root.mp4 = (f, quality='default') ->
     dsl.currentObj.media('mp4', f, quality)
 root.webm = (f, quality='default') ->
-    dsl.currentObj.media('webm', f, quality)
+    dsl.currentObj.media('webm', root.webm_base_url + f, quality)
 root.ogv = (f, quality='default') ->
     dsl.currentObj.media('ogv', f, quality)
 root.vimeo = (f, quality='default') ->
