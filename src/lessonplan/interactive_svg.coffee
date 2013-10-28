@@ -129,6 +129,37 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         @svg.select(s + '-highlight-box').remove()
 
 
+    xHighlightElement: (s) ->
+        el = @svg.select(s)
+
+        r = el.node().getBBox()
+
+        if el.parent?
+            p = el.parent
+        else
+            p = @svg
+
+        margin = 5
+
+        p.append('text').attr('x', Math.abs(r.x + r.width/2.0)-15)
+                        .attr('y', Math.abs(r.y + r.height/2.0)+18)
+                        .style('font-family', 'Lato, sans-serif')
+                        .style('font-size', '40px')
+                        .style('font-weight','700')
+                        .attr('fill', '#a00')
+                           # .attr('width', r.width + 2*margin)
+                           # .attr('height', r.height + 2*margin)
+                           # .style('fill', 'none')
+                           # .style('stroke-width', 2)
+                           # .style('stroke', color)
+                        .attr('id', s[1..] + '-highlight-x')
+                        .text('X')
+
+    xUnhighlightElement: (s) ->
+        console.log 'removing: ' + s + '-highlight-x'
+        @svg.select(s + '-highlight-x').remove()
+
+
     # Reveal the interactive SVG, loading as needed
     show: ->
 

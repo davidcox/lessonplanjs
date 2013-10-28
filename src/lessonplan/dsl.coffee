@@ -234,6 +234,14 @@ root.box_unhighlight = (targets...) ->
     dsl.currentObj.addChild(unglowObj)
 
 
+root.x_highlight = (targets...) ->
+    xObj = new lessonplan.XHighlightAction(targets)
+    dsl.currentObj.addChild(xObj)
+
+root.x_unhighlight = (targets...) ->
+    xObj = new lessonplan.XUnhighlightAction(targets)
+    dsl.currentObj.addChild(xObj)
+
 root.transition = (groupFrom, groupTo) ->
     transitionObj = new lessonplan.GroupTransitionAction(groupFrom, groupTo)
     console.log '-------======'

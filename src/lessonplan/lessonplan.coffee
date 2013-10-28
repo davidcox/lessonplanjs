@@ -605,7 +605,6 @@ class lessonplan.BoxHighlightAction extends LessonElement
 
     run: (seeking=false) ->
         stage = @parent.stage()
-        console.log 'boxing!'
         stage.boxAroundElement('#' + s, @color) for s in @selectors
 
 
@@ -615,10 +614,29 @@ class lessonplan.BoxUnhighlightAction extends LessonElement
 
     run: (seeking=false) ->
         stage = @parent.stage()
-        console.log 'unboxing!' + @selectors
         for s in @selectors
             console.log s
             stage.unboxElement('#' + s)
+
+
+class lessonplan.XHighlightAction extends LessonElement
+    constructor: (@selectors)  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        console.log 'x-ing!'
+        stage.xHighlightElement('#' + s) for s in @selectors
+
+
+class lessonplan.XUnhighlightAction extends LessonElement
+    constructor: (@selectors)  ->
+        super()
+
+    run: (seeking=false) ->
+        stage = @parent.stage()
+        console.log 'un-x-ing!'
+        stage.xUnhighlightElement('#' + s) for s in @selectors
 
 
 class lessonplan.GroupTransitionAction extends LessonElement
