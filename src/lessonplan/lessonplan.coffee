@@ -773,12 +773,17 @@ class lessonplan.WaitForChoice extends LessonElement
         @options = []
 
     addOption: (opt) ->
+        opt.parent = this
         @options.push(opt)
 
     init: ->
         for opt in @options
             opt.init()
         super()
+
+
+    reset: ->
+        @children = []
 
     run: (seeking=false) ->
 
@@ -805,11 +810,17 @@ class lessonplan.WaitForChoice extends LessonElement
                     console.log 'opt.value = ' + opt
                     console.log opt
                     if opt.children?
-                        opt.stage = => @parent.stage()
-                        option_dfrd = lessonplan.runChained(opt.children)
-                        $.when(option_dfrd).then(=>
-                            @dfrd.resolve()
-                        )
+                        # attach the children of the option to
+                        # item so that the scene controller will run them
+                        @children = opt.children
+
+                        @dfrd.resolve()
+
+                        # opt.stage = => @parent.stage()
+                        # option_dfrd = lessonplan.runChained(opt.children)
+                        # $.when(option_dfrd).then(=>
+                        #     @dfrd.resolve()
+                        # )
                         return
                     else
                         break

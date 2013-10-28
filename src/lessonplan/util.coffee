@@ -93,6 +93,12 @@ util =
         else
             el.transition().attr('opacity', 1.0).duration(duration)
 
+    # popUpElement: (el, duration) ->
+    #     el.attr('opacity', 1.0)
+    #     el.style('display', 'none')
+
+    #     el.transition().attr('transform', identity) duration(duration)
+
     transitionGroups: (gsel1, gsel2, duration) ->
         console.log gsel1
         console.log gsel2
