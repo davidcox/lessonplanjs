@@ -10,9 +10,14 @@
 
 root = window ? exports
 
+lessonPath = [root.module_id, root.lesson_id].join('/')
+segmentPath = [root.module_id, root.lesson_id, root.segment_id].join('/')
+
 # TODO: unify placement of defines like this
 svgRoot = root.static_base_url + '/slides'
-
+webmRoot = root.webm_base_url + '/' + segmentPath
+subtitleRoot = root.static_base_url + '/subtitles/' + segmentPath
+subtitleExtension = 'json'
 
 # Infrastructure for managing the 'current' object
 # in our little imperative DSL
@@ -123,7 +128,7 @@ root.m4v = (f, quality='default') ->
 root.mp4 = (f, quality='default') ->
     dsl.currentObj.media('mp4', f, quality)
 root.webm = (f, quality='default') ->
-    dsl.currentObj.media('webm', root.webm_base_url + f, quality)
+    dsl.currentObj.media('webm', webmRoot + '/' + f, quality)
 root.ogv = (f, quality='default') ->
     dsl.currentObj.media('ogv', f, quality)
 root.vimeo = (f, quality='default') ->
@@ -143,7 +148,7 @@ root.video = (name) ->
 
 root.subtitles = (f) ->
     console.log('adding subtitles: ' + f)
-    dsl.currentObj.subtitles(f)
+    dsl.currentObj.subtitles(subtitleRoot + '/' + f + '.' + subtitleExtension)
 
 root.duration = (t) ->
     dsl.currentObj.duration(t) if dsl.currentObj.duration?

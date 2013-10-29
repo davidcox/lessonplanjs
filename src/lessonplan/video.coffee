@@ -18,7 +18,6 @@ interactiveDivSelector = '#interactive'
 class lessonplan.Video extends lessonplan.LessonElement
     constructor: (elId, @inserted=false) ->
         @preferredFormat = 'mp4'
-        # @preferredFormat = 'youtube'
 
         # a very coarse marker of whether the video is OK or not
         @broken = false
@@ -29,7 +28,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @cues = []
 
-        @videoQuality = 'default'
+        @videoQuality = 'sd'
 
         @playerReady = $.Deferred()
         super(elId)
@@ -44,7 +43,7 @@ class lessonplan.Video extends lessonplan.LessonElement
     qualities: () ->
         return keys(@mediaUrlDict)
 
-    media: (fileType, url, quality='default') ->
+    media: (fileType, url, quality='sd') ->
         if url?
             if not @mediaUrls[quality]?
                 @mediaUrls[quality] = []
