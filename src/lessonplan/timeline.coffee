@@ -438,10 +438,6 @@ class lessonplan.Timeline
             @activebar.attr('x', progressWidth + '%')
             @activebar.attr('width', activebarWidth + '%')
             console.log 'setting activebar width: ' + activebarWidth + '%'
-            if activebarWidth > 99
-                console.log segment
-                console.log t
-                console.barf()
         else
             # this is a video
             newWidth = @tScale(@displayedSegment.start + @currentTime)
