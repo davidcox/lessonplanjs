@@ -353,6 +353,7 @@ class lessonplan.Video extends lessonplan.LessonElement
                 dfrd.resolve()
             @pop.on('ended', @yieldCb)
 
+            @pop.volume(0.95)
             @pop.play()
         )
 
@@ -365,13 +366,26 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     pause: ->
 
+        if not @pop?
+            return true
+
         dfrd = $.Deferred()
+
+        # add in a timed double-check to ensure that we're
+        # responsive to pausing
+        checkIfPaused = =>
+            if @pop.paused()
+                dfrd.resolve()
+                clearInterval(@checkIfPausedInterval) if @checkIfPausedInterval?
+
+        @checkIfPausedInterval = setInterval(checkIfPaused, 100)
 
         @pop.on('pause', ->
             dfrd.resolve()
         )
 
-        @pop.pause() if @pop
+        if not @pop.paused()
+            @pop.pause()
 
         return dfrd
 

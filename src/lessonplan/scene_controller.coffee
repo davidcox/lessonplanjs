@@ -116,55 +116,6 @@ class lessonplan.SceneController
             @punt()
             return
 
-        # test for pausing
-        if @shouldPause
-            console.log('[ shouldPause ]')
-            logging.logInteraction('timeline', 'pause', true)
-
-            @shouldPause = false
-            @pausing = true
-            @pauseDfrd = @currentElement.pause()
-
-        if @pausing
-            console.log('[ pausing ]')
-            $.when(@pauseDfrd)
-             .then(=>
-                @paused = true
-                @pausedObservable(true)
-                @playingObservable(false)
-                @pausing = false
-            )
-
-            @punt()
-            return
-
-
-        if @shouldBuffer
-            console.log('[ shouldBuffer ]')
-            @shouldBuffer = false
-
-            @buffering = true
-            $.when(=>
-                console.log 'pausing to buffer'
-                @currentElement.pause()
-            ).then(=>
-                util.indicateLoading(true)
-            )
-
-
-        if @buffering
-            console.log('[ buffering ]')
-
-            if @currentElement.ready()
-                console.log 'buffered enough...'
-                @buffering = false
-                @shouldBuffer = false
-                util.indicateLoading(false)
-                @shouldRun = true
-
-            @punt()
-            return
-
 
         # test for seeking
         if @shouldSeek
@@ -216,7 +167,9 @@ class lessonplan.SceneController
 
                 @seekDfrd.resolve()
                 @seeking = false
-                @shouldRun = true
+
+                if not @shouldPause
+                    @shouldRun = true
             )
 
 
@@ -224,6 +177,56 @@ class lessonplan.SceneController
             console.log('[ seeking ]')
             @punt()
             return
+
+        # test for pausing
+        if @shouldPause
+            console.log('[ shouldPause ]')
+            logging.logInteraction('timeline', 'pause', true)
+
+            @shouldPause = false
+            @pausing = true
+            @pauseDfrd = @currentElement.pause()
+
+        if @pausing
+            console.log('[ pausing ]')
+            $.when(@pauseDfrd)
+             .then(=>
+                @paused = true
+                @pausedObservable(true)
+                @playingObservable(false)
+                @pausing = false
+            )
+
+            @punt()
+            return
+
+
+        if @shouldBuffer
+            console.log('[ shouldBuffer ]')
+            @shouldBuffer = false
+
+            @buffering = true
+            $.when(=>
+                console.log 'pausing to buffer'
+                @currentElement.pause()
+            ).then(=>
+                util.indicateLoading(true)
+            )
+
+
+        if @buffering
+            console.log('[ buffering ]')
+
+            if @currentElement.ready()
+                console.log 'buffered enough...'
+                @buffering = false
+                @shouldBuffer = false
+                util.indicateLoading(false)
+                @shouldRun = true
+
+            @punt()
+            return
+
 
         if @shouldResume
             console.log '[ shouldResume ]'
