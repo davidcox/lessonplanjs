@@ -330,14 +330,14 @@ class lessonplan.Timeline
         )
 
 
-        # No tooltips on subsegment markers yet
+        # tooltips on subsegment markers
         #
-        # $('.timeline-subsegment-marker').tipsy(
-        #     #gravity: $.fn.tipsy.autoNS
-        #     gravity:'sw'
-        #     title: ->
-        #         d3.select(this).attr('timelinetooltip')
-        # )
+        $('.timeline-subsegment-marker').tipsy(
+            #gravity: $.fn.tipsy.autoNS
+            gravity:'sw'
+            title: ->
+                d3.select(this).attr('timelinetooltip')
+        )
 
 
         console.log('Done setting up timeline.')
