@@ -221,7 +221,10 @@ util =
         # NOTE: these parameters must match those in the CSS
         # TODO: fix this
         # fixed pixel padding around the player
-        player_padding = 30;
+        if $('#player-wrapper').hasClass('tight-wrapper')
+            player_padding = 0;
+        else
+            player_padding = 30;
 
         adjusted_width = width - 2*player_padding
 
