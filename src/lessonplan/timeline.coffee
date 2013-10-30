@@ -180,7 +180,7 @@ class lessonplan.Timeline
                     subSegId = m.elementId
                     subsegment =
                         segId: subSegId
-                        title: ''
+                        title: m.title
                         duration: totalDuration / milestones.length
 
                     @subsegments.push(subsegment)

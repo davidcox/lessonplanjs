@@ -713,7 +713,9 @@ class lessonplan.SetAction extends LessonElement
 # of a milestone
 class lessonplan.MilestoneAction extends LessonElement
 
-    constructor: (@name, @title=null) ->
+    constructor: (@name, @title) ->
+        if not @title?
+            @title = @name
         @disarmed = false
         super()
 
