@@ -438,7 +438,11 @@ class lessonplan.Line extends LessonElement
         super()
 
     init: ->
-        @loadAudio(@audioFile)
+        fileParts = @audioFile.split('.')
+        fileParts.pop()
+        fileParts.push('ogg')
+        oggVersion = fileParts.join('.')
+        @loadAudio([@audioFile, oggVersion])
         @subtitleContainer = $('#subtitle-container')
         super()
 
