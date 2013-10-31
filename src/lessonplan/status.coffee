@@ -12,6 +12,7 @@ progress =
 			type: 'GET',
 			success: (result) ->
 				console.log('get status[' + path + ' ]')
+				console.log result
 				if (result == 1)
 					cb('available')
 				else if (result == 0)

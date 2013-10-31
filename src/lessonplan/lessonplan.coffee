@@ -438,19 +438,19 @@ class lessonplan.Line extends LessonElement
         super()
 
     init: ->
-        fileParts = @audioFile.split('.')
-        fileParts.pop()
-        fileParts
-        oggVersion = fileParts.join('.')
-        console.log oggVersion
-        @loadAudio(@audioFile,
-            formats: ['mp3', 'ogg']
-        )
+        @loadAudio(@audioFile)
         @subtitleContainer = $('#subtitle-container')
         super()
 
     loadAudio: (af) ->
         console.log('loading: ' + af)
+
+        fileParts = af.split('.')
+        fileParts.pop()
+        fileParts
+        af = fileParts.join('.')
+        console.log '=============='
+        console.log af
 
         if af[0] is '/'
             audioPath = root.audio_base_url + af
@@ -458,7 +458,10 @@ class lessonplan.Line extends LessonElement
         else
             audioPath = audioRoot + '/' + af
 
-        @audio = new buzz.sound(audioPath,
+        console.log '*******#@#$@#*$@#*$@#$*@#$*@#*'
+        console.log [audioPath + '.mp3', audioPath + '.ogg']
+
+        @audio = new buzz.sound([audioPath + '.mp3', audioPath + '.ogg'],
             preload: true
         )
         @audio.bind('empty error', =>
