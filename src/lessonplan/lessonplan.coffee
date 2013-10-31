@@ -442,6 +442,7 @@ class lessonplan.Line extends LessonElement
         fileParts.pop()
         fileParts.push('ogg')
         oggVersion = fileParts.join('.')
+        console.log oggVersion
         @loadAudio([@audioFile, oggVersion])
         @subtitleContainer = $('#subtitle-container')
         super()
