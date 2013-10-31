@@ -99,11 +99,11 @@ util =
 
     #     el.transition().attr('transform', identity) duration(duration)
 
-    transitionGroups: (gsel1, gsel2, duration) ->
-        console.log gsel1
-        console.log gsel2
-        g1 = d3.select('#' + gsel1)
-        g2 = d3.select('#' + gsel2)
+    transitionGroups: (g1, g2, duration) ->
+        # console.log gsel1
+        # console.log gsel2
+        # g1 = d3.select('#' + gsel1)
+        # g2 = d3.select('#' + gsel2)
 
         root.g1 = g1
         g1Children = [d3.select(node) for node in g1[0][0].childNodes when node.nodeType != 3][0]

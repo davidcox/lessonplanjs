@@ -671,7 +671,7 @@ class lessonplan.GroupTransitionAction extends LessonElement
             stage.showElement('#' + @toSel)
 
         else
-            util.transitionGroups(@fromSel, @toSel)
+            stage.transitionGroups(@fromSel, @toSel)
 
 class lessonplan.MultipleChoiceQuestion extends LessonElement
     constructor: (@varname) ->
