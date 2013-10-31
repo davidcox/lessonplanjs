@@ -470,18 +470,28 @@ class lessonplan.Line extends LessonElement
         return @parent.stage()
 
     pause: ->
+
+        deferreds = []
+
         if @childDeferred?
             @childDeferred.reject()
 
             $.when(@childDeferred).then =>
-                child.reset() for child in @children
+                for child in @children
+                    dfrd = child.reset()
+                    deferreds.push(dfrd)
 
-        if @children? and @children.length
+                # child.reset() for child in @children
+
+        if @children? and @children.length and @audio?
             # if there are subordinate actions, then just stop the
             # audio so we can restart from a fresh state
-            @audio.stop() if @audio
+            deferreds.push(@audio.stop())
         else
-            @audio.pause() if @audio
+            deferreds.push(@audio.pause())
+
+        return $.when.apply($, deferreds)
+
 
     resume: ->
         if @children? and @children.length
