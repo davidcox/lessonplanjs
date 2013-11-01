@@ -48,6 +48,13 @@ class lessonplan.Video extends lessonplan.LessonElement
             if not @mediaUrls[quality]?
                 @mediaUrls[quality] = []
             @mediaUrls[quality].push(url)
+
+            if fileType == 'mp4' and quality == 'sd' and url.indexOf('vimeo')
+                re = /\/(\d+)\./
+                m = url.match(re)
+                if m? and m.length == 2
+                    @vimeo_id = m[1]
+
         else
             if @mediaUrlDict[quality]?
                 return @mediaUrlDict[quality][fileType]
@@ -77,6 +84,14 @@ class lessonplan.Video extends lessonplan.LessonElement
             @broken = true
             util.indicateLoadFail(true)
         )
+
+
+        if @vimeo_id?
+            console.log 'adding alt player link'
+            $('#alt-player-link').empty()
+            $('#alt-player-link').append('Trouble view this video? Try <a href="/alt_video/' + @vimeo_id + '" target="alt_player">here</a>')
+        else
+            console.log 'no vimeo id'
 
         super()
 
