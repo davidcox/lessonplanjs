@@ -89,7 +89,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         if @vimeo_id?
             console.log 'adding alt player link'
             $('#alt-player-link').empty()
-            $('#alt-player-link').append('Trouble view this video? Try <a href="/alt_video/' + @vimeo_id + '" target="alt_player">here</a>')
+            $('#alt-player-link').append('Trouble viewing this video? Try <a href="/alt_video/' + @vimeo_id + '" target="alt_player">here</a>')
         else
             console.log 'no vimeo id'
 
