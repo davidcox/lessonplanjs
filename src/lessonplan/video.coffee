@@ -71,6 +71,27 @@ class lessonplan.Video extends lessonplan.LessonElement
         # fill me in
         @subtitlesFile = f
 
+        $.getJSON(@subtitlesFile, (data) =>
+
+            if not data?
+                console.log 'no data for file: '
+                console.log @subtitlesFile
+                return
+
+            for s in data.data
+                txt = s.footnote.text
+                startTime = s.footnote.start
+
+                if startTime == 0
+                    startTime += 0.1
+
+                container = new lessonplan.LessonElement()
+                subtitleAction = new lessonplan.ShowSubtitleAction(txt)
+                container.children.push(subtitleAction)
+                @cue(startTime, container)
+
+        )
+
 
     # init is called after the DOM is ready
     init: ->
@@ -84,6 +105,9 @@ class lessonplan.Video extends lessonplan.LessonElement
             @broken = true
             util.indicateLoadFail(true)
         )
+
+        for c in @cues
+            c.init() if c.init?
 
 
         if @vimeo_id?
@@ -151,8 +175,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         d3.select(videoPlayerDivSelector).style('display', 'inline')
         d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
 
-        # don't do this:
-        # $('#subtitle-container').empty()
+        $('#interactive-subtitles').empty()
 
         # remove leftover interactive subtitles?
 
@@ -263,8 +286,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         @pop = Popcorn.smart(videoPlayerDivSelector, urls)
         # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
-        if @subtitlesFile?
-            @pop.parseJSON(@subtitlesFile)
+        # if @subtitlesFile?
+        #     @pop.parseJSON(@subtitlesFile)
 
         @playerNode = @pop.video
         if @playerNode.hasAttribute('controls')
@@ -294,12 +317,11 @@ class lessonplan.Video extends lessonplan.LessonElement
         cueIt = (t, a) =>
             @pop.cue(t, ->
                 console.log('running cued actions')
+                console.log a.children
                 lessonplan.runChained(a.children)
             )
 
         for [t, a] in @cues
-            console.log('here')
-            console.log(a)
             cueIt(t, a)
 
         @pop.load()

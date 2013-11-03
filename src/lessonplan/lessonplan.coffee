@@ -466,7 +466,7 @@ class lessonplan.Line extends LessonElement
 
     init: ->
         @loadAudio(@audioFile)
-        @subtitleContainer = $('#subtitle-container')
+        @subtitleContainer = $('#interactive-subtitles')
         super()
 
     loadAudio: (af) ->
@@ -595,6 +595,22 @@ class lessonplan.Line extends LessonElement
         # return a deferred object that is contingent on
         # both the audio and the children
         return $.when(audioDeferred, @childDeferred)
+
+
+class lessonplan.ShowSubtitleAction extends LessonElement
+
+    constructor: (@text) ->
+        super()
+
+
+    init: ->
+        super()
+
+    run: ->
+        @subtitleContainer = $('#interactive-subtitles')
+        if @text? and @subtitleContainer?
+            @subtitleContainer.empty()
+            @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
 
 
 

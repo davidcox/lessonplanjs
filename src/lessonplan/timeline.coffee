@@ -573,8 +573,6 @@ class lessonplan.Timeline
             console.log 'setting activebar width: ' + activebarWidth + '%'
         else
             # this is a video?
-            console.log @displayedSegment
-            console.log @currentTime
             newWidth = @tScale(@displayedSegment.startTime + @currentTime)
             @progressbar.attr('width', newWidth + '%')
             @activebar.attr('x', '0%')
