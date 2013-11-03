@@ -394,11 +394,11 @@ class lessonplan.Timeline
         console.log('[timeline]: installing click handlers...')
 
         # Marker click action -- SEEK!
-        @markers.on('click', (d) =>
-            console.log('marker click: ' + d.title)
-            @sceneController.seek(d.obj, 0)
-            d3.event.stopPropagation()
-            )
+        # @markers.on('click', (d) =>
+        #     console.log('marker click: ' + d.title)
+        #     @sceneController.seek(d.obj, 0)
+        #     d3.event.stopPropagation()
+        #     )
 
         console.log('Installing tooltips...')
 
@@ -452,17 +452,17 @@ class lessonplan.Timeline
 
 
         # Marker click action
-        @milestoneMarkers.on('click', (d) =>
+        # @milestoneMarkers.on('click', (d) =>
 
-            obj = d.obj # @segmentLookup[d.segId].obj
-            if d.parent?
-                t = d.name
-            else
-                # something is wrong... just bail. Better to do nothing here.
-                return
-            @sceneController.seek(obj, t)
-            d3.event.stopPropagation()
-        )
+        #     obj = d.obj # @segmentLookup[d.segId].obj
+        #     if d.parent?
+        #         t = d.name
+        #     else
+        #         # something is wrong... just bail. Better to do nothing here.
+        #         return
+        #     @sceneController.seek(obj, t)
+        #     d3.event.stopPropagation()
+        # )
 
 
         # tooltips on subsegment markers
