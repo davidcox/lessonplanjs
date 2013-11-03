@@ -131,6 +131,15 @@ class lessonplan.Timeline
             timeline.seekToX(x)
         )
 
+
+        @svg.on('mouseover', ->
+            [x, y] = d3.mouse(this)
+
+            timeline.timelineToolTip(x)
+        )
+
+        @svg.on('mouseout', -> timeline.hideTimelineToolTip())
+s
         # Connect Knockout.js bindings between the timeline object and the
         # html UI.  This will let us control the play/pause state, etc.
         ko.applyBindings(this, @parentDiv.node())
@@ -151,6 +160,9 @@ class lessonplan.Timeline
         # below the subsegments
         @allMilestones = []
         @milestoneLookup = {}
+
+        @allSeekables = []
+        @seekableLookup = {}
 
         # setup each subsegment and the markers/milestones within
         for subsegment in @scene.children
@@ -191,6 +203,7 @@ class lessonplan.Timeline
                 duration: duration
                 obj: subsegment
                 milestones: []
+                seekables: []
 
             @orderedSubsegments.push(subsegEntry)
             @subsegmentLookup[subsegId] = subsegEntry
@@ -218,6 +231,29 @@ class lessonplan.Timeline
 
                     @allMilestones.push(milestoneEntry)
                     @milestoneLookup[milestoneId] = milestoneEntry
+
+            console.log 'subsegment.findSeekables'
+            console.log subsegment.findSeekables
+            if subsegment.findSeekables?
+                seekables = subsegment.findSeekables()
+                console.log 'found these seekables:'
+                console.log seekables
+                for s in seekables
+                    seekableId = s.elementId
+
+                    seekableEntry =
+                        id: seekableId
+                        title: s.title
+                        duration: totalDuration / seekables.length
+                        obj: s
+                        parent: subsegment
+
+                    # add this milestone entry to the subsegment entry
+                    # it belongs to
+                    subsegEntry.seekables.push(seekableEntry)
+
+                    @allSeekables.push(seekableEntry)
+                    @seekableLookup[seekableId] = seekableEntry
 
         # by this point, we should have an ordered list of subsegment entries,
         # each containing a duration, title, id and a list of milestones within it
@@ -264,6 +300,23 @@ class lessonplan.Timeline
 
                 console.log 'milestone:'
                 console.log milestoneEntry
+
+            nSeekables = subsegEntry.seekables.length
+            seekableDuration = subsegEntry.duration / nSeekables
+            seekableRunningTime = 0.0
+
+            for seekableEntry in subsegEntry.seekables
+                # in theory, this is where we'd update milestone durations from external info
+                # milestoneEntry.duration = milestoneEntry.obj.duration() if milestoneEntry.obj.duration?
+                seekableEntry.duration = seekableDuration
+
+                seekableEntry.startTime = seekableRunningTime
+                seekableEntry.absoluteStartTime = seekableEntry.startTime + subsegEntry.startTime
+
+                seekableRunningTime += seekableEntry.duration
+
+                console.log 'seekable:'
+                console.log seekableEntry
 
 
         ## This is the previous, slightly insane version
@@ -481,6 +534,10 @@ class lessonplan.Timeline
     # Update the current timeline display
     # This event gets fired whenever the current element or time changes
     update: (subsegment, t) ->
+        console.log 'update(subsegment, t)'
+        console.log subsegment
+        console.log t
+
         if not subsegment?
             console.log('[timeline]: warning: empty segment in timeline')
             return
@@ -493,6 +550,13 @@ class lessonplan.Timeline
         timelineSegment = @subsegmentLookup[segId]
 
         if not timelineSegment?
+            seekable = @seekableLookup[segId]
+
+            if seekable?
+                timelineSegment = @subsegmentLookup[seekable.parent.elementId]
+                t = seekable.startTime
+
+        if not timelineSegment?
             console.log 'segment lookup failed: '
             console.log subsegment
             console.log segId
@@ -500,8 +564,8 @@ class lessonplan.Timeline
 
             @currentTime = undefined
             return
-        else
-            @displayedSegment = timelineSegment
+
+        @displayedSegment = timelineSegment
 
 
         if not @tScale?
@@ -523,24 +587,25 @@ class lessonplan.Timeline
             @activebar.attr('width', activebarWidth + '%')
             console.log 'setting activebar width: ' + activebarWidth + '%'
         else
-            # this is a video
+            # this is a video?
+            console.log @displayedSegment
+            console.log @currentTime
             newWidth = @tScale(@displayedSegment.startTime + @currentTime)
             @progressbar.attr('width', newWidth + '%')
             @activebar.attr('x', '0%')
             @activebar.attr('width', '0%')
 
-    seekToX: (x) ->
-
+    timelineLookup: (x) ->
         if not @tScale?
             console.log('[timeline]: no time scale defined')
-            return
+            return [undefined, undefined]
 
         svgWidth = @svg.node().getBBox().width
-        console.log(svgWidth)
         t = @tScale.invert(100 * (x / svgWidth))
 
         thisSeg = undefined
-        for s in @orderedSegments
+        for s in @orderedSubsegments
+            console.log s
             if s.startTime > t
                 break
 
@@ -550,22 +615,36 @@ class lessonplan.Timeline
         if not thisSeg?
             console.log('[timeline]: no sensible segment to match')
 
-        relT = t - thisSeg.start
-        console.log('[timeline]: seeking to ' + thisSeg.segId + ':' + relT)
+        relT = t - thisSeg.startTime
+        console.log('[timeline]: seeking to ' + thisSeg.id + ':' + relT)
 
         # if this segment has a list of seekables, then we should seek to one
         # of them.
         if thisSeg.seekables?
             thisSeekable = undefined
             for s in thisSeg.seekables
+                console.log s
                 if s.startTime > relT
                     break
 
-                if s.startTime < t
+                if s.startTime < relT
                     thisSeekable = s
 
-            relT = thisSeekable.id
+            if thisSeekable?
+                relT = thisSeekable.id
+        else
+            console.log 'no seekables'
 
+        console.log('[timeline]: seeking to ' + thisSeg.id + ':' + relT)
+
+        return thisSeg, relT
+
+    seekToX: (x) ->
+
+        [thisSeg, relT] = timelineLookup(x)
+
+        if not thisSeg?
+            return
 
         @update(thisSeg, relT)
         @sceneController.seek(thisSeg.obj, relT)

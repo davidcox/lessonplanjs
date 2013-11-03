@@ -328,7 +328,7 @@ class lessonplan.Interactive extends LessonElement
         if not el?
             el = this
 
-        if testfn(el)
+        if el.elementId == name and testfn(el)
             return el
 
         if seeking
@@ -346,16 +346,16 @@ class lessonplan.Interactive extends LessonElement
     findMilestone: (name, el, seeking=false) ->
         # do a depth-first search until we find a milestone with this name
 
-        return @findElement(name, el, seeking, ->
-            return (el instanceof lessonplan.MilestoneAction)
+        return @findElement(name, el, seeking, (v) ->
+            return (v instanceof lessonplan.MilestoneAction)
         )
 
 
     findSeekable: (name, el, seeking=false) ->
         # do a depth-first search until we find a milestone with this name
 
-        return @findElement(name, el, seeking, ->
-            return (el instanceof lessonplan.Line or el instanceof lessonplan.WaitForChoice)
+        return @findElement(name, el, seeking, (v) ->
+            return (v instanceof lessonplan.Line or v instanceof lessonplan.WaitForChoice or v instanceof lessonplan.MilestoneAction)
         )
 
 
@@ -379,18 +379,22 @@ class lessonplan.Interactive extends LessonElement
     # find and return a list of all milestones
     findMilestones: (el, milestones) ->
 
-        return @findElements(el, milestones, -> (el instanceof lessonplan.MilestoneAction))
+        return @findElements(el, milestones, (v) -> return (v instanceof lessonplan.MilestoneAction))
 
     findSeekables: (el, seekables) ->
-        return @findElement(el, seekables, ->
-            (el instanceof lessonplan.Line or el instanceof lessonplan.WaitForChoice))
+        return @findElements(el, seekables, (v) ->
+            return (v instanceof lessonplan.Line or v instanceof lessonplan.WaitForChoice))
 
     seek: (name) ->
 
         # don't try to seek to a milestone that
         # doesn't exist
-        if not name? or not @findMilestone(name, this)
+        if not name? or not @findSeekable(name, this)?
+            console.log 'could not find seekable in interactive'
+            console.log name
             return true
+        else
+            console.log "found seekable, now let's go there..."
 
         dfrd = $.Deferred()
 
@@ -400,11 +404,11 @@ class lessonplan.Interactive extends LessonElement
             stage_dfrd = true
 
         $.when(stage_dfrd).then(=>
-            el = @findMilestone(name, this, true)
+            el = @findSeekable(name, this, true)
 
             # hack the current state
             if el?
-                el.disarm()
+                el.disarm() if el.disarm?
                 @currentChild = @children.indexOf(el)
                 if not @currentChild? or @currentChild < 0
                     @currentChild = 0
