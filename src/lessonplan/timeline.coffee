@@ -578,6 +578,11 @@ class lessonplan.Timeline
             @activebar.attr('x', '0%')
             @activebar.attr('width', '0%')
 
+            timeLeft = @totalDuration - @currentTime
+            timeLeftMinutes = Math.floor(timeLeft / 60);
+            timeLeftSeconds = Math.floor(timeLeft - 60 * timeLeftMinutes)
+            $('#clock-text').text(util.padNumber(timeLeftMinutes, 2) + ':' + util.padNumber(timeLeftSeconds, 2))
+
     seekToX: (x) ->
 
         if not @tScale?

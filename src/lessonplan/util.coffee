@@ -315,6 +315,14 @@ util =
         console.log('set script src')
         document.getElementsByTagName("head")[0].appendChild(script)
 
+    padNumber: (number, length) ->
+
+        str = '' + number
+        while (str.length < length)
+            str = '0' + str
+
+        return str
+
 
 root = window ? exports
 root.util = util
