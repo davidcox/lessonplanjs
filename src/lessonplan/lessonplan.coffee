@@ -542,8 +542,6 @@ class lessonplan.Line extends LessonElement
         # don't navigate children normally (as in super()); they will run
         # concurrent with the line
         if @parent?
-            if @text?
-                @subtitleContainer.empty()
             # $('.interactive-subtitle').remove()
             return @parent.nextAfterChild(this)
         else
@@ -591,6 +589,7 @@ class lessonplan.Line extends LessonElement
         @audio.play()
 
         if @text?
+            @subtitleContainer.empty()
             @subtitleContainer.append('<div class="interactive-subtitle">' + @text + '</div>')
 
         # return a deferred object that is contingent on

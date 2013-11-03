@@ -151,6 +151,11 @@ class lessonplan.Video extends lessonplan.LessonElement
         d3.select(videoPlayerDivSelector).style('display', 'inline')
         d3.select(videoPlayerDivSelector).transition().style('opacity', 1.0).duration(1000)
 
+        # don't do this:
+        # $('#subtitle-container').empty()
+
+        # remove leftover interactive subtitles?
+
         if not @inserted
             util.showBackdrop(true)
 
