@@ -210,27 +210,27 @@ class lessonplan.Timeline
 
             # collect up milestones so that they can be added to the
             # timeline as well
-            if subsegment.findMilestones?
-                milestones = subsegment.findMilestones()
-                for m in milestones
+            # if subsegment.findMilestones?
+            #     milestones = subsegment.findMilestones()
+            #     for m in milestones
 
-                    milestoneId = m.elementId
+            #         milestoneId = m.elementId
 
-                    # For now, just evenly space the milestones
-                    # in the future could possibly query
-                    milestoneEntry =
-                        id: milestoneId
-                        title: m.title
-                        duration: totalDuration / milestones.length
-                        obj: m
-                        parent: subsegment
+            #         # For now, just evenly space the milestones
+            #         # in the future could possibly query
+            #         milestoneEntry =
+            #             id: milestoneId
+            #             title: m.title
+            #             # duration: totalDuration / milestones.length
+            #             obj: m
+            #             parent: subsegment
 
-                    # add this milestone entry to the subsegment entry
-                    # it belongs to
-                    subsegEntry.milestones.push(milestoneEntry)
+            #         # add this milestone entry to the subsegment entry
+            #         # it belongs to
+            #         subsegEntry.milestones.push(milestoneEntry)
 
-                    @allMilestones.push(milestoneEntry)
-                    @milestoneLookup[milestoneId] = milestoneEntry
+            #         @allMilestones.push(milestoneEntry)
+            #         @milestoneLookup[milestoneId] = milestoneEntry
 
             console.log 'subsegment.findSeekables'
             console.log subsegment.findSeekables
@@ -247,6 +247,13 @@ class lessonplan.Timeline
                         duration: totalDuration / seekables.length
                         obj: s
                         parent: subsegment
+
+                    console.log s
+                    if s instanceof lessonplan.MilestoneAction
+                        console.log '> found milestone action'
+                        subsegEntry.milestones.push(seekableEntry)
+                        @allMilestones.push(seekableEntry)
+                        @milestoneLookup[seekableId] = seekableEntry
 
                     # add this milestone entry to the subsegment entry
                     # it belongs to
@@ -280,26 +287,26 @@ class lessonplan.Timeline
 
             subsegmentRunningTime += subsegEntry.duration
 
-            nMilestones = subsegEntry.milestones.length
-            milestoneDuration = subsegEntry.duration / nMilestones
+            # nMilestones = subsegEntry.milestones.length
+            # milestoneDuration = subsegEntry.duration / nMilestones
 
-            milestoneRunningTime = 0.0
+            # milestoneRunningTime = 0.0
 
             console.log 'subsegment'
             console.log subsegEntry
 
-            for milestoneEntry in subsegEntry.milestones
-                # in theory, this is where we'd update milestone durations from external info
-                # milestoneEntry.duration = milestoneEntry.obj.duration() if milestoneEntry.obj.duration?
-                milestoneEntry.duration = milestoneDuration
+            # for milestoneEntry in subsegEntry.milestones
+            #     # in theory, this is where we'd update milestone durations from external info
+            #     # milestoneEntry.duration = milestoneEntry.obj.duration() if milestoneEntry.obj.duration?
+            #     milestoneEntry.duration = milestoneDuration
 
-                milestoneEntry.startTime = milestoneRunningTime
-                milestoneEntry.absoluteStartTime = milestoneEntry.startTime + subsegEntry.startTime
+            #     milestoneEntry.startTime = milestoneRunningTime
+            #     milestoneEntry.absoluteStartTime = milestoneEntry.startTime + subsegEntry.startTime
 
-                milestoneRunningTime += milestoneEntry.duration
+            #     milestoneRunningTime += milestoneEntry.duration
 
-                console.log 'milestone:'
-                console.log milestoneEntry
+            #     console.log 'milestone:'
+            #     console.log milestoneEntry
 
             nSeekables = subsegEntry.seekables.length
             seekableDuration = subsegEntry.duration / nSeekables
@@ -313,33 +320,14 @@ class lessonplan.Timeline
                 seekableEntry.startTime = seekableRunningTime
                 seekableEntry.absoluteStartTime = seekableEntry.startTime + subsegEntry.startTime
 
+                # if seekableEntry.obj instanceof lessonplan.MilestoneAction
+                #     milstoneEntry = @milestoneLookup[seekableEntry.id]
+                #     milestoneEntry.startTime = seekableEntry.startTime
+                #     milestoneEntry.absoluteStartTime = seekableEntry.absoluteStartTime
+                #     milestoneEntry.duration = seekableEntry.duration
+
                 seekableRunningTime += seekableEntry.duration
 
-                console.log 'seekable:'
-                console.log seekableEntry
-
-
-        ## This is the previous, slightly insane version
-        # for subsegment in @scene.children
-        #     segId = subsegment.elementId
-        #     console.log('setting up ' + segId)
-        #     duration = beat.duration()
-        #     @segmentLookup[segId].obj = beat
-        #     @segmentLookup[segId].duration = duration
-        #     segmentStart = runningTime
-        #     @segmentLookup[segId].start = segmentStart
-        #     runningTime += duration
-
-        #     if beat.findMilestones?
-        #         milestones = beat.findMilestones()
-        #         for m, i in milestones
-        #             # subSegId = segId + '/' + m.name
-        #             subSegId = m.elementId
-        #             milestoneDuration = duration / (milestones.length + 1)
-        #             @segmentLookup[subSegId].obj = beat
-        #             @segmentLookup[subSegId].duration = milestoneDuration
-        #             @segmentLookup[subSegId].start = segmentStart + (i+1)*milestoneDuration
-        #             @segmentLookup[subSegId].subtarget = m.name
 
         @totalDuration = subsegmentRunningTime
 
@@ -534,9 +522,6 @@ class lessonplan.Timeline
     # Update the current timeline display
     # This event gets fired whenever the current element or time changes
     update: (subsegment, t) ->
-        console.log 'update(subsegment, t)'
-        console.log subsegment
-        console.log t
 
         if not subsegment?
             console.log('[timeline]: warning: empty segment in timeline')
@@ -596,7 +581,7 @@ class lessonplan.Timeline
             @activebar.attr('width', '0%')
 
     seekToX: (x) ->
-    # timelineLookup: (x) ->
+
         if not @tScale?
             console.log('[timeline]: no time scale defined')
             return [undefined, undefined]
@@ -637,12 +622,6 @@ class lessonplan.Timeline
             console.log 'no seekables'
 
         console.log('[timeline]: seeking to ' + thisSeg.id + ':' + relT)
-
-    #     return [thisSeg, relT]
-
-    # seekToX: (x) ->
-
-    #     [thisSeg, relT] = timelineLookup(x)
 
         if not thisSeg?
             return

@@ -383,7 +383,7 @@ class lessonplan.Interactive extends LessonElement
 
     findSeekables: (el, seekables) ->
         return @findElements(el, seekables, (v) ->
-            return (v instanceof lessonplan.Line or v instanceof lessonplan.WaitForChoice))
+            return (v instanceof lessonplan.Line or v instanceof lessonplan.WaitForChoice or v instanceof lessonplan.MilestoneAction))
 
     seek: (name) ->
 
@@ -476,17 +476,12 @@ class lessonplan.Line extends LessonElement
         fileParts.pop()
         fileParts
         af = fileParts.join('.')
-        console.log '=============='
-        console.log af
 
         if af[0] is '/'
             audioPath = root.audio_base_url + af
             console.log 'here: ' + audioPath
         else
             audioPath = audioRoot + '/' + af
-
-        console.log '*******#@#$@#*$@#*$@#$*@#$*@#*'
-        console.log [audioPath + '.mp3', audioPath + '.ogg']
 
         @audio = new buzz.sound([audioPath + '.mp3', audioPath + '.ogg'],
             preload: true

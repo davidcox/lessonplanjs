@@ -145,6 +145,9 @@ class lessonplan.SceneController
 
             ).then(=>
                 l '> resetting'
+                if @targetSegment == @currentElement
+                    return true
+
                 sceneResetReturn = @scene.reset()
                 console.log 'srr'
                 console.log sceneResetReturn
