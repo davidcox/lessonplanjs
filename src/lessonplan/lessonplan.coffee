@@ -322,45 +322,68 @@ class lessonplan.Interactive extends LessonElement
         return $.when(stopPromise, hidePromise, super())
 
 
-    # Find a particular milestone and return it
-    # If `seeking` is set to true, all of the elements along the
-    # way will be run in "seeking" mode
-    findMilestone: (name, el, seeking=false) ->
+    findElement: (name, el, seeking, testfn) ->
         # do a depth-first search until we find a milestone with this name
 
         if not el?
             el = this
 
-        if el instanceof lessonplan.MilestoneAction and el.name is name
+        if testfn(el)
             return el
 
         if seeking
             el.run(true)  # run "silently"
 
         for child in el.children
-            el2 = @findMilestone(name, child, seeking)
+            el2 = @findElement(name, child, seeking, testfn)
             if el2?
                 return el2
 
-        return null
+
+    # Find a particular milestone and return it
+    # If `seeking` is set to true, all of the elements along the
+    # way will be run in "seeking" mode
+    findMilestone: (name, el, seeking=false) ->
+        # do a depth-first search until we find a milestone with this name
+
+        return @findElement(name, el, seeking, ->
+            return (el instanceof lessonplan.MilestoneAction)
+        )
+
+
+    findSeekable: (name, el, seeking=false) ->
+        # do a depth-first search until we find a milestone with this name
+
+        return @findElement(name, el, seeking, ->
+            return (el instanceof lessonplan.Line or el instanceof lessonplan.WaitForChoice)
+        )
 
 
     # find and return a list of all milestones
-    findMilestones: (el, milestones) ->
+    findElements: (el, elements, testfn) ->
 
         if not el?
             el = this
 
-        if not milestones?
-            milestones = []
+        if not elements?
+            elements = []
 
-        if el instanceof lessonplan.MilestoneAction
-            milestones.push(el)
+        if testfn(el)
+            elements.push(el)
 
         for child in el.children
-            @findMilestones(child, milestones)
+            @findElements(child, elements, testfn)
 
-        return milestones
+        return elements
+
+    # find and return a list of all milestones
+    findMilestones: (el, milestones) ->
+
+        return @findElements(el, milestones, -> (el instanceof lessonplan.MilestoneAction))
+
+    findSeekables: (el, seekables) ->
+        return @findElement(el, seekables, ->
+            (el instanceof lessonplan.Line or el instanceof lessonplan.WaitForChoice))
 
     seek: (name) ->
 

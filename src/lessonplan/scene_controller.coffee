@@ -49,7 +49,7 @@ class lessonplan.SceneController
         @selectedSceneIndex = 0
 
         # Knockout.js bindings for intra-app comms
-        @currentSegment = ko.observable(undefined)
+        @currentLessonElement = ko.observable(undefined)
         @currentTime = ko.observable(undefined)
         @currentScene = ko.observable(undefined)
         @currentSceneIndex = ko.observable(undefined)
@@ -305,7 +305,7 @@ class lessonplan.SceneController
 
                 # update the KO bindings
                 @currentTime(0.0)
-                @currentSegment(@currentElement)
+                @currentLessonElement(@currentElement)
                 @runningDfrd = @currentElement.run()
                 @running = true
                 @playingObservable(true)
