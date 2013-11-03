@@ -132,14 +132,14 @@ class lessonplan.Timeline
         )
 
 
-        @svg.on('mouseover', ->
-            [x, y] = d3.mouse(this)
+        # @svg.on('mouseover', ->
+        #     [x, y] = d3.mouse(this)
 
-            timeline.timelineToolTip(x)
-        )
+        #     timeline.timelineToolTip(x)
+        # )
 
-        @svg.on('mouseout', -> timeline.hideTimelineToolTip())
-s
+        # @svg.on('mouseout', -> timeline.hideTimelineToolTip())
+
         # Connect Knockout.js bindings between the timeline object and the
         # html UI.  This will let us control the play/pause state, etc.
         ko.applyBindings(this, @parentDiv.node())
@@ -595,7 +595,8 @@ s
             @activebar.attr('x', '0%')
             @activebar.attr('width', '0%')
 
-    timelineLookup: (x) ->
+    seekToX: (x) ->
+    # timelineLookup: (x) ->
         if not @tScale?
             console.log('[timeline]: no time scale defined')
             return [undefined, undefined]
@@ -637,11 +638,11 @@ s
 
         console.log('[timeline]: seeking to ' + thisSeg.id + ':' + relT)
 
-        return thisSeg, relT
+    #     return [thisSeg, relT]
 
-    seekToX: (x) ->
+    # seekToX: (x) ->
 
-        [thisSeg, relT] = timelineLookup(x)
+    #     [thisSeg, relT] = timelineLookup(x)
 
         if not thisSeg?
             return
