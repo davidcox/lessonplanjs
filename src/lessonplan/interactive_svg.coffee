@@ -103,6 +103,11 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         # @svg.select(s).classed('glowing', true)
         @svg.select(s).style('filter', 'url(#glow)')
 
+        # HACK
+        glowFilter = @svg.select('filter#glow')
+        glowFilter.attr('id', 'glow1')
+        glowFilter.attr('id', 'glow')
+
     unglowElement: (s) ->
         # @svg.select(s).classed('glowing', false)
         @svg.select(s).style('filter', '')
