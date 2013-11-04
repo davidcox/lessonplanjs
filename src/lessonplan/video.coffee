@@ -50,10 +50,16 @@ class lessonplan.Video extends lessonplan.LessonElement
             @mediaUrls[quality].push(url)
 
             if fileType == 'mp4' and quality == 'sd' and url.indexOf('vimeo')
+                console.log 'found vimeo link'
                 re = /\/(\d+)\./
                 m = url.match(re)
                 if m? and m.length == 2
                     @vimeo_id = m[1]
+            else
+                console.log 'did not find vimeo link'
+                console.log fileType
+                console.log quality
+                console.log url
 
         else
             if @mediaUrlDict[quality]?

@@ -123,17 +123,17 @@ root.set_property = (property, value, time=0) ->
 
     dsl.currentObj.addChild(setObj)
 
-root.m4v = (f, quality='default') ->
+root.m4v = (f, quality='sd') ->
     dsl.currentObj.media('m4v', f, quality)
-root.mp4 = (f, quality='default') ->
+root.mp4 = (f, quality='sd') ->
     dsl.currentObj.media('mp4', f, quality)
-root.webm = (f, quality='default') ->
+root.webm = (f, quality='sd') ->
     dsl.currentObj.media('webm', webmRoot + '/' + f, quality)
-root.ogv = (f, quality='default') ->
+root.ogv = (f, quality='sd') ->
     dsl.currentObj.media('ogv', f, quality)
-root.vimeo = (f, quality='default') ->
+root.vimeo = (f, quality='sd') ->
     dsl.currentObj.media('vimeo', f, quality)
-root.youtube = (f, quality='default') ->
+root.youtube = (f, quality='sd') ->
     dsl.currentObj.media('youtube', f, quality)
 
 
