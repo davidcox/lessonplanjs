@@ -77,6 +77,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         # fill me in
         @subtitlesFile = f
 
+        @subtitlesDfrd = $.Deferred()
+
         $.getJSON(@subtitlesFile, (data) =>
 
             if not data?
@@ -96,6 +98,8 @@ class lessonplan.Video extends lessonplan.LessonElement
                 container.children.push(subtitleAction)
                 @cue(startTime, container)
 
+            @subtitlesDfrd.resolve()
+
         )
 
 
@@ -109,6 +113,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         $.when(@load()).fail(=>
             @broken = true
+            @subtitlesDfrd.resolve() if @subtitlesDfrd?
             util.indicateLoadFail(true)
         )
 
@@ -123,7 +128,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         else
             console.log 'no vimeo id'
 
-        super()
+        $.when(@subtitlesDfrd).then => super()
 
     reset: (t) ->
         if @broken then return
