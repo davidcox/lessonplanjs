@@ -526,12 +526,14 @@ class lessonplan.Line extends LessonElement
 
 
     resume: ->
-        if @children? and @children.length
-            console.log 'restart line'
-            $.when(@reset()).then =>
+        $.when(@reset()).then =>
                 @run()
-        else
-            @audio.play() if @audio
+        # if @children? and @children.length
+        #     console.log 'restart line'
+        #     $.when(@reset()).then =>
+        #         @run()
+        # else
+        #     @audio.play() if @audio
 
     stop: ->
         @audio.stop() if @audio
