@@ -107,6 +107,7 @@ class lessonplan.Video extends lessonplan.LessonElement
     # init is called after the DOM is ready
     init: ->
 
+        console.log 'video init called'
         # hide the video player by default
         $(videoPlayerDivSelector).attr('style', 'opacity: 0.0;')
 

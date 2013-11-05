@@ -86,7 +86,14 @@ class lessonplan.SceneController
 
     startRunLoop: ->
         @runLoopActive = true
-        @shouldRun = true
+
+        @pausedObservable(true)
+
+        if root.lessonplan_autoplay
+            @shouldRun = true
+        else
+            @shouldPause = true
+
         @punt(0)
 
     runLoop: ->
@@ -393,6 +400,9 @@ class lessonplan.SceneController
 
                     if not @scene?
                         console.log('Could not find scene named: ' + name)
+
+                    @scene.init()
+
                     # update the bindings
                     @currentElement = @scene
                     @sceneIndex = index
