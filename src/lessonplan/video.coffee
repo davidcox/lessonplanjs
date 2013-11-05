@@ -100,7 +100,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
             @subtitlesDfrd.resolve()
 
-        )
+        ).fail -> console.log 'subtitles failed to load'
+
 
 
     # init is called after the DOM is ready
@@ -117,8 +118,9 @@ class lessonplan.Video extends lessonplan.LessonElement
             util.indicateLoadFail(true)
         )
 
-        for c in @cues
-            c.init() if c.init?
+        $.when(@subtitlesDfrd).then =>
+            for c in @cues
+                c.init() if c.init?
 
 
         if @vimeo_id?
@@ -128,7 +130,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         else
             console.log 'no vimeo id'
 
-        $.when(@subtitlesDfrd).then => super()
+        super()
 
     reset: (t) ->
         if @broken then return
@@ -332,11 +334,12 @@ class lessonplan.Video extends lessonplan.LessonElement
                 lessonplan.runChained(a.children)
             )
 
-        for [t, a] in @cues
-            cueIt(t, a)
+        $.when(@subtitlesDfrd).then =>
+            for [t, a] in @cues
+                cueIt(t, a)
 
         @pop.load()
-        return dfrd
+        return $.when(dfrd, @subtitlesDfrd)
 
     # youtubePreload: ->
 
