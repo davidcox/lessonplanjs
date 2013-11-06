@@ -31,6 +31,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         @videoQuality = 'sd'
 
         @playerReady = $.Deferred()
+
+        @loaded = false
         super(elId)
 
 
@@ -106,6 +108,9 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     # init is called after the DOM is ready
     init: ->
+        super()
+
+    justInTimeInit: ->
 
         console.log 'video init called'
         # hide the video player by default
@@ -126,12 +131,12 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         if @vimeo_id?
             console.log 'adding alt player link'
-            $('#alt-player-link').empty()
-            $('#alt-player-link').append('Trouble viewing this video? Try <a href="/alt_video/' + @vimeo_id + '" target="alt_player">here</a>')
+            $('.alt-player-link').empty()
+            $('.alt-player-link').append('Trouble viewing this video? Try <a href="/alt_video/' + @vimeo_id + '" target="alt_player">here</a>')
         else
             console.log 'no vimeo id'
 
-        super()
+        @init()
 
     reset: (t) ->
         if @broken then return
@@ -159,22 +164,31 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         dfrd = $.Deferred()
 
-        if typeof(t) != 'number'
-            t = @lookupMilestone(t)
-            if not t?
-                dfrd.reject()
-                return dfrd
+        seekIt = =>
+            if typeof(t) != 'number'
+                t = @lookupMilestone(t)
+                if not t?
+                    dfrd.reject()
+                    return dfrd
 
-        @pop.pause()
-        @pop.currentTime(t)
+            @pop.pause()
 
-        checkIfSeeking = =>
-            if not @pop.seeking()
-                dfrd.resolve()
-            else
-                setTimeout(checkIfSeeking, 100)
+            try
+                @pop.currentTime(t)
 
-        checkIfSeeking()
+                checkIfSeeking = =>
+                    if not @pop.seeking()
+                        dfrd.resolve()
+                    else
+                        setTimeout(checkIfSeeking, 100)
+
+                checkIfSeeking()
+
+        if not @loaded
+            $.when(@justInTimeInit()).then => seekIt()
+        else
+            seekIt()
+
         return dfrd
 
     show: ->
@@ -209,6 +223,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     cleanup: ->
         if @playerNode? and @playerNode.remove?
+            console.log 'cleaning up'
             @playerNode.remove()
         @playerNode = undefined
 
@@ -338,6 +353,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         $.when(@subtitlesDfrd).then =>
             for [t, a] in @cues
                 cueIt(t, a)
+            @loaded = true
 
         @pop.load()
         return $.when(dfrd, @subtitlesDfrd)
@@ -382,6 +398,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         if @inserted
             @show()
+
+        @justInTimeInit()
 
         console.log('video run called')
         dfrd = $.Deferred()
