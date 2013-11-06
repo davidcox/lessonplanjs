@@ -193,8 +193,11 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     show: ->
 
+
         if @inserted
+            @load()
             $('#interactive').css('z-index', 50)
+
 
         $(videoPlayerDivSelector).css('z-index', 100)
         @playerNode.setAttribute('style', 'display: inline; opacity: 1.0;')
@@ -398,8 +401,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         if @inserted
             @show()
-
-        @justInTimeInit()
+        else
+            @justInTimeInit()
 
         console.log('video run called')
         dfrd = $.Deferred()
