@@ -14,6 +14,8 @@ class lessonplan.SceneController
     constructor: (@sceneList) ->
 
         # state variables
+        @idling = false
+
         @shouldSeek = false
         @seeking = false
         @targetSegment = undefined
@@ -92,7 +94,8 @@ class lessonplan.SceneController
         if root.lessonplan_autoplay
             @shouldRun = true
         else
-            @shouldPause = true
+            @idling = true
+            @pausedObservable(true)
 
         @punt(0)
 
@@ -103,6 +106,7 @@ class lessonplan.SceneController
         if not @runLoopActive
             console.log('run loop inactive: ' + @runLoopActive)
             return # bail
+
 
         # test for stopping
         if @shouldStop
@@ -244,7 +248,8 @@ class lessonplan.SceneController
 
             @shouldResume = false
 
-            if not @currentElement.resume?
+            if not @currentElement.resume? or @idling
+                @idling = false
                 @shouldRun = true
             else
                 @running = true
@@ -265,6 +270,7 @@ class lessonplan.SceneController
             @running = true
             @playingObservable(true)
             @pausedObservable(false)
+            util.indicateLoading(false)
             @runningDfrd = @currentElement.run()
             @stallCount = 0
 
@@ -401,7 +407,7 @@ class lessonplan.SceneController
                     if not @scene?
                         console.log('Could not find scene named: ' + name)
 
-                    @scene.init()
+                    # @scene.init()
 
                     # update the bindings
                     @currentElement = @scene

@@ -193,11 +193,15 @@ class lessonplan.Scene extends LessonElement
     run: (seeking=false) ->
         console.log('scene[' + @elementId + ']')
 
-        @init()
-        return $.when(util.indicateLoading(false))
-                .then(=> util.showTitleBanner(@title, 5000.0))
+        # @init()
+        return $.when(util.showTitleBanner(@title, 5000.0))
+                .then(=> @init())
                 .then(=> super())
 
+    init: ->
+        console.log '=================='
+        console.log('SCENE INIT')
+        super()
 
 class lessonplan.Message extends LessonElement
 
@@ -483,9 +487,14 @@ class lessonplan.Line extends LessonElement
         else
             audioPath = audioRoot + '/' + af
 
-        @audio = new buzz.sound([audioPath + '.mp3', audioPath + '.ogg'],
-            preload: true
-        )
+        if true
+            @audio = new buzz.sound([audioPath + '.mp3', audioPath + '.ogg'],
+                preload: true
+            )
+        else
+            @audio = new buzz.sound([audioPath + '.mp3'],
+                preload: true
+            )
         @audio.bind('empty error', =>
             console.log('Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage())
             @errorState = @audio.getErrorCode()
@@ -587,7 +596,7 @@ class lessonplan.Line extends LessonElement
         )
 
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
-        @audio.load()
+        # @audio.load()
         @audio.play()
 
         if @text?
