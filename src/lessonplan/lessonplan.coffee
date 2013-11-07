@@ -804,6 +804,8 @@ class lessonplan.MilestoneAction extends LessonElement
         console.log 'calling completeMilestone'
         lessonplan.milestones.completeMilestone(path, @name)
 
+        return true
+
 
 # "Play" an interactive (if it has a notion of playing and stopping)
 class lessonplan.PlayAction extends LessonElement
