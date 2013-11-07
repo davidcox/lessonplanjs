@@ -320,6 +320,9 @@ class lessonplan.Video extends lessonplan.LessonElement
         @pop = Popcorn.smart(videoPlayerDivSelector, urls)
         # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
+        $('#video-download-link').attr('href', urls[0])
+        $('#video-download-link').css('display', 'inline')
+
         # if @subtitlesFile?
         #     @pop.parseJSON(@subtitlesFile)
 
