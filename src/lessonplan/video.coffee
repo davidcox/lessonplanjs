@@ -402,7 +402,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         if @inserted
             @show()
         else
-            @justInTimeInit()
+            if not @playerNode?
+                @justInTimeInit()
 
         console.log('video run called')
         dfrd = $.Deferred()
