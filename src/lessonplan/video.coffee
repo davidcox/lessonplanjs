@@ -138,6 +138,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @init()
 
+        @inited = true
+
     reset: (t) ->
         if @broken then return
 
@@ -402,7 +404,7 @@ class lessonplan.Video extends lessonplan.LessonElement
         if @inserted
             @show()
         else
-            if not @playerNode?
+            if not @inited
                 @justInTimeInit()
 
         console.log('video run called')
