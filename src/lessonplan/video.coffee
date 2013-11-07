@@ -401,47 +401,53 @@ class lessonplan.Video extends lessonplan.LessonElement
         if seeking
             return
 
-        if @inserted
-            @show()
-        else
-            if not @inited
-                @justInTimeInit()
-
         console.log('video run called')
         dfrd = $.Deferred()
 
-        $.when(@playerReady).done( =>
+        runIt = =>
+            $.when(@playerReady).done( =>
 
-            if @broken
-                console.log 'Unable to play video'
-                dfrd.reject()
-                return
+                if @broken
+                    console.log 'Unable to play video'
+                    dfrd.reject()
+                    return
 
-            console.log('playing video')
+                console.log('playing video')
 
-            @show()
+                @show()
 
-            if not @inserted
-                @updateTimeCb = =>
-                    t = @pop.currentTime()
-                    @parentScene.currentTime(t)
-                @pop.on('timeupdate', @updateTimeCb)
+                if not @inserted
+                    @updateTimeCb = =>
+                        t = @pop.currentTime()
+                        @parentScene.currentTime(t)
+                    @pop.on('timeupdate', @updateTimeCb)
 
 
-            # yield when the view has ended
-            @yieldCb = ->
-                console.log('video finished cb')
-                dfrd.resolve()
-            @pop.on('ended', @yieldCb)
+                # yield when the view has ended
+                @yieldCb = ->
+                    console.log('video finished cb')
+                    dfrd.resolve()
+                @pop.on('ended', @yieldCb)
 
-            @pop.volume(0.95)
-            @pop.play()
-        )
+                @pop.volume(0.95)
+                @pop.play()
+            )
+
+            if @inserted
+                dfrd.done =>
+                    console.log 'hiding'
+                    @hide()
+
 
         if @inserted
-            dfrd.done =>
-                console.log 'hiding'
-                @hide()
+            $.when(@show()).then => runIt()
+        else
+            if not @inited
+                $.when(@justInTimeInit()).then => runIt()
+            else
+                $.when(runIt()).then(-> console.log('did it'))
+
+
 
         return dfrd
 
