@@ -326,6 +326,9 @@ class lessonplan.Video extends lessonplan.LessonElement
         # if @subtitlesFile?
         #     @pop.parseJSON(@subtitlesFile)
 
+        if @playerNode?
+            console.log 'removing preexisitng node...'
+            @playerNode.remove()
         @playerNode = @pop.video
         if @playerNode.hasAttribute('controls')
             @playerNode.removeAttribute('controls')
@@ -407,6 +410,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         console.log('video run called')
         dfrd = $.Deferred()
 
+        window.mcb80x_pop = @pop
+
         runIt = =>
             $.when(@playerReady).done( =>
 
@@ -433,6 +438,7 @@ class lessonplan.Video extends lessonplan.LessonElement
                 @pop.on('ended', @yieldCb)
 
                 @pop.volume(0.95)
+                console.log 'called video play'
                 @pop.play()
             )
 
