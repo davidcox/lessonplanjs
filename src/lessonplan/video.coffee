@@ -186,7 +186,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
                 checkIfSeeking()
 
-        if not @loaded
+        if not @inited
             $.when(@justInTimeInit()).then => seekIt()
         else
             seekIt()
@@ -195,10 +195,18 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     show: ->
 
+        console.log '[ video show ]'
 
         if @inserted
-            @load()
+            console.log 'do not load'
+            # @load()
             $('#interactive').css('z-index', 50)
+
+        console.log 'disappear the video tags'
+        $('#video video').css('display', 'none')
+        console.log '================='
+        console.log '>>>>>>>>>>>>>>>>>'
+        console.log $('#video video')
 
 
         $(videoPlayerDivSelector).css('z-index', 100)
@@ -217,13 +225,15 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     hide: ->
 
+        console.log '[ video hide ]'
+
         d3.select(videoPlayerDivSelector)
             .transition()
             .style('opacity', 0.0)
             .duration(1000)
             .each('end', =>
                 d3.select(videoPlayerDivSelector).style('display', 'none')
-                # @playerNode.setAttribute('style', 'opacity: 0.0; display: none') if @playerNode?
+                @playerNode.setAttribute('style', 'opacity: 0.0; display: none') if @playerNode?
             )
 
     cleanup: ->
@@ -243,6 +253,8 @@ class lessonplan.Video extends lessonplan.LessonElement
     #         setTimeout(playit, 1000)
 
     load: ->
+
+        console.log '[ video load ]'
 
         dfrd = $.Deferred()
 
@@ -393,6 +405,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
 
     finish: ->
+
+        console.log '[ video finish ]'
         # unregister callbacks
         @pop.off('ended')
         @pop.off('timeupdate')
@@ -406,6 +420,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         if seeking
             return
+
+        console.log '[ video run ]'
 
         console.log('video run called')
         dfrd = $.Deferred()
@@ -422,7 +438,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
                 console.log('playing video')
 
-                @show()
+                # @show()
 
                 if not @inserted
                     @updateTimeCb = =>
@@ -448,15 +464,21 @@ class lessonplan.Video extends lessonplan.LessonElement
                     @hide()
 
 
-        if @inserted
-            $.when(@show()).then => runIt()
+        if not @inited
+            console.log 'video was not inited'
+            $.when(@justInTimeInit()).then(=> @show())
+                                     .then(=> runIt())
+
         else
-            if not @inited
-                $.when(@justInTimeInit()).then => runIt()
-            else
-                $.when(runIt()).then(-> console.log('did it'))
+            $.when(@show()).then(=> runIt())
 
-
+        # if @inserted
+        #     $.when(@show()).then => runIt()
+        # else
+        #     if not @inited
+        #         $.when(@justInTimeInit()).then => runIt()
+        #     else
+        #         $.when(runIt()).then(-> console.log('did it'))
 
         return dfrd
 
