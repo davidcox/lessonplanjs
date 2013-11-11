@@ -327,10 +327,15 @@ class lessonplan.Video extends lessonplan.LessonElement
         else
             dfrd.reject()
 
+
+        # an ugly hack.  Chrome on Win7 will pick up the mp4 even if it can't play it
+        # so make sure the WebM version appears first.
+        urls.sort()
+        urls.reverse()
+
         console.log(urls)
         console.log videoPlayerDivSelector
         @pop = Popcorn.smart(videoPlayerDivSelector, urls)
-        # @pop = Popcorn.baseplayer(videoPlayerDivSelector, @mediaUrls())
 
         $('#video-download-link').attr('href', urls[0])
         $('#video-download-link').css('display', 'inline')

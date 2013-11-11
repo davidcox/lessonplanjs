@@ -199,11 +199,11 @@ svgbind =
                 .range([0.0, 1.0]).clamp(true)
 
         else
-            maxCoord = 0
-            minCoord = - box.node().height.animVal.value
+            minCoord = 0
+            maxCoord = -box.node().height.animVal.value
 
             svgCoordsToSliderCoords = d3.scale.linear()
-                .domain([maxCoord, minCoord])
+                .domain([minCoord, maxCoord])
                 .range([0.0, 1.0]).clamp(true)
 
 
@@ -235,7 +235,7 @@ svgbind =
                 if orientation is 'h'
                     svgCoord = d3.event.x - box.node().x.animVal.value
                 else
-                    svgCoord = d3.event.y - box.node().y.animVal.value
+                    svgCoord = (d3.event.y - box.node().y.animVal.value - box.node().height.animVal.value)
 
                 d.value = svgCoordsToValue(svgCoord)
 
