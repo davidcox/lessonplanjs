@@ -118,9 +118,9 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @playerSelector = undefined
 
-        $.when(@load()).fail(=>
+        loadDfrd = $.when(@load()).fail(=>
             @broken = true
-            @subtitlesDfrd.resolve() if @subtitlesDfrd?
+            @subtitlesDfrd.reject() if @subtitlesDfrd?
             util.indicateLoadFail(true)
         )
 
@@ -136,9 +136,9 @@ class lessonplan.Video extends lessonplan.LessonElement
         else
             console.log 'no vimeo id'
 
-        @init()
+        initDfrd = @init()
 
-        @inited = true
+        return $.when(initDfrd, loadDfrd).then => @inited = true
 
     reset: (t) ->
         if @broken then return
@@ -252,11 +252,12 @@ class lessonplan.Video extends lessonplan.LessonElement
     #             @playWhenReady()
     #         setTimeout(playit, 1000)
 
-    load: ->
+    load: (dfrd) ->
 
         console.log '[ video load ]'
 
-        dfrd = $.Deferred()
+        if not dfrd?
+            dfrd = $.Deferred()
 
         # f = @media(@preferredFormat)
 
@@ -329,9 +330,14 @@ class lessonplan.Video extends lessonplan.LessonElement
 
 
         # an ugly hack.  Chrome on Win7 will pick up the mp4 even if it can't play it
-        # so make sure the WebM version appears first.
+        # so try to make sure the WebM version appears first.
         urls.sort()
         urls.reverse()
+
+
+        if @avoidMP4
+            urls = (url for url in urls when url.indexOf('mp4') < 0)
+            console.log 'culled urls: ' + urls
 
         console.log(urls)
         console.log videoPlayerDivSelector
@@ -365,8 +371,13 @@ class lessonplan.Video extends lessonplan.LessonElement
             dfrd.resolve()
         )
 
-        @pop.on('error', ->
-            dfrd.reject()
+        @pop.on('error', =>
+            if @avoidMP4? and @avoidMP4
+                dfrd.reject()
+            else
+                @avoidMP4 = true
+                console.log 'attempt to load again'
+                @load(dfrd)
         )
 
         # create new function context so the closure on
