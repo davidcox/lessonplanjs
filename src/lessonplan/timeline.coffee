@@ -183,7 +183,7 @@ class lessonplan.Timeline
 
             # some objects will have a duration observable that we can subscribe to (videos)
             # others will have a method we can ask for approx time (interactives)
-            if subsegment.duration.subscribe?
+            if subsegment.duration? and subsegment.duration.subscribe?
                 subsegment.duration.subscribe(=> @setupTiming())
             else
                 if milestones.length
