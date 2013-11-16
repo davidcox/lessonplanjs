@@ -90,6 +90,9 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         util.hideElement(@svg.select(s), 250)
 
     hideAllElements: (s) ->
+        svgNode = @svg.node()
+        window.svgNode = svgNode
+
         children = @svg.node().children
         if not children?
             children = @svg.node().childNodes
