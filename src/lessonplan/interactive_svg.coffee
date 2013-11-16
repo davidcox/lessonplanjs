@@ -91,8 +91,11 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
     hideAllElements: (s) ->
         children = @svg.node().children
-        if children?
-            util.hideElement(d3.select(child)) for child in children
+        if not children?
+            children = @svg.node().childNodes
+
+        util.hideElement(d3.select(child)) for child in children
+
 
     transitionGroups: (gsel1, gsel2, duration) ->
         g1 = @svg.select('#' + gsel1)
