@@ -75,6 +75,9 @@ util =
         return dfrd
 
     hideElement: (el, duration) ->
+        if el[0][0].nodeType == 3
+            return
+
         if duration is undefined
             el.attr('opacity', 0.0)
             el.attr('display', 'none')
