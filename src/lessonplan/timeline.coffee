@@ -340,12 +340,42 @@ class lessonplan.Timeline
             .range([0.0, 100.0])
 
 
+        @seekableMarkers = @svg.selectAll('.timeline-seekable-markers')
+            .data(@allSeekables)
+
+        @seekableMarkers.enter()
+                        .append('rect')
+                        .attr('y', @progressbarTop)
+                        .attr('x', (d) =>
+                            @tScale(d.absoluteStartTime) + '%')
+                        .attr('width', (d) => @tScale(d.duration) + '%')
+                        .attr('height', @progressbarHeight)
+                        .attr('class', 'seekable-marker')
+                        .attr('opacity', 0.001)
+                        .attr('timelinetooltip', (d) ->
+                            return d.obj.text if d.obj? and d.obj.text?
+                            return ''
+                        )
+        $('.seekable-marker').qtip(
+            content:
+                attr: 'timelinetooltip'
+            position:
+                my: 'bottom center'
+                at: 'top center'
+                target: 'mouse'
+                adjust:
+                    y: -20
+            style:
+                classes: 'qtip-light qtip-shadow'
+            show:
+                delay: 0
+            hide:
+                delay: 0
+        )
+
+
         @markers = @svg.selectAll('.timeline-subsegment-marker')
                         .data(@orderedSubsegments)
-                        # .attr('cx', (d) =>
-                        #     console.log('marker at: ' + @tScale(d.startTime))
-                        #     @tScale(d.startTime) + '%'
-                        # )
 
         @markers.enter()
                 .append('circle')
@@ -390,11 +420,17 @@ class lessonplan.Timeline
 
         console.log('Installing tooltips...')
 
-        $('.timeline-segment-marker').tipsy(
-            #gravity: $.fn.tipsy.autoNS
-            gravity:'sw'
-            title: ->
-                d3.select(this).attr('timelinetooltip')
+
+        $('.timeline-segment-marker').qtip(
+            content:
+                attr: 'timelinetooltip'
+            position:
+                my: 'bottom center'
+                at: 'top center'
+            style:
+                classes: 'qtip-tipsy qtip-shadow'
+            show:
+                solo: true
         )
 
 
@@ -429,6 +465,7 @@ class lessonplan.Timeline
             d3.select(this).transition()
                 .attr('r', ml)
                 .duration(250)
+            console.log 'here!'
         )
 
         # shrinkify
@@ -455,11 +492,25 @@ class lessonplan.Timeline
 
         # tooltips on subsegment markers
         #
-        $('.timeline-milestone-marker').tipsy(
-            #gravity: $.fn.tipsy.autoNS
-            gravity:'sw'
-            title: ->
-                d3.select(this).attr('timelinetooltip')
+        # $('.timeline-milestone-marker').tipsy(
+        #     #gravity: $.fn.tipsy.autoNS
+        #     gravity:'sw'
+        #     title: ->
+        #         d3.select(this).attr('timelinetooltip')
+        # )
+
+        $('.timeline-milestone-marker').qtip(
+            content:
+                attr: 'timelinetooltip'
+            position:
+                my: 'bottom center'
+                at: 'top center'
+                target: 'mouse'
+            style:
+                classes: 'qtip-tipsy qtip-rounded qtip-shadow'
+            show:
+                solo: true
+                event: 'click mouseover'
         )
 
 
@@ -503,11 +554,21 @@ class lessonplan.Timeline
 
                 title = @sceneController.sceneList[s].title
 
-                $(m.node()).tipsy(
-                    #gravity: $.fn.tipsy.autoNS
-                    gravity:'sw'
-                    title: -> title
+                # $(m.node()).tipsy(
+                #     #gravity: $.fn.tipsy.autoNS
+                #     gravity:'sw'
+                #     title: -> title
+                # )
+                $(m.node()).qtip(
+                    content:
+                        text: title
+                    position:
+                        my: 'bottom center'
+                        at: 'top center'
+                    style:
+                        classes: 'qtip-tipsy qtip-shadow'
                 )
+
 
 
     updateSceneIndicator: (currentScene) ->
