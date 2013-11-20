@@ -74,13 +74,20 @@ svgbind =
     bindText: (svg, selector, observable, centered) ->
         el = svg.select(selector)
 
-        bbox = el.node().getBBox()
+        try
+            bbox = el.node().getBBox()
+        catch error
+            bbox = el.node().getBoundingClientRect()
 
         if centered
             center = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
             origTransform = el.attr('transform')
             recenter = (el) ->
-                newbbox = el.node().getBBox()
+                try
+                    newbbox = el.node().getBBox()
+                catch error
+                    newbbox = el.node().getBoundingClientRect()
+
                 newcenter = [ newbbox.x + newbbox.width/2.0, newbbox.y + newbbox.height/2.0]
                 transform = origTransform
                 transform += 'translate(' + center[0] + ', ' + center[1] + ') '
@@ -265,8 +272,10 @@ svgbind =
 
     bindScale: (svg, selector, observable, scaleMapping, anchorType) ->
 
-
-        bbox = svg.select(selector).node().getBBox()
+        try
+            bbox = svg.select(selector).node().getBBox()
+        catch error
+            bbox = svg.select(selector).node().getBoundingClientRect()
 
         if anchorType is 'sw'
             anchor = [bbox.x, bbox.y + bbox.height]

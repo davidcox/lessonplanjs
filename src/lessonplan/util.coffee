@@ -142,8 +142,13 @@ util =
                     g2Child.attr('display', 'none')
                     g1Child.transition().duration(1000).attr('transform', g2Child.attr('transform'))
                 else
-                    bbox1 = g1Child[0][0].getBBox()
-                    bbox2 = g2Child[0][0].getBBox()
+                    try
+                        bbox1 = g1Child[0][0].getBBox()
+                        bbox2 = g2Child[0][0].getBBox()
+
+                    catch error
+                        bbox1 = g1Child[0][0].getBoundingClientRect()
+                        bbox2 = g2Child[0][0].getBoundingClientRect()
 
                     dx = bbox2.x - bbox1.x
                     dy = bbox2.y - bbox1.y

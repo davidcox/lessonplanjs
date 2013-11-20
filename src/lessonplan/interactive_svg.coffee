@@ -123,8 +123,11 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     boxAroundElement: (s, color) ->
         el = @svg.select(s)
 
-        #r = el.node().getBoundingClientRect()
-        r = el.node().getBBox()
+        try
+            r = el.node().getBBox()
+        catch error
+            r = el.node().getBoundingClientRect()
+
 
         if el.parent?
             p = el.parent
@@ -149,7 +152,11 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     xHighlightElement: (s) ->
         el = @svg.select(s)
 
-        r = el.node().getBBox()
+        try
+            r = el.node().getBBox()
+        catch error
+            r = el.node().getBoundingClientRect()
+
 
         if el.parent?
             p = el.parent

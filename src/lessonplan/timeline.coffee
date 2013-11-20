@@ -650,7 +650,11 @@ class lessonplan.Timeline
             console.log('[timeline]: no time scale defined')
             return [undefined, undefined]
 
-        svgWidth = @svg.node().getBBox().width
+        try
+            svgWidth = @svg.node().getBBox().width
+        catch error
+            svgWidth = @svg.node().getBoundingClientRect().width
+
         t = @tScale.invert(100 * (x / svgWidth))
 
         thisSeg = undefined
