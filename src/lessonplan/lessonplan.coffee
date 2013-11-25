@@ -816,6 +816,20 @@ class lessonplan.PlayAction extends LessonElement
         @parent.stage().play()
 
 
+# "Play" an interactive (if it has a notion of playing and stopping)
+class lessonplan.PlayUntilAction extends LessonElement
+    constructor: (@t) ->
+        super()
+
+    run: (seeking=false) ->
+        if @parent.stage().playUntil?
+            return @parent.stage().playUntil(@t)
+        else
+            console.log 'failing over'
+            @parent.stage().play()
+            return true
+
+
 class lessonplan.StopAndResetAction extends LessonElement
 
     constructor: (@stageId) ->

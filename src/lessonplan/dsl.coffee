@@ -179,6 +179,11 @@ root.play = (name) ->
     dsl.currentObj.addChild(runObj)
 
 
+root.play_until = (t) ->
+    runObj = new lessonplan.PlayUntilAction(t)
+    dsl.currentObj.addChild(runObj)
+
+
 root.wait = (delay) ->
     waitObj = new lessonplan.WaitAction(delay)
     dsl.currentObj.addChild(waitObj)
