@@ -227,13 +227,14 @@ svgbind =
             svgCoord = valueToSvgCoords(d.value)
             coord = [0, 0]
             if orientation is 'h'
-                coord[0] = svgCoord
+                coord[0] = svgCoord - knob.attr('r')
             else
                 coord[1] = svgCoord
 
             return "translate(" + coord + ")"
 
 
+        knob = svg.select(knobSelector)
 
         # create a drag "behavior" in d3
         drag = d3.behavior.drag()
@@ -255,8 +256,6 @@ svgbind =
 
         d = {value: observable()}
 
-
-        knob = svg.select(knobSelector)
 
         knob.data([d])
             .attr("transform", sliderTransform)
