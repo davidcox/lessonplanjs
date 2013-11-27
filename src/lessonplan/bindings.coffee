@@ -135,7 +135,8 @@ svgbind =
 
         # register on click handles for every selector in the map
         for s in Object.keys(selectorMap)
-            d3.select(s).on('click', ->
+            svg.select(s).on('click', ->
+                console.log 'toggle evt: ' + s
                 observable(!observable())
                 logInteraction('toggle', {'on': onSelector, 'off': offSelector}, observable())
             )

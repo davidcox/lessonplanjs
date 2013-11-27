@@ -823,7 +823,7 @@ class lessonplan.PlayUntilAction extends LessonElement
 
     run: (seeking=false) ->
         if @parent.stage().playUntil?
-            return @parent.stage().playUntil(@t)
+            return @parent.stage().playUntil(@t, seeking)
         else
             console.log 'failing over'
             @parent.stage().play()

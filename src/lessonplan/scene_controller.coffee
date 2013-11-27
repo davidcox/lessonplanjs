@@ -160,9 +160,6 @@ class lessonplan.SceneController
                     return true
 
                 sceneResetReturn = @scene.reset()
-                console.log 'srr'
-                console.log sceneResetReturn
-                console.log sceneResetReturn.state()
                 return sceneResetReturn
 
             ).then(=>
