@@ -151,11 +151,11 @@ svgbind =
         @bindMultiState(svg, selectorMap, observable)
 
         for s in Object.keys(selectorMap)
-            d3.selectAll(s).on('mousedown', ->
+            svg.selectAll(s).on('mousedown', ->
                 observable(true)
                 logInteraction('momentary-down', {'on': onSelector, 'off': offSelector}, observable())
             )
-            d3.selectAll(s).on('mouseup', ->
+            svg.selectAll(s).on('mouseup', ->
                 observable(false)
                 logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
             )
