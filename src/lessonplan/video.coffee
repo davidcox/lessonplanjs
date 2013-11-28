@@ -102,9 +102,9 @@ class lessonplan.Video extends lessonplan.LessonElement
 
             @subtitlesDfrd.resolve()
 
-        ).fail ->
+        ).fail =>
             console.log 'subtitles failed to load'
-            @subtitlesDfrd.reject()
+            @subtitlesDfrd.resolve()
 
         return @subtitlesDfrd
 
