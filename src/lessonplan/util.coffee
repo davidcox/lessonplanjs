@@ -111,11 +111,9 @@ util =
         # g1 = d3.select('#' + gsel1)
         # g2 = d3.select('#' + gsel2)
 
-        root.g1 = g1
         g1Children = [d3.select(node) for node in g1[0][0].childNodes when node.nodeType != 3][0]
         g2Children = [d3.select(node) for node in g2[0][0].childNodes when node.nodeType != 3][0]
 
-        root.g1Children = g1Children
 
         g1ChildIds = ['#' + el.attr('id') for el in g1Children when (el? and el.attr?)][0]
         g2ChildIds = ['#' + el.attr('id') for el in g2Children when (el? and el.attr?)][0]
@@ -128,10 +126,23 @@ util =
         for childId, i in g1ChildIdStems
             console.log 'Child ID: '
             g1Child = d3.select(g1ChildIds[i])
+
+            if not g1Child?
+                console.log 'ERROR: bad g1Child in transition'
+                console.log g1
+                console.log g2
+                continue
+
             console.log childId
             if childId in g2ChildIdStems
                 g2ChildId = g2ChildIds[g2ChildIdStems.indexOf(childId)]
                 g2Child = d3.select(g2ChildId)
+
+                if not g2Child?
+                    console.log 'ERROR: bad g2child in transition: ' + g2ChildId
+                    console.log g1
+                    console.log g2
+                    continue
 
                 console.log 'move ' + childId
                 console.log g2Child.attr('id')

@@ -101,8 +101,21 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
 
 
     transitionGroups: (gsel1, gsel2, duration) ->
+
+        console.log '[ transitioning ' + gsel1 + ' to ' + gsel2 + ' ]'
         g1 = @svg.select('#' + gsel1)
         g2 = @svg.select('#' + gsel2)
+
+        if not g1?
+            console.log 'ERROR: bad transitionGroup:'
+            console.log 'Invalid selector: ' + gsel1
+            return
+
+        if not g2?
+            console.log 'ERROR: bad transitionGroup:'
+            console.log 'Invalid selector: ' + gsel2
+            return
+
         return util.transitionGroups(g1, g2, duration)
 
     glowElement: (s) ->
