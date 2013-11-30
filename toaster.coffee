@@ -10,7 +10,9 @@ toast 'src'
             # 'third-party/jquery-ui-1.9.2.custom.js',
             # 'third-party/jquery.tipsy.js',
             'third-party/jquery.qtip.min.js',
-            'third-party/buzz.js']
+            'third-party/howler.min.js',
+            # 'third-party/buzz.js'
+          ]
 
   # => OPTIONS (optional, default values listed)
   # bare: false

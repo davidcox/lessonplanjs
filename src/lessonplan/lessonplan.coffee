@@ -29,8 +29,6 @@ audioRoot = root.audio_base_url + '/' + module_path
 soundtrackRoot = root.audio_base_url + '/soundtracks'
 
 
-
-
 # Lesson Elements
 # These are the objects that the DSL will actually build
 # They are organized hierarchically with a "Scene" at the
@@ -242,10 +240,10 @@ class lessonplan.Interactive extends LessonElement
         @loadSoundtrack(s)
 
     loadSoundtrack: (s) ->
-        @soundtrackAudio = new buzz.sound(soundtrackRoot + '/' + s,
-            preload:true
-            loop: true
-        )
+        # @soundtrackAudio = new buzz.sound(soundtrackRoot + '/' + s,
+        #     preload:true
+        #     loop: true
+        # )
 
     finish: ->
         @soundtrackAudio.stop() if @soundtrackAudio?
@@ -264,8 +262,8 @@ class lessonplan.Interactive extends LessonElement
         return $.when(stopPromise, hidePromise)
 
     playSoundtrack: ->
-        @soundtrackAudio.load()
-        @soundtrackAudio.play().setVolume(6)
+        @soundtrackAudio.load() if @soundtrackAudio?
+        @soundtrackAudio.play().setVolume(6) if @soundtrackAudio?
         # @soundtrackAudio.play().setVolume(0)
 
     show: ->
@@ -465,7 +463,6 @@ lessonplan.runChained = (actions, seeking=false) ->
 class lessonplan.Line extends LessonElement
 
     constructor: (@audioFile, @text) ->
-        @errorState = 0
         super()
 
     init: ->
@@ -481,25 +478,22 @@ class lessonplan.Line extends LessonElement
         fileParts
         af = fileParts.join('.')
 
+        @soundID = af
+
         if af[0] is '/'
             audioPath = root.audio_base_url + af
             console.log 'here: ' + audioPath
         else
             audioPath = audioRoot + '/' + af
 
-        if true
-            @audio = new buzz.sound([audioPath + '.mp3', audioPath + '.ogg'],
-                preload: true
-            )
-        else
-            @audio = new buzz.sound([audioPath + '.mp3'],
-                preload: true
-            )
-        @audio.bind('empty error', =>
-            console.log('Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage())
-            @errorState = @audio.getErrorCode()
+        @audio = new Howl(
+            urls: [audioPath + '.mp3', audioPath + '.ogg']
+            onloaderror: =>
+                console.log 'Audio load failed: [' + @audioFile + ']'
         )
+
         @audio.load()
+
 
     reset: ->
         $.when(@stop()).then =>
@@ -536,7 +530,7 @@ class lessonplan.Line extends LessonElement
 
     resume: ->
         $.when(@reset()).then =>
-                @run()
+            @run()
         # if @children? and @children.length
         #     console.log 'restart line'
         #     $.when(@reset()).then =>
@@ -545,8 +539,8 @@ class lessonplan.Line extends LessonElement
         #     @audio.play() if @audio
 
     stop: ->
-        @audio.stop() if @audio
-        @audio.unbind('ended')
+        @audio.stop() if @audio?
+        @audio.off('end') if @audio?
         super()
 
     next: ->
@@ -575,27 +569,18 @@ class lessonplan.Line extends LessonElement
         audioDeferred = $.Deferred()
 
 
-        if @errorState == 0 and @audio.getNetworkStateCode() != 3
-
-            @audio.bind('empty.run error.run', =>
-                console.log 'Audio error [' + @audioFile + ']: ' + @audio.getErrorMessage()
-                @errorState = @audio.getErrorCode()
-                audioDeferred.resolve()
-            )
-
-            @audio.bind('ended', ->
-                audioDeferred.resolve()
-            )
-
-        else
-            console.log 'Audio [' + @audioFile + '] will not play'
+        @audio.on('loaderror', =>
+            console.log 'Audio load error [' + @audioFile + ']'
             audioDeferred.resolve()
+        )
 
-        @audio.bind('ended', =>
+        @audio.on('end', ->
             audioDeferred.resolve()
         )
 
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
+        console.log @audio
+        root.theAudio = @audio
         # @audio.load()
         @audio.play()
 
