@@ -462,11 +462,12 @@ lessonplan.runChained = (actions, seeking=false) ->
 
 class lessonplan.Line extends LessonElement
 
-    constructor: (@audioFile, @text) ->
+    constructor: (@audioFile, @text, @justInTimeLoad=false) ->
         super()
 
     init: ->
-        @loadAudio(@audioFile)
+        if not @justInTimeLoad
+            @loadAudio(@audioFile)
         @subtitleContainer = $('#interactive-subtitles')
         super()
 
@@ -486,10 +487,17 @@ class lessonplan.Line extends LessonElement
         else
             audioPath = audioRoot + '/' + af
 
+        @loadDeferred = $.Deferred()
+
         @audio = new Howl(
             urls: [audioPath + '.mp3', audioPath + '.ogg']
+            buffer: true
             onloaderror: =>
                 console.log 'Audio load failed: [' + @audioFile + ']'
+                @loadDeferred.resolve()
+            onload: =>
+                console.log 'Loaded'
+                @loadDeferred.resolve()
         )
 
         @audio.load()
@@ -554,6 +562,10 @@ class lessonplan.Line extends LessonElement
 
     run: (seeking=false) ->
 
+        if @justInTimeLoad
+            @loadAudio(@audioFile)
+
+        root.audio_playing = this
 
         @childDeferred = $.Deferred().resolve()
 
@@ -561,28 +573,29 @@ class lessonplan.Line extends LessonElement
         # tandem with the line/voiceover
         if @children? and @children.length
 
-            @childDeferred = lessonplan.runChained(@children, seeking)
+            @childDeferred = $.when(@loadDeferred).then => lessonplan.runChained(@children, seeking)
 
         if seeking
             return true
 
-        audioDeferred = $.Deferred()
+        @audioDeferred = $.Deferred()
 
 
         @audio.on('loaderror', =>
             console.log 'Audio load error [' + @audioFile + ']'
-            audioDeferred.resolve()
+            @audioDeferred.resolve()
         )
 
-        @audio.on('end', ->
-            audioDeferred.resolve()
+        @audio.on('end', =>
+            console.log 'audio finished playing'
+            @audioDeferred.resolve()
         )
 
         console.log('playing audio: ' + audioRoot + '/' + @audioFile)
         console.log @audio
         root.theAudio = @audio
         # @audio.load()
-        @audio.play()
+        $.when(@loadDeferred).then => @audio.play()
 
         if @text?
             @subtitleContainer.empty()
@@ -590,7 +603,7 @@ class lessonplan.Line extends LessonElement
 
         # return a deferred object that is contingent on
         # both the audio and the children
-        return $.when(audioDeferred, @childDeferred)
+        return $.when(@audioDeferred, @childDeferred)
 
 
 class lessonplan.ShowSubtitleAction extends LessonElement

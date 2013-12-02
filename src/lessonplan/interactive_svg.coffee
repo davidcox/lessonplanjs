@@ -84,10 +84,16 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
     init: () ->
 
     showElement: (s) ->
-        util.showElement(@svg.select(s), 250)
+        try
+            util.showSVGElement(@svg.select(s), 250)
+        catch error
+            console.log 'Could not show SVG element ' + s
 
     hideElement: (s) ->
-        util.hideElement(@svg.select(s), 250)
+        try
+            util.hideSVGElement(@svg.select(s), 250)
+        catch error
+            console.log 'Could not hide SVG element ' + s
 
     hideAllElements: (s) ->
         svgNode = @svg.node()
@@ -97,7 +103,7 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
         if not children?
             children = @svg.node().childNodes
 
-        util.hideElement(d3.select(child)) for child in children
+        util.hideSVGElement(d3.select(child)) for child in children
 
 
     transitionGroups: (gsel1, gsel2, duration) ->

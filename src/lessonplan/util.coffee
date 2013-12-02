@@ -74,30 +74,49 @@ util =
 
         return dfrd
 
-    hideElement: (el, duration) ->
+
+    hideElement: (el, duration, useVisibility=false) ->
         try
             if el[0][0].nodeType == 3
                 return
         catch error
-            console.log 'pressing on'
+            console.log 'Cannot assess node type while hiding element: pressing on anyways'
 
         if duration is undefined
             el.attr('opacity', 0.0)
-            el.attr('display', 'none')
+            if useVisibility
+                el.attr('display', 'inline')
+                el.attr('pointer-events', 'none')
+                el.attr('visibility', 'hidden')
+            else
+                el.attr('display', 'none')
         else
             el.transition()
               .attr('opacity', 0.0)
               .duration(duration)
-              .each('end', -> el.attr('display', 'none'))
+              .each('end', ->
+                if useVisibility
+                    el.attr('pointer-events', 'none')
+                    el.attr('display', 'inline')
+                    el.attr('visibility', 'hidden')
+                else
+                    el.attr('display', 'none'))
 
-    showElement: (el, duration) ->
+    showElement: (el, duration, useVisibility=false) ->
         # el.attr('opacity', 0.0)
         el.attr('visibility', 'visible')
         el.attr('display', 'inline')
+        el.attr('pointer-events', 'inherit')
         if duration is undefined
             el.attr('opacity', 1.0)
         else
             el.transition().attr('opacity', 1.0).duration(duration)
+
+    showSVGElement: (el, duration) ->
+        return @showElement(el, duration, true)
+
+    hideSVGElement: (el, duration) ->
+        return @hideElement(el, duration, true)
 
     # popUpElement: (el, duration) ->
     #     el.attr('opacity', 1.0)
@@ -267,15 +286,10 @@ util =
         # aiming for
         adjusted_current_aspect = adjusted_width / adjusted_height
 
-        console.log 'adjusted_width: ' + adjusted_width
-        console.log 'adjusted_height: ' + adjusted_height
-        console.log 'adjusted_current_aspect: ' + adjusted_current_aspect
         if adjusted_current_aspect < stage_aspect_target
 
             # actual window is narrower than the target
             # so we need to scale the height accordingly
-
-            console.log 'too narrow'
 
             # max width is the desired situation
             $('#player-wrapper').css('left', player_padding)
@@ -295,7 +309,6 @@ util =
 
             # actual window is wider than the target
             # so we need to limit the width
-            console.log 'too wide'
 
             # use as much of the height as we can
             $('#player-wrapper').css('bottom', player_padding)
