@@ -33,6 +33,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         @playerReady = $.Deferred()
 
         @loaded = false
+        @inited = false
+
         super(elId)
 
 
@@ -112,7 +114,7 @@ class lessonplan.Video extends lessonplan.LessonElement
 
     # init is called after the DOM is ready
     init: ->
-        super()
+        return super()
 
     justInTimeInit: ->
 
@@ -122,7 +124,9 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         @playerSelector = undefined
 
-        loadDfrd = $.when(@load()).fail(=>
+        loadDfrd = $.when(@load())
+
+        loadDfrd.fail(=>
             @broken = true
             @subtitlesDfrd.reject() if @subtitlesDfrd?
             util.indicateLoadFail(true)
@@ -226,6 +230,8 @@ class lessonplan.Video extends lessonplan.LessonElement
 
         if not @inserted
             util.showBackdrop(true)
+
+        return true
 
     hide: ->
 
@@ -372,11 +378,15 @@ class lessonplan.Video extends lessonplan.LessonElement
         )
 
         @pop.on('canplaythrough', ->
+            console.log 'canplaythrough event triggered, resolving deferred'
             dfrd.resolve()
         )
 
+        console.log @pop
+
         @pop.on('error', =>
             if @avoidMP4? and @avoidMP4
+                console.log 'failed even after avoiding mp4'
                 dfrd.reject()
             else
                 @avoidMP4 = true
@@ -398,8 +408,10 @@ class lessonplan.Video extends lessonplan.LessonElement
                 cueIt(t, a)
             @loaded = true
 
+        console.log 'pop load called'
         @pop.load()
-        return $.when(dfrd, @subtitlesDfrd)
+        return $.when(@subtitlesDfrd).then =>
+            console.log 'load all resolved'
 
     # youtubePreload: ->
 
@@ -441,6 +453,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         if seeking
             return
 
+        window.video_playing = this
+
         console.log '[ video run ]'
 
         console.log('video run called')
@@ -449,7 +463,8 @@ class lessonplan.Video extends lessonplan.LessonElement
         window.mcb80x_pop = @pop
 
         runIt = =>
-            $.when(@playerReady).done( =>
+            console.log 'runIt called'
+            $.when(@playerReady).then( =>
 
                 if @broken
                     console.log 'Unable to play video'

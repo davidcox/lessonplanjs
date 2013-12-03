@@ -71,6 +71,8 @@ class lessonplan.LessonElement
         if @children?
             child.init() for child in @children
 
+        return true
+
 
     # methods for picking up after a child node
     # has yielded
@@ -491,7 +493,7 @@ class lessonplan.Line extends LessonElement
 
         @audio = new Howl(
             urls: [audioPath + '.mp3', audioPath + '.ogg']
-            buffer: true
+            # buffer: true
             onloaderror: =>
                 console.log 'Audio load failed: [' + @audioFile + ']'
                 @loadDeferred.resolve()
@@ -516,7 +518,7 @@ class lessonplan.Line extends LessonElement
 
         deferreds = []
 
-        if @childDeferred?
+        if @childDeferred? and @childDeferred.reject?
             @childDeferred.reject()
 
             $.when(@childDeferred).then =>
