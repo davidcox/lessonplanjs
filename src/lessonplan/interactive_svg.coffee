@@ -96,12 +96,15 @@ class lessonplan.InteractiveSVG extends lessonplan.ViewModel
             console.log 'Could not hide SVG element ' + s
 
     hideAllElements: (s) ->
+        console.log 'hiding all elements'
         svgNode = @svg.node()
         window.svgNode = svgNode
 
         children = @svg.node().children
         if not children?
             children = @svg.node().childNodes
+
+        console.log children
 
         util.hideSVGElement(d3.select(child)) for child in children
 

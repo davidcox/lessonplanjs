@@ -76,6 +76,7 @@ util =
 
 
     hideElement: (el, duration, useVisibility=false) ->
+        console.log 'hiding element'
         try
             if el[0][0].nodeType == 3
                 return

@@ -53,9 +53,9 @@ svgbind =
         thisobj = this
         setter = (newVal) ->
             if newVal
-                util.showElement(el, duration)
+                util.showSVGElement(el, duration)
             else
-                util.hideElement(el, duration)
+                util.hideSVGElement(el, duration)
 
         observable.subscribe(setter)
         setter(observable())
@@ -77,7 +77,13 @@ svgbind =
         try
             bbox = el.node().getBBox()
         catch error
-            bbox = el.node().getBoundingClientRect()
+            if el.style('display') is 'none'
+                el.attr('visibility', 'hidden')
+                el.style('display', 'inline')
+                bbox = el.node().getBBox()
+            else
+                # almost certainly wrong
+                bbox = el.node().getBoundingClientRect()
 
         if centered
             center = [bbox.x + bbox.width/2.0, bbox.y + bbox.height/2.0]
@@ -272,10 +278,20 @@ svgbind =
 
     bindScale: (svg, selector, observable, scaleMapping, anchorType) ->
 
+        el = svg.select(selector)
         try
-            bbox = svg.select(selector).node().getBBox()
+            bbox = el.node().getBBox()
         catch error
-            bbox = svg.select(selector).node().getBoundingClientRect()
+            console.log 'failed to get bbox'
+            console.log el
+            window.el = el
+            if el.style('display') is 'none'
+                el.attr('visibility', 'hidden')
+                el.style('display', 'inline')
+                bbox = el.node().getBBox()
+            else
+                # almost certainly not right
+                bbox = el.node().getBoundingClientRect()
 
         if anchorType is 'sw'
             anchor = [bbox.x, bbox.y + bbox.height]
