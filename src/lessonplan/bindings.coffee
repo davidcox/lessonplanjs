@@ -197,6 +197,7 @@ svgbind =
         sliderCoordsToValue = mapping
         valueToSliderCoords = mapping.invert
 
+        knob = svg.select(knobSelector)
         box = svg.select(boxSelector)
 
         window.box = box
@@ -204,8 +205,10 @@ svgbind =
             console.log("Couldn't find " + boxSelector)
 
         # build mapping from svg coords to slider coords
+        minCoord = 0
+
         if orientation is 'h'
-            minCoord = 0 # box.node().x.animVal.value
+
             maxCoord = minCoord + box.node().width.animVal.value
 
             svgCoordsToSliderCoords = d3.scale.linear()
@@ -213,8 +216,7 @@ svgbind =
                 .range([0.0, 1.0]).clamp(true)
 
         else
-            minCoord = 0
-            maxCoord = -box.node().height.animVal.value
+            maxCoord = minCoord - box.node().height.animVal.value
 
             svgCoordsToSliderCoords = d3.scale.linear()
                 .domain([minCoord, maxCoord])
@@ -234,14 +236,12 @@ svgbind =
             svgCoord = valueToSvgCoords(d.value)
             coord = [0, 0]
             if orientation is 'h'
-                coord[0] = svgCoord - knob.attr('r')
+                coord[0] = svgCoord - Number(knob.attr('r'))
             else
-                coord[1] = svgCoord
+                coord[1] = svgCoord #+ Number(knob.attr('r'))
 
             return "translate(" + coord + ")"
 
-
-        knob = svg.select(knobSelector)
 
         # create a drag "behavior" in d3
         drag = d3.behavior.drag()
