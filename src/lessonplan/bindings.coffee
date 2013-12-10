@@ -166,6 +166,15 @@ svgbind =
                 logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
             )
 
+            svg.selectAll(s).on('touchstart', ->
+                observable(true)
+                logInteraction('momentary-down', {'on': onSelector, 'off': offSelector}, observable())
+            )
+            svg.selectAll(s).on('touchend', ->
+                observable(false)
+                logInteraction('momentary-up', {'on': onSelector, 'off': offSelector}, observable())
+            )
+
     bindMultipleChoice: (svg, selectorMap, observable) ->
 
         for k in Object.keys(selectorMap)
