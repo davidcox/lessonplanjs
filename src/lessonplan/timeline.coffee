@@ -10,6 +10,8 @@ class lessonplan.Timeline
         @paused = @sceneController.pausedObservable
         @playing = @sceneController.playingObservable
 
+        @onDeckCBs = []
+
 
         @self = ko.observable(this)
 
@@ -268,6 +270,7 @@ class lessonplan.Timeline
         # from it's elementId
 
 
+
     # Given the currently loaded scene, translate durations, etc.
     # into a visual timeline
     # This may be called many times in a row, as new info about video
@@ -339,6 +342,10 @@ class lessonplan.Timeline
             .domain([0.0, @totalDuration])
             .range([0.0, 100.0])
 
+
+        for subsegEntry in @orderedSubsegments
+            subsegEntry.startX = @tScale(subsegEntry.startTime)
+            subsegEntry.tScale = @tScale
 
         @seekableMarkers = @svg.selectAll('.timeline-seekable-markers')
             .data(@allSeekables)
@@ -516,6 +523,10 @@ class lessonplan.Timeline
 
         console.log('Done setting up timeline.')
 
+        for cb in @onDeckCBs
+
+            cb(@getOnDeckURIs()) if cb?
+
 
     setupSceneIndicator: ->
 
@@ -580,9 +591,61 @@ class lessonplan.Timeline
 
 
 
+    # what's the current timeline URI
+    currentTimelineURI: ->
+        return @currentSubsegment.elementId + '/' + @currentTime
+
+    # install a callback to be fired at this URI
+    atTimelineURI: (uri, cb) ->
+        # split the URI
+        uri_list = uri.split('/')
+        t = uri_list.pop()
+        segId = uri_list.pop()
+
+        seg = @segmentLookup[segId].obj
+
+        if seg instanceof lessonplan.video
+            seg.pop.cue(t, cb)
+        else
+            console.log "No one said this API wasn't brittle..."
+
+        return timelineURItoX(uri)
+
+    timelineURIToX: (uri) ->
+
+        # split the URI
+        uri_list = uri.split('/')
+        t = uri_list.pop()
+        segId = uri_list.pop()
+
+        segEntry = @segmentLookup[segId]
+
+        # hack for now, make t a number
+        t = Number(t)
+
+        x = segEntry.startX + segEntry.tScale(t)
+
+
+    onNewOnDeckURIs: (cb) ->
+        @onDeckCBs.push(cb)
+        @setupTiming()
+
+    getOnDeckURIs: ->
+
+        uris = []
+        for segEntry in @orderedSubsegments
+            uris.push(segEntry.segId)
+
+        return uris
+
+
     # Update the current timeline display
     # This event gets fired whenever the current element or time changes
     update: (subsegment, t) ->
+
+        @currentSubsegment = subsegment   
+        @currentTime = t
+
 
         if not subsegment?
             console.log('[timeline]: warning: empty segment in timeline')
@@ -617,8 +680,6 @@ class lessonplan.Timeline
         if not @tScale?
             console.log('[timeline]: no time scale defined')
             return
-
-        @currentTime = t
 
         if not @displayedSegment?
             console.log('warning: no segment to display')
