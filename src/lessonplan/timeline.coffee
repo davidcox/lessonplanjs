@@ -11,7 +11,7 @@ class lessonplan.Timeline
         @playing = @sceneController.playingObservable
 
         @onDeckCBs = []
-
+        @timelineCallbacks = []
 
         @self = ko.observable(this)
 
@@ -264,6 +264,9 @@ class lessonplan.Timeline
                     @allSeekables.push(seekableEntry)
                     @seekableLookup[seekableId] = seekableEntry
 
+        for tlcb in @timelineCallbacks
+            @installTimelineCallback(tlcb[0], tlcb[1])
+
         # by this point, we should have an ordered list of subsegment entries,
         # each containing a duration, title, id and a list of milestones within it
         # Also: a milestone lookup, where we can find out details about a milestone
@@ -277,6 +280,9 @@ class lessonplan.Timeline
     # duration, etc. is obtained from the network
     setupTiming: ->
         console.log('[timeline]: adjusting timing...')
+
+        if not @orderedSubsegments?
+            return
 
         subsegmentRunningTime = 0.0
 
@@ -524,8 +530,9 @@ class lessonplan.Timeline
         console.log('Done setting up timeline.')
 
         for cb in @onDeckCBs
-
-            cb(@getOnDeckURIs()) if cb?
+            ondeck = @getOnDeckURIs()
+            console.log cb
+            cb(ondeck) if cb?
 
 
     setupSceneIndicator: ->
@@ -597,21 +604,32 @@ class lessonplan.Timeline
 
     # install a callback to be fired at this URI
     atTimelineURI: (uri, cb) ->
+        if @subsegmentLookup?
+            installTimelineCallback(uri, cb)
+        else
+            @timelineCallbacks.push([uri, cb])
+
+    installTimelineCallback: (uri, cb) ->
         # split the URI
         uri_list = uri.split('/')
         t = uri_list.pop()
         segId = uri_list.pop()
 
-        seg = @segmentLookup[segId].obj
+        console.log @subsegmentLookup
+        seg = @subsegmentLookup[segId].obj
 
-        if seg instanceof lessonplan.video
-            seg.pop.cue(t, cb)
+        if true # better be true... # seg instanceof lessonplan.video
+            console.log "~~~~~~~~~~~~~~~~ registering..."
+            console.log t
+            console.log cb
+            console.log seg
+            seg.cueRaw(t, cb)
         else
             console.log "No one said this API wasn't brittle..."
 
-        return timelineURItoX(uri)
+        # return @timelineURItoX(uri)
 
-    timelineURIToX: (uri) ->
+    timelineURItoX: (uri) ->
 
         # split the URI
         uri_list = uri.split('/')

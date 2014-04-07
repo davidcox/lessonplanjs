@@ -572,3 +572,13 @@ class lessonplan.Video extends lessonplan.LessonElement
     cue: (t, actions) ->
         @cues.push([t, actions])
 
+    cueRaw: (t, cb) ->
+        action = new lessonplan.LessonElement()
+        action.run = -> cb()
+
+        action_container = new lessonplan.LessonElement()
+        action_container.addChild(action)
+
+        console.log 'cueing raw cb'
+        @cue(t, action_container)
+
